@@ -11,6 +11,19 @@
       "expo-router",
       "expo-web-browser",
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#2563EB",
+          "image": "./assets/stride-circle-splash.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#2563EB",
+            "image": "./assets/stride-circle-splash.png"
+          }
+        }
+      ],
+      [
         "expo-sensors",
         {
           "motionPermission": "Stride Circle uses your motion activity to show your steps to you and your circle."
@@ -21,7 +34,8 @@
         {
           "locationWhenInUsePermission": "Stride Circle uses your location to show your route, distance, and pace during an activity."
         }
-      ]
+      ],
+      "expo-splash-screen"
     ],
     "ios": {
       "supportsTablet": true
