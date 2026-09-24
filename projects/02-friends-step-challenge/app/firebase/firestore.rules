@@ -28,9 +28,18 @@ service cloud.firestore {
 
     match /users/{userId}/circleMemberships/{circleId} {
       allow read: if signedIn() && request.auth.uid == userId;
-      allow create, update: if signedIn()
+      allow create: if signedIn()
         && request.auth.uid == userId
         && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId;
+      allow update: if signedIn()
+        && (
+          request.auth.uid == userId
+          || (
+            isCircleOwner(circleId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['circleName', 'updatedAt'])
+            && request.resource.data.circleName == getAfter(/databases/$(database)/documents/circles/$(circleId)).data.name
+          )
+        );
       // A non-owner may leave, while the circle owner may remove another member.
       // An owner cannot remove their own membership and accidentally orphan the circle.
       allow delete: if signedIn()
@@ -46,7 +55,13 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.inviteCode == circleId;
-      allow update, delete: if false;
+      allow update: if signedIn()
+        && isCircleOwner(circleId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'name', 'updatedAt'])
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.inviteCode == resource.data.inviteCode
+        && request.resource.data.activityType == resource.data.activityType;
+      allow delete: if false;
 
       match /members/{memberId} {
         allow get, list: if signedIn()

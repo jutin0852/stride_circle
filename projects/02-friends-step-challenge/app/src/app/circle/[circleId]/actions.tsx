@@ -59,7 +59,10 @@ export default function CircleActionsRoute() {
       <View style={styles.actions}>
         <ActionRow label="Invite friends" caption="Share a private invite" onPress={() => void handleShare()} />
         <ActionRow label={showCode ? 'Hide invite code' : 'View invite code'} caption="Only share it with people you trust" onPress={() => setShowCode((visible) => !visible)} />
-        {isCreator ? <ActionRow label="Manage members" caption="Remove people from this circle" onPress={() => router.push({ pathname: '/circle/[circleId]/members', params: { circleId: details.circle.id } })} /> : null}
+        {isCreator ? <>
+          <ActionRow label="Edit circle" caption="Change its name or description" onPress={() => router.push({ pathname: '/circle/[circleId]/edit', params: { circleId: details.circle.id } })} />
+          <ActionRow label="Manage members" caption="Remove people from this circle" onPress={() => router.push({ pathname: '/circle/[circleId]/members', params: { circleId: details.circle.id } })} />
+        </> : null}
         {!isCreator ? <ActionRow destructive disabled={isLeaving} label={isLeaving ? 'Leaving circle…' : 'Leave circle'} onPress={confirmLeave} /> : null}
       </View>
       {showCode ? <View style={styles.codeCard}><Text style={styles.codeLabel}>PRIVATE INVITE CODE</Text><Text selectable style={styles.code}>{details.circle.inviteCode}</Text><Text style={styles.codeHint}>Anyone with this code can request to join your circle.</Text></View> : null}

@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDocs,
   onSnapshot,
   runTransaction,
   serverTimestamp,
@@ -18,6 +19,7 @@ const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export type Circle = {
   activityType: CircleActivityType;
+  description: string;
   id: string;
   inviteCode: string;
   name: string;
@@ -93,6 +95,7 @@ export async function createCircle(input: { activityType: CircleActivityType; na
       transaction.set(circleReference, {
         activityType: input.activityType,
         createdAt: serverTimestamp(),
+        description: '',
         inviteCode,
         name,
         ownerId: input.user.uid,
@@ -113,6 +116,31 @@ export async function createCircle(input: { activityType: CircleActivityType; na
   }
 
   throw new Error('We could not create an invite code. Please try again.');
+}
+
+/** Updates the circle document and every member's list label in one batch. */
+export async function updateCircle(input: { circleId: string; description: string; name: string }) {
+  const name = input.name.trim();
+  const description = input.description.trim();
+  if (!name) throw new Error('Enter a name for your circle.');
+  if (name.length > 40) throw new Error('Circle names can be up to 40 characters.');
+  if (description.length > 140) throw new Error('Descriptions can be up to 140 characters.');
+
+  const db = requireFirebase(database, 'Firestore');
+  const circleReference = doc(db, 'circles', input.circleId);
+  const membersSnapshot = await getDocs(collection(db, 'circles', input.circleId, 'members'));
+  const batch = writeBatch(db);
+
+  batch.update(circleReference, { description, name, updatedAt: serverTimestamp() });
+  membersSnapshot.docs.forEach((member) => {
+    batch.set(
+      getUserMembershipReference(member.id, input.circleId),
+      { circleName: name, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+  });
+
+  await batch.commit();
 }
 
 export async function joinCircle(input: { inviteCode: string; user: User }) {
@@ -305,6 +333,7 @@ export function watchCircleDetails(
 
       circle = {
         activityType: getActivityType(data.activityType),
+        description: typeof data.description === 'string' ? data.description : '',
         id: circleSnapshot.id,
         inviteCode: typeof data.inviteCode === 'string' ? data.inviteCode : circleSnapshot.id,
         name: data.name,

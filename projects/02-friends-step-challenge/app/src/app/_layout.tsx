@@ -16,6 +16,7 @@ export default function RootLayout() {
           <Stack.Screen name="edit-profile" />
           <Stack.Screen name="profile-character" options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.9] }} />
           <Stack.Screen name="circle/[circleId]/actions" options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.5, 1] }} />
+          <Stack.Screen name="circle/[circleId]/edit" options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.75, 1] }} />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>
