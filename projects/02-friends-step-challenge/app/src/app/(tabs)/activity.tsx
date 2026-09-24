@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import MapView, { Polyline } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { ActivitySummarySheet } from '@/components/activity-summary-sheet';
+import { ActivityMap } from '@/components/activity-map';
 import { CelebrationSheet } from '@/components/celebration-sheet';
 import { saveActivity } from '@/lib/activities';
 import { useActivityTracking, type FinishedActivity, type GpsSignalStatus } from '@/hooks/use-activity-tracking';
@@ -32,17 +32,11 @@ export default function ActivityRoute() {
   const [isCompletionVisible, setCompletionVisible] = useState(false);
   const { user } = useAuth();
   const tracking = useActivityTracking();
-  const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
   const isRun = activityType === 'run';
   const averagePace = tracking.distanceMeters > 0 ? tracking.elapsedMs / 1_000 / (tracking.distanceMeters / 1_000) : null;
   const isMoving = tracking.status === 'tracking' || tracking.status === 'paused';
   const activityTitle = tracking.status === 'tracking' ? `Recording your ${isRun ? 'run' : 'walk'}` : tracking.status === 'paused' ? 'Activity paused' : tracking.status === 'finished' ? 'Nice work.' : isRun ? 'Ready to run?' : 'Ready to walk?';
-
-  useEffect(() => {
-    if (!tracking.currentLocation) return;
-    mapRef.current?.animateToRegion({ ...tracking.currentLocation, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 450);
-  }, [tracking.currentLocation]);
 
   const primaryAction = () => {
     if (tracking.status === 'idle' || tracking.status === 'denied' || tracking.status === 'error') { setCompletionVisible(false); setFinishedActivity(null); setSaveState('idle'); void tracking.start(); return; }
@@ -94,9 +88,7 @@ export default function ActivityRoute() {
   };
 
   return <View style={styles.page}>
-    {process.env.EXPO_OS === 'web' ? <View style={styles.mapFallback}><Text style={styles.mapFallbackText}>Maps are available in the iPhone app.</Text></View> : <MapView ref={mapRef} style={StyleSheet.absoluteFill} initialRegion={defaultRegion} showsMyLocationButton showsUserLocation>
-      {tracking.route.length > 1 ? <Polyline coordinates={tracking.route} strokeColor={colors.accent} strokeWidth={5} /> : null}
-    </MapView>}
+    <ActivityMap currentLocation={tracking.currentLocation} fallback={<View style={styles.mapFallback}><Text style={styles.mapFallbackText}>Maps are available in the iPhone app.</Text></View>} initialRegion={defaultRegion} route={tracking.route} showsUserLocation style={StyleSheet.absoluteFill} />
     <View pointerEvents="none" style={[styles.topOverlay, { top: insets.top + 12 }]}>
       <Text style={styles.eyebrow}>RECORD ACTIVITY</Text>
       <Text style={styles.title}>{activityTitle}</Text>

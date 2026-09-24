@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
+import { ActivityMap } from '@/components/activity-map';
 import { Skeleton } from '@/components/skeleton';
 import { useActivityRecord } from '@/hooks/use-activity-record';
 import { colors } from '@/theme';
@@ -29,15 +29,10 @@ export default function ActivityDetailRoute() {
   const { activityId } = useLocalSearchParams<{ activityId: string }>();
   const { user } = useAuth();
   const { record, status } = useActivityRecord(user?.uid, activityId);
-  const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
   const initialRegion = useMemo(() => {
     const point = record?.route[0];
     return point ? { ...point, latitudeDelta: 0.012, longitudeDelta: 0.012 } : undefined;
-  }, [record?.route]);
-
-  useEffect(() => {
-    if (record?.route.length && record.route.length > 1) mapRef.current?.fitToCoordinates(record.route, { animated: false, edgePadding: { bottom: 170, left: 42, right: 42, top: 140 } });
   }, [record?.route]);
 
   if (status === 'loading') return <View style={styles.loading}><Skeleton style={{ height: 280, width: '100%' }} /><View style={styles.loadingCard}><Skeleton style={{ height: 12, width: 92 }} /><Skeleton style={{ height: 34, marginTop: 8, width: 198 }} /><Skeleton style={{ height: 70, marginTop: 20, width: '100%' }} /></View></View>;
@@ -46,9 +41,7 @@ export default function ActivityDetailRoute() {
 
   const hasRoute = record.route.length > 1;
   return <View style={styles.page}>
-    {hasRoute && process.env.EXPO_OS !== 'web' ? <MapView ref={mapRef} initialRegion={initialRegion} style={StyleSheet.absoluteFill}>
-      <Polyline coordinates={record.route} strokeColor={colors.accent} strokeWidth={5} />
-    </MapView> : <View style={styles.mapFallback}><View style={styles.mapFallbackIcon}><Ionicons color={colors.accent} name="map-outline" size={30} /></View><Text style={styles.mapFallbackTitle}>{hasRoute ? 'Route map is available in the iPhone app.' : 'Route not available'}</Text><Text style={styles.mapFallbackText}>{hasRoute ? 'Open this activity on your phone to see the route.' : 'This was saved before route recording was added.'}</Text></View>}
+    <ActivityMap fallback={<View style={styles.mapFallback}><View style={styles.mapFallbackIcon}><Ionicons color={colors.accent} name="map-outline" size={30} /></View><Text style={styles.mapFallbackTitle}>{hasRoute ? 'Route map is available in the iPhone app.' : 'Route not available'}</Text><Text style={styles.mapFallbackText}>{hasRoute ? 'Open this activity on your phone to see the route.' : 'This was saved before route recording was added.'}</Text></View>} fitRoute initialRegion={initialRegion} route={record.route} style={StyleSheet.absoluteFill} />
     <Pressable accessibilityLabel="Go back to History" accessibilityRole="button" onPress={() => router.back()} style={[styles.backButton, { top: insets.top + 12 }]}><Ionicons color={colors.ink} name="chevron-back" size={23} /></Pressable>
     <View style={[styles.summary, { paddingBottom: Math.max(insets.bottom, 24) }]}>
       <View style={styles.grabber} />
