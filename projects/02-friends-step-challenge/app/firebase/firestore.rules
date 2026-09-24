@@ -1,0 +1,91 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isCircleOwner(circleId) {
+      return get(/databases/$(database)/documents/circles/$(circleId)).data.ownerId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow read, update: if signedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/dailySteps/{dateKey} {
+      allow create, read, update: if signedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/activities/{activityId} {
+      allow create, read: if signedIn() && request.auth.uid == userId;
+      allow update, delete: if false;
+    }
+
+    match /users/{userId}/circleMemberships/{circleId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId;
+      // A non-owner may leave, while the circle owner may remove another member.
+      // An owner cannot remove their own membership and accidentally orphan the circle.
+      allow delete: if signedIn()
+        && (
+          (request.auth.uid == userId && !isCircleOwner(circleId))
+          || (isCircleOwner(circleId) && request.auth.uid != userId)
+        );
+    }
+
+    match /circles/{circleId} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.inviteCode == circleId;
+      allow update, delete: if false;
+
+      match /members/{memberId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create, update: if signedIn()
+          && request.auth.uid == memberId
+          && request.resource.data.userId == request.auth.uid
+          && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId;
+        // Matches the membership rule above, so the two records are removed atomically.
+        allow delete: if signedIn()
+          && (
+            (request.auth.uid == memberId && !isCircleOwner(circleId))
+            || (isCircleOwner(circleId) && request.auth.uid != memberId)
+          );
+      }
+
+      match /dailySteps/{dateKey}/entries/{userId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create, update: if signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.userId == request.auth.uid
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow delete: if false;
+      }
+
+      match /dailyActivities/{dateKey}/entries/{userId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create, update: if signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.userId == request.auth.uid
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
