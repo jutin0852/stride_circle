@@ -2,6 +2,7 @@ import type { AvatarChoice } from '@/lib/avatar';
 
 export type Friend = {
   avatar?: AvatarChoice;
+  id?: string;
   name: string;
   initials: string;
   steps: number;
