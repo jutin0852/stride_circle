@@ -10,6 +10,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/circles/$(circleId)).data.ownerId == request.auth.uid;
     }
 
+    function isDeletingCircle(circleId) {
+      return !existsAfter(/databases/$(database)/documents/circles/$(circleId));
+    }
+
     match /users/{userId} {
       allow create: if signedIn() && request.auth.uid == userId;
       allow read, update: if signedIn() && request.auth.uid == userId;
@@ -41,11 +45,12 @@ service cloud.firestore {
           )
         );
       // A non-owner may leave, while the circle owner may remove another member.
-      // An owner cannot remove their own membership and accidentally orphan the circle.
+      // The owner can remove their own membership only while deleting the circle.
       allow delete: if signedIn()
         && (
           (request.auth.uid == userId && !isCircleOwner(circleId))
           || (isCircleOwner(circleId) && request.auth.uid != userId)
+          || (request.auth.uid == userId && isCircleOwner(circleId) && isDeletingCircle(circleId))
         );
     }
 
@@ -61,7 +66,7 @@ service cloud.firestore {
         && request.resource.data.ownerId == resource.data.ownerId
         && request.resource.data.inviteCode == resource.data.inviteCode
         && request.resource.data.activityType == resource.data.activityType;
-      allow delete: if false;
+      allow delete: if signedIn() && isCircleOwner(circleId);
 
       match /members/{memberId} {
         allow get, list: if signedIn()
@@ -75,6 +80,7 @@ service cloud.firestore {
           && (
             (request.auth.uid == memberId && !isCircleOwner(circleId))
             || (isCircleOwner(circleId) && request.auth.uid != memberId)
+            || (request.auth.uid == memberId && isCircleOwner(circleId) && isDeletingCircle(circleId))
           );
       }
 

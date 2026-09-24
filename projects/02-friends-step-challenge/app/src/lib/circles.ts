@@ -143,6 +143,34 @@ export async function updateCircle(input: { circleId: string; description: strin
   await batch.commit();
 }
 
+/**
+ * Deletes the circle and the membership records that make it visible to
+ * members. Historical activity documents are deliberately retained so they
+ * cannot be re-written; once the circle document is gone, those records are
+ * no longer accessible through the app.
+ */
+export async function deleteCircle(input: { circleId: string }) {
+  const db = requireFirebase(database, 'Firestore');
+  const circleReference = doc(db, 'circles', input.circleId);
+  const membersSnapshot = await getDocs(collection(db, 'circles', input.circleId, 'members'));
+
+  // Each member needs two deletions (their member record and membership
+  // record), plus the circle document. Firestore batches allow 500 writes.
+  if (membersSnapshot.size > 249) {
+    throw new Error('This circle has too many members to delete from the app right now.');
+  }
+
+  const batch = writeBatch(db);
+
+  membersSnapshot.docs.forEach((member) => {
+    batch.delete(member.ref);
+    batch.delete(getUserMembershipReference(member.id, input.circleId));
+  });
+  batch.delete(circleReference);
+
+  await batch.commit();
+}
+
 export async function joinCircle(input: { inviteCode: string; user: User }) {
   const inviteCode = normaliseInviteCode(input.inviteCode);
   if (!inviteCode) throw new Error('Enter an invite code.');

@@ -5,7 +5,7 @@ import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/auth/auth-provider';
 import { Skeleton } from '@/components/skeleton';
 import { useCircleDetails } from '@/hooks/use-circle-details';
-import { removeCircleMember } from '@/lib/circles';
+import { deleteCircle, removeCircleMember } from '@/lib/circles';
 import { colors } from '@/theme';
 
 export default function CircleActionsRoute() {
@@ -14,6 +14,7 @@ export default function CircleActionsRoute() {
   const { user } = useAuth();
   const { details, status } = useCircleDetails(circleId);
   const [showCode, setShowCode] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
   async function handleShare() {
@@ -46,6 +47,31 @@ export default function CircleActionsRoute() {
     }
   }
 
+  function confirmDelete() {
+    if (!details) return;
+    Alert.alert(
+      'Delete this circle?',
+      `This removes “${details.circle.name}” for every member. It cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete circle', style: 'destructive', onPress: () => void deleteCurrentCircle() },
+      ],
+    );
+  }
+
+  async function deleteCurrentCircle() {
+    if (!details) return;
+    setIsDeleting(true);
+    try {
+      await deleteCircle({ circleId: details.circle.id });
+      router.dismissAll();
+    } catch (error) {
+      Alert.alert('Could not delete circle', getMessage(error));
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   if (status === 'loading') return <ActionsSkeleton />;
   if (!details) return <View style={styles.loading}><Text style={styles.muted}>This circle is unavailable.</Text></View>;
 
@@ -62,6 +88,7 @@ export default function CircleActionsRoute() {
         {isCreator ? <>
           <ActionRow label="Edit circle" caption="Change its name or description" onPress={() => router.push({ pathname: '/circle/[circleId]/edit', params: { circleId: details.circle.id } })} />
           <ActionRow label="Manage members" caption="Remove people from this circle" onPress={() => router.push({ pathname: '/circle/[circleId]/members', params: { circleId: details.circle.id } })} />
+          <ActionRow destructive disabled={isDeleting} label={isDeleting ? 'Deleting circle…' : 'Delete circle'} caption="Remove it for everyone" onPress={confirmDelete} />
         </> : null}
         {!isCreator ? <ActionRow destructive disabled={isLeaving} label={isLeaving ? 'Leaving circle…' : 'Leave circle'} onPress={confirmLeave} /> : null}
       </View>
