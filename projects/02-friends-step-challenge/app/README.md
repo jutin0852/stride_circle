@@ -4,7 +4,6 @@
 
 Stride Circle is a social fitness app for friends who want more motivation than a personal step counter can provide. It combines daily step goals with GPS-recorded walks and runs, then turns movement into a shared experience through private circles, daily standings, and a visual race track.
 
-> **Demo video:** add your uploaded demo-video link here before sharing this repository publicly.
 
 ## The problem
 
