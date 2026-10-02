@@ -50,17 +50,23 @@ jobs:
             exit 1
           fi
 
-          scheme="$(xcodebuild -list -json -workspace "$workspace" | node -e '
+          preferred_scheme="$(basename "$workspace" .xcworkspace)"
+          scheme="$(PREFERRED_SCHEME="$preferred_scheme" xcodebuild -list -json -workspace "$workspace" | node -e '
             let input = "";
             process.stdin.on("data", chunk => input += chunk);
             process.stdin.on("end", () => {
               const project = JSON.parse(input);
               const schemes = project.workspace?.schemes ?? [];
-              const scheme = schemes.find(value => !value.endsWith("-Pods")) ?? schemes[0];
+              const preferred = process.env.PREFERRED_SCHEME;
+              const scheme = schemes.includes(preferred)
+                ? preferred
+                : schemes.find(value => !value.endsWith("-Pods") && value !== "EXApplication")
+                  ?? schemes[0];
               if (!scheme) process.exit(1);
               process.stdout.write(scheme);
             });
           ')"
+          echo "Using Xcode scheme: $scheme"
 
           derived_data="$RUNNER_TEMP/stride-circle-derived-data"
 
