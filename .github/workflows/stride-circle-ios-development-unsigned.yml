@@ -62,7 +62,7 @@ jobs:
             process.stdin.on("data", chunk => input += chunk);
             process.stdin.on("end", () => {
               const project = JSON.parse(input);
-              const schemes = project.workspace?.schemes ?? [];
+              const schemes = project.project?.schemes ?? [];
               const preferred = process.env.PREFERRED_SCHEME;
               const scheme = schemes.includes(preferred)
                 ? preferred
