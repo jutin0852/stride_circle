@@ -1,6 +1,9 @@
 name: Build iOS development client for free sideloading
 
 on:
+  push:
+    branches:
+      - 'codex/**'
   workflow_dispatch:
 
 permissions:
