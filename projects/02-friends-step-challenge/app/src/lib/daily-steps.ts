@@ -11,10 +11,11 @@ import {
 } from 'firebase/firestore';
 
 import { database, requireFirebase } from '@/lib/firebase';
+import type { HealthDataSource } from '@/services/health-data';
 
 export type DailyStepRecord = {
   dateKey: string;
-  source: 'ios-pedometer';
+  source: HealthDataSource | 'ios-pedometer';
   steps: number;
   timeZone: string;
 };
@@ -68,13 +69,14 @@ export async function loadDailyStepHistory(userId: string, days = 7) {
 
 export async function saveDailySteps(input: {
   dateKey?: string;
+  source?: HealthDataSource | 'ios-pedometer';
   steps: number;
   userId: string;
 }) {
   const dateKey = input.dateKey ?? getLocalDateKey();
   const record: DailyStepRecord = {
     dateKey,
-    source: 'ios-pedometer',
+    source: input.source ?? 'expo-pedometer',
     steps: input.steps,
     timeZone: getLocalTimeZone(),
   };

@@ -3,14 +3,14 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/auth-provider';
-import { colors } from '@/theme';
+import { semanticColors } from '@/design-system/tokens';
 
 export default function TabsLayout() {
   const { isLoading, user } = useAuth();
   const insets = useSafeAreaInsets();
 
   if (isLoading) {
-    return <View style={styles.loading}><ActivityIndicator color={colors.accent} size="large" /></View>;
+    return <View style={styles.loading}><ActivityIndicator color={semanticColors.brandDark} size="large" /></View>;
   }
 
   if (!user) return <Redirect href="/sign-in" />;
@@ -19,13 +19,13 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarActiveTintColor: semanticColors.brandDark,
+        tabBarInactiveTintColor: semanticColors.contentTertiary,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '800' },
         tabBarIconStyle: { height: 24, width: 24 },
         tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
+          backgroundColor: semanticColors.card,
+          borderTopColor: semanticColors.divider,
           height: 58 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 8,
@@ -42,5 +42,5 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  loading: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center' },
+  loading: { alignItems: 'center', backgroundColor: semanticColors.canvas, flex: 1, justifyContent: 'center' },
 });

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { Pedometer } from 'expo-sensors';
 
-const isIOS = process.env.EXPO_OS === 'ios';
+import { createHealthDataProvider } from '@/services/health-data';
 
 export type StepTrackingStatus =
   | 'checking'
@@ -19,7 +18,8 @@ type StepTrackingState = {
 };
 
 export function useStepTracking() {
-  const subscriptionRef = useRef<ReturnType<typeof Pedometer.watchStepCount> | null>(null);
+  const provider = useMemo(() => createHealthDataProvider(), []);
+  const subscriptionRef = useRef<{ remove: () => void } | null>(null);
   const [state, setState] = useState<StepTrackingState>({
     todaySteps: 0,
     status: 'checking',
@@ -31,44 +31,39 @@ export function useStepTracking() {
   }, []);
 
   const refreshTodaySteps = useCallback(async () => {
-    if (!isIOS) return;
+    if (!provider.canReadDailyTotals) return;
 
     try {
       const end = new Date();
       const start = new Date(end);
       start.setHours(0, 0, 0, 0);
 
-      const result = await Pedometer.getStepCountAsync(start, end);
-      setState({ todaySteps: result.steps, status: 'tracking' });
+      const steps = await provider.getDailySteps({ end, start });
+      setState({ todaySteps: steps, status: 'tracking' });
     } catch {
       setState((current) => ({ ...current, status: 'error' }));
     }
-  }, []);
+  }, [provider]);
 
   const startWatching = useCallback(() => {
     stopWatching();
 
-    subscriptionRef.current = Pedometer.watchStepCount(({ steps }) => {
-      if (isIOS) {
-        void refreshTodaySteps();
-        return;
-      }
-
-      setState({ todaySteps: steps, status: 'tracking' });
+    subscriptionRef.current = provider.subscribeToStepUpdates(() => {
+      void refreshTodaySteps();
     });
     setState((current) => ({ ...current, status: 'tracking' }));
     void refreshTodaySteps();
-  }, [refreshTodaySteps, stopWatching]);
+  }, [provider, refreshTodaySteps, stopWatching]);
 
   const checkAvailability = useCallback(async () => {
     try {
-      const available = await Pedometer.isAvailableAsync();
+      const available = await provider.isAvailable();
       if (!available) {
         setState({ todaySteps: 0, status: 'unavailable' });
         return;
       }
 
-      const permission = await Pedometer.getPermissionsAsync();
+      const permission = await provider.getPermissionStatus();
       if (permission.granted) {
         startWatching();
         return;
@@ -78,13 +73,13 @@ export function useStepTracking() {
     } catch {
       setState({ todaySteps: 0, status: 'error' });
     }
-  }, [startWatching]);
+  }, [provider, startWatching]);
 
   const requestStepAccess = useCallback(async () => {
     setState((current) => ({ ...current, status: 'requesting' }));
 
     try {
-      const permission = await Pedometer.requestPermissionsAsync();
+      const permission = await provider.requestPermission();
       if (!permission.granted) {
         setState((current) => ({ ...current, status: 'denied' }));
         return;
@@ -94,7 +89,7 @@ export function useStepTracking() {
     } catch {
       setState((current) => ({ ...current, status: 'error' }));
     }
-  }, [startWatching]);
+  }, [provider, startWatching]);
 
   useEffect(() => {
     const availabilityTimer = setTimeout(() => {
@@ -118,7 +113,9 @@ export function useStepTracking() {
   }, [checkAvailability]);
 
   return {
+    openHealthSettings: provider.openHealthSettings,
     requestStepAccess,
+    source: provider.source,
     todaySteps: state.todaySteps,
     status: state.status,
   };

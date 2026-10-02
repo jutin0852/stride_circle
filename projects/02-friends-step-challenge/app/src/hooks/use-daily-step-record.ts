@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 
 import { saveCircleDailySteps } from '@/lib/circles';
 import { loadDailySteps, saveDailySteps } from '@/lib/daily-steps';
+import type { HealthDataSource } from '@/services/health-data';
 
 type DailyStepSyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export function useDailyStepRecord(input: {
   circleId: string | undefined;
   shouldSave: boolean;
+  source?: HealthDataSource | 'ios-pedometer';
   steps: number;
   userId: string | undefined;
 }) {
@@ -39,13 +41,13 @@ export function useDailyStepRecord(input: {
   useEffect(() => {
     const userId = input.userId;
     if (!userId || !input.shouldSave) return;
-    const syncKey = `${input.circleId ?? 'private'}:${input.steps}`;
+    const syncKey = `${input.circleId ?? 'private'}:${input.source ?? 'unknown'}:${input.steps}`;
     if (latestSyncKeyRef.current === syncKey) return;
 
     const timeout = setTimeout(() => {
       setSyncStatus('saving');
 
-      void saveDailySteps({ steps: input.steps, userId })
+      void saveDailySteps({ source: input.source, steps: input.steps, userId })
         .then(() => {
           if (!input.circleId) return;
           return saveCircleDailySteps({
@@ -63,7 +65,7 @@ export function useDailyStepRecord(input: {
     }, 15_000);
 
     return () => clearTimeout(timeout);
-  }, [input.circleId, input.shouldSave, input.steps, input.userId]);
+  }, [input.circleId, input.shouldSave, input.source, input.steps, input.userId]);
 
   return { savedSteps, syncStatus };
 }
