@@ -50,8 +50,14 @@ jobs:
             exit 1
           fi
 
-          preferred_scheme="$(basename "$workspace" .xcworkspace)"
-          scheme="$(PREFERRED_SCHEME="$preferred_scheme" xcodebuild -list -json -workspace "$workspace" | node -e '
+          project="$(find ios -maxdepth 1 -name '*.xcodeproj' -print -quit)"
+          if [[ -z "$project" ]]; then
+            echo "No iOS app project was generated."
+            exit 1
+          fi
+
+          preferred_scheme="$(basename "$project" .xcodeproj)"
+          scheme="$(PREFERRED_SCHEME="$preferred_scheme" xcodebuild -list -json -project "$project" | node -e '
             let input = "";
             process.stdin.on("data", chunk => input += chunk);
             process.stdin.on("end", () => {
@@ -60,7 +66,7 @@ jobs:
               const preferred = process.env.PREFERRED_SCHEME;
               const scheme = schemes.includes(preferred)
                 ? preferred
-                : schemes.find(value => !value.endsWith("-Pods") && value !== "EXApplication")
+                : schemes.find(value => !value.endsWith("-Pods") && !value.startsWith("EXApplication"))
                   ?? schemes[0];
               if (!scheme) process.exit(1);
               process.stdout.write(scheme);
