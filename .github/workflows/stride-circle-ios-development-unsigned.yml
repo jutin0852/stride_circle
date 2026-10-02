@@ -16,7 +16,7 @@ defaults:
 jobs:
   build-ios-development-client:
     name: Build unsigned iOS development client
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
 
     steps:
