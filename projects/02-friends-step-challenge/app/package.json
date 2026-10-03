@@ -37,7 +37,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit --incremental false",
+    "verify": "npm run lint && npm run typecheck"
   },
   "private": true
 }
