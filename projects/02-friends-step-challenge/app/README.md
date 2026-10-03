@@ -110,6 +110,32 @@ Maps use a platform-specific implementation: native builds use the real map expe
 
 For GPS and pedometer testing, use a physical device and grant the relevant permissions.
 
+## Automated verification
+
+From the repository root, enter the app directory and install the locked dependencies
+with Node.js 24 and npm:
+
+```sh
+cd projects/02-friends-step-challenge/app
+npm ci
+npm run verify
+```
+
+`verify` runs ESLint followed by TypeScript checking and exits with a failure if
+either check fails. These static checks do not need Firebase credentials or a
+running app. They do not replace unit tests, Firestore-rule tests, or physical-device
+checks for permissions, GPS, and step tracking.
+
+The root workflow [App verification](../../../.github/workflows/verify.yml) runs
+the same command on pull requests, pushes to `main`, and manual dispatch. It uses
+read-only repository permissions, caches npm downloads, and cancels superseded
+runs. No deployment or database changes happen in this workflow.
+
+The workflow only becomes available on GitHub after it is pushed. Once it has
+run successfully, configure branch protection to require the `Lint and TypeScript`
+check before merging. Adding this workflow does not enable branch protection or
+automatic merging.
+
 ## Security and configuration
 
 - Real environment files are ignored by Git; only [`.env.example`](.env.example) is included.
