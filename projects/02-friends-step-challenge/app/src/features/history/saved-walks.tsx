@@ -32,7 +32,7 @@ function formatElapsed(milliseconds: number) {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.md, marginTop: spacing.xxl },
+  section: { gap: spacing.md, marginTop: spacing.xl },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xs },
   title: { color: historyColors.ink },
   list: { gap: 0 },

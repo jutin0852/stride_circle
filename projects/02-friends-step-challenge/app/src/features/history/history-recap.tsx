@@ -51,7 +51,7 @@ function formatRhythmSteps(steps: number) {
 }
 
 const styles = StyleSheet.create({
-  section: { marginTop: spacing.xxl },
+  section: { marginTop: spacing.xl },
   sectionTitle: { paddingHorizontal: spacing.xs, marginBottom: spacing.sm },
   title: { color: historyColors.ink },
   rhythm: { paddingTop: 0 },

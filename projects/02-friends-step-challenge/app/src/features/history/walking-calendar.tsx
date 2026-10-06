@@ -38,9 +38,9 @@ export function WalkingCalendar(props: Props) {
   const route = createJourneyPath(cells, byDate, protectedDays, props.today, status, gridWidth, cellHeight);
 
   return <View style={[styles.card, props.compact && styles.compactCard]}>
-    <View style={styles.calendarHeader}>
-      <View style={styles.titleCopy}><AppText accessibilityRole="header" variant="titleSmall" style={styles.title}>Your walking month</AppText><AppText variant="bodySmall" tone="secondary" style={styles.subtitle}>{goalReady ? `Based on your current ${formatSteps(goal)}-step goal.` : 'Saved daily steps, in your local calendar.'}</AppText></View>
-      <View style={styles.monthNav}>
+    <View style={[styles.calendarHeader, props.compact && styles.calendarHeaderCompact]}>
+      <View style={[styles.calendarTitle, props.compact && styles.calendarTitleCompact]}><View style={styles.titleCopy}><AppText accessibilityRole="header" variant="titleSmall" style={styles.title}>Your walking month</AppText><AppText variant="bodySmall" tone="secondary" style={styles.subtitle}>{goalReady ? `Based on your current ${formatSteps(goal)}-step goal.` : 'Saved daily steps, in your local calendar.'}</AppText></View></View>
+      <View style={[styles.monthNav, props.compact && styles.monthNavCompact]}>
         <IconButton accessibilityLabel="Previous month" onPress={() => props.onMonthChange(-1)} style={styles.navButton}><Ionicons name="chevron-back" size={18} color={historyColors.blueDeep} /></IconButton>
         <AppText variant="label" style={styles.month}>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(dateFromKey(month))}</AppText>
         <IconButton accessibilityLabel="Next month" disabled={isCurrentMonth} accessibilityState={{ disabled: isCurrentMonth }} onPress={() => props.onMonthChange(1)} style={nextMonthButtonStyle}><Ionicons name="chevron-forward" size={18} color={historyColors.blueDeep} /></IconButton>
@@ -115,13 +115,13 @@ function Legend({ kind, label }: { kind: 'route' | 'goal' | 'protected' | 'below
 const styles = StyleSheet.create({
   card: { backgroundColor: historyColors.paper, borderRadius: radii.xl, borderColor: '#D5E9F0', borderWidth: 2, borderBottomWidth: 5, overflow: 'visible' },
   compactCard: { marginHorizontal: -12 },
-  calendarHeader: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 8, gap: 4 },
-  calendarHeaderCompact: { flexWrap: 'wrap' },
+  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 14, paddingBottom: 8, gap: 4 },
+  calendarHeaderCompact: { alignItems: 'flex-start', flexWrap: 'wrap' },
   calendarTitle: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' }, calendarTitleCompact: { flexBasis: '100%', flexGrow: 0, flexShrink: 0, width: '100%' },
   titleCopy: { flexShrink: 1, minWidth: 0 },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 23 }, subtitle: { fontSize: 12, lineHeight: 17, color: historyColors.muted }, monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2 }, monthNavCompact: { width: '100%', justifyContent: 'center', marginLeft: 0 },
   navButton: { backgroundColor: 'transparent', borderColor: 'transparent', width: 42, height: 42 }, month: { minWidth: 108, textAlign: 'center', color: historyColors.ink },
-  grid: { paddingBottom: spacing.sm }, gridInset: { paddingHorizontal: 5 }, weekdays: { flexDirection: 'row', marginBottom: 5 }, weekday: { width: '14.285714%', textAlign: 'center', fontSize: 11, letterSpacing: 0.4, paddingVertical: spacing.xs },
+  grid: { paddingBottom: spacing.xs }, gridInset: { paddingHorizontal: 5 }, weekdays: { flexDirection: 'row', marginBottom: 5 }, weekday: { width: '14.285714%', textAlign: 'center', fontSize: 11, letterSpacing: 0.4, paddingVertical: spacing.xs },
   cells: { position: 'relative', overflow: 'visible', flexGrow: 0, flexShrink: 0 },
   weekRow: { flexDirection: 'row', columnGap: GRID_GAP, flexGrow: 0, flexShrink: 0 },
   cell: { flexGrow: 0, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
