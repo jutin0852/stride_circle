@@ -1,0 +1,109 @@
+name: Build Stride Circle iOS development client
+
+on:
+  push:
+    branches:
+      - 'codex/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: projects/02-friends-step-challenge/app
+
+jobs:
+  build-ios-development-client:
+    name: Build unsigned iOS development client
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/02-friends-step-challenge/app/package-lock.json
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Generate the iOS project
+        run: npx expo prebuild --clean --platform ios
+
+      - name: Install CocoaPods dependencies
+        run: npx pod-install ios
+
+      - name: Build an unsigned Debug app
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          workspace="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"
+          if [[ -z "$workspace" ]]; then
+            echo "No iOS workspace was generated."
+            exit 1
+          fi
+
+          project="$(find ios -maxdepth 1 -name '*.xcodeproj' -print -quit)"
+          if [[ -z "$project" ]]; then
+            echo "No iOS app project was generated."
+            exit 1
+          fi
+
+          preferred_scheme="$(basename "$project" .xcodeproj)"
+          scheme="$(PREFERRED_SCHEME="$preferred_scheme" xcodebuild -list -json -project "$project" | node -e '
+            let input = "";
+            process.stdin.on("data", chunk => input += chunk);
+            process.stdin.on("end", () => {
+              const project = JSON.parse(input);
+              const schemes = project.project?.schemes ?? [];
+              const preferred = process.env.PREFERRED_SCHEME;
+              const scheme = schemes.includes(preferred)
+                ? preferred
+                : schemes.find(value => !value.endsWith("-Pods") && !value.startsWith("EXApplication"))
+                  ?? schemes[0];
+              if (!scheme) process.exit(1);
+              process.stdout.write(scheme);
+            });
+          ')"
+          echo "Using Xcode scheme: $scheme"
+
+          derived_data="$RUNNER_TEMP/stride-circle-derived-data"
+
+          xcodebuild \
+            -workspace "$workspace" \
+            -scheme "$scheme" \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$derived_data" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+          app_path="$(find "$derived_data/Build/Products/Debug-iphoneos" -maxdepth 1 -name '*.app' -print -quit)"
+          if [[ -z "$app_path" ]]; then
+            echo "The iOS build completed without producing an app bundle."
+            exit 1
+          fi
+
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$app_path" "$RUNNER_TEMP/Payload/"
+          output="$GITHUB_WORKSPACE/projects/02-friends-step-challenge/app/StrideCircle-development-unsigned.ipa"
+          (
+            cd "$RUNNER_TEMP"
+            zip -qry "$output" Payload
+          )
+
+      - name: Upload the unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: stride-circle-development-unsigned
+          path: projects/02-friends-step-challenge/app/StrideCircle-development-unsigned.ipa
+          if-no-files-found: error

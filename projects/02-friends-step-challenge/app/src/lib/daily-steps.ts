@@ -4,22 +4,48 @@ import {
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  where,
 } from 'firebase/firestore';
 
 import { database, requireFirebase } from '@/lib/firebase';
+import { isValidDateKey } from '@/domain/walking-history';
+import type { HealthDataSource } from '@/services/health-data';
 
 export type DailyStepRecord = {
   dateKey: string;
-  source: 'ios-pedometer';
+  source: HealthDataSource | 'ios-pedometer';
   steps: number;
   timeZone: string;
 };
 
 export type DailyStepHistoryRecord = Pick<DailyStepRecord, 'dateKey' | 'steps'>;
+
+/** Bounded overview plus a separate month query: older months remain browsable. */
+export function watchStepHistory(
+  userId: string,
+  range: { from: string; to: string } | null,
+  onChange: (records: DailyStepHistoryRecord[]) => void,
+  onError: () => void,
+) {
+  const db = requireFirebase(database, 'Firestore');
+  const reference = collection(db, 'users', userId, 'dailySteps');
+  const historyQuery = range
+    ? query(reference, where('dateKey', '>=', range.from), where('dateKey', '<=', range.to), orderBy('dateKey', 'desc'))
+    : query(reference, orderBy('dateKey', 'desc'), limit(400));
+  return onSnapshot(historyQuery, (snapshot) => {
+    onChange(snapshot.docs.flatMap((document) => {
+      const data = document.data();
+      if (typeof data.steps !== 'number' || !Number.isFinite(data.steps) || data.steps < 0) return [];
+      const dateKey = typeof data.dateKey === 'string' ? data.dateKey : document.id;
+      return isValidDateKey(dateKey) ? [{ dateKey, steps: data.steps }] : [];
+    }));
+  }, onError);
+}
 
 function getDailyStepReference(userId: string, dateKey: string) {
   const db = requireFirebase(database, 'Firestore');
@@ -68,13 +94,14 @@ export async function loadDailyStepHistory(userId: string, days = 7) {
 
 export async function saveDailySteps(input: {
   dateKey?: string;
+  source?: HealthDataSource | 'ios-pedometer';
   steps: number;
   userId: string;
 }) {
   const dateKey = input.dateKey ?? getLocalDateKey();
   const record: DailyStepRecord = {
     dateKey,
-    source: 'ios-pedometer',
+    source: input.source ?? 'expo-pedometer',
     steps: input.steps,
     timeZone: getLocalTimeZone(),
   };

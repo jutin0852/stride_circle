@@ -9,6 +9,7 @@ import {
 } from '@/lib/circles';
 
 type CircleState = {
+  userId?: string;
   circles: CircleSummary[];
   details: CircleDetails | null;
   selectedCircleId: string | null;
@@ -16,6 +17,8 @@ type CircleState = {
 };
 
 export function useCurrentCircle(userId: string | undefined) {
+  const [revision, setRevision] = useState(0);
+  const refresh = useCallback(() => setRevision((value) => value + 1), []);
   const [circleState, setCircleState] = useState<CircleState>({
     circles: [],
     details: null,
@@ -31,22 +34,23 @@ export function useCurrentCircle(userId: string | undefined) {
       (circles, selectedCircleId) =>
         setCircleState((current) => ({
           ...current,
+          userId,
           circles,
-          details: current.selectedCircleId === selectedCircleId ? current.details : null,
+          details: current.userId === userId && current.selectedCircleId === selectedCircleId ? current.details : null,
           selectedCircleId,
           status: 'ready',
         })),
-      () => setCircleState((current) => ({ ...current, status: 'error' })),
+      () => setCircleState({ userId, circles: [], details: null, selectedCircleId: null, status: 'error' }),
     );
-  }, [userId]);
+  }, [revision, userId]);
 
   useEffect(() => {
     return watchCircleDetails(
-      circleState.selectedCircleId ?? undefined,
+      circleState.userId === userId ? circleState.selectedCircleId ?? undefined : undefined,
       (details) => setCircleState((current) => ({ ...current, details })),
       () => setCircleState((current) => ({ ...current, details: null, status: 'error' })),
     );
-  }, [circleState.selectedCircleId]);
+  }, [circleState.selectedCircleId, circleState.userId, revision, userId]);
 
   const changeSelectedCircle = useCallback(
     async (circleId: string) => {
@@ -56,5 +60,6 @@ export function useCurrentCircle(userId: string | undefined) {
     [userId],
   );
 
-  return { ...circleState, selectCircle: changeSelectedCircle };
+  const current = circleState.userId === userId ? circleState : { circles: [], details: null, selectedCircleId: null, status: 'loading' as const };
+  return { ...current, refresh, selectCircle: changeSelectedCircle };
 }
