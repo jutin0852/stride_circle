@@ -2,6 +2,9 @@
 
 # dependencies
 node_modules/
+.tools/
+functions/lib/
+functions/node_modules/
 
 # Expo
 .expo/
@@ -23,8 +26,12 @@ expo-env.d.ts
 
 # debug
 npm-debug.*
+firestore-debug.log
 yarn-debug.*
 yarn-error.*
+
+# local verification evidence
+.artifacts/
 
 # macOS
 .DS_Store

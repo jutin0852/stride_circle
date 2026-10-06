@@ -20,7 +20,10 @@ export default function CircleActionsRoute() {
   async function handleShare() {
     if (!details) return;
     try {
-      await Share.share({ message: `Join my Stride Circle “${details.circle.name}” with invite code ${details.circle.inviteCode}.` });
+      const message = details.circle.visibility === 'private' && details.circle.inviteCode
+        ? `Join my Stride Circle “${details.circle.name}” with invite code ${details.circle.inviteCode}.`
+        : `Find my public Stride Circle “${details.circle.name}” in the Circles tab.`;
+      await Share.share({ message });
     } catch {
       Alert.alert('Could not open sharing', 'Try again in a moment.');
     }
@@ -84,7 +87,7 @@ export default function CircleActionsRoute() {
       <Text style={styles.subtitle}>Circle actions</Text>
       <View style={styles.actions}>
         <ActionRow label="Invite friends" caption="Share a private invite" onPress={() => void handleShare()} />
-        <ActionRow label={showCode ? 'Hide invite code' : 'View invite code'} caption="Only share it with people you trust" onPress={() => setShowCode((visible) => !visible)} />
+        {details.circle.visibility === 'private' ? <ActionRow label={showCode ? 'Hide invite code' : 'View invite code'} caption="Only share it with people you trust" onPress={() => setShowCode((visible) => !visible)} /> : <ActionRow label="Public circle" caption="Anyone can find and join this circle" onPress={() => undefined} />}
         {isCreator ? <>
           <ActionRow label="Edit circle" caption="Change its name or description" onPress={() => router.push({ pathname: '/circle/[circleId]/edit', params: { circleId: details.circle.id } })} />
           <ActionRow label="Manage members" caption="Remove people from this circle" onPress={() => router.push({ pathname: '/circle/[circleId]/members', params: { circleId: details.circle.id } })} />
@@ -92,7 +95,7 @@ export default function CircleActionsRoute() {
         </> : null}
         {!isCreator ? <ActionRow destructive disabled={isLeaving} label={isLeaving ? 'Leaving circle…' : 'Leave circle'} onPress={confirmLeave} /> : null}
       </View>
-      {showCode ? <View style={styles.codeCard}><Text style={styles.codeLabel}>PRIVATE INVITE CODE</Text><Text selectable style={styles.code}>{details.circle.inviteCode}</Text><Text style={styles.codeHint}>Anyone with this code can request to join your circle.</Text></View> : null}
+      {showCode && details.circle.inviteCode ? <View style={styles.codeCard}><Text style={styles.codeLabel}>PRIVATE INVITE CODE</Text><Text selectable style={styles.code}>{details.circle.inviteCode}</Text><Text style={styles.codeHint}>Only share this code with people you trust.</Text></View> : null}
     </View>
   );
 }

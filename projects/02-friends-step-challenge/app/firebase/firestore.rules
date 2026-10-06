@@ -2,6 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function maxCircleMembers() {
+      return 20;
+    }
+
     function signedIn() {
       return request.auth != null;
     }
@@ -12,6 +16,26 @@ service cloud.firestore {
 
     function isDeletingCircle(circleId) {
       return !existsAfter(/databases/$(database)/documents/circles/$(circleId));
+    }
+
+    function isCircleModerator(circleId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.role == 'owner'
+          || get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.role == 'moderator'
+        );
+    }
+
+    function isPublicOpenCircle(circleId) {
+      return exists(/databases/$(database)/documents/circles/$(circleId))
+        && get(/databases/$(database)/documents/circles/$(circleId)).data.visibility == 'public'
+        && get(/databases/$(database)/documents/circles/$(circleId)).data.joinPolicy == 'open';
+    }
+
+    function isPublicOpenCircleAfter(circleId) {
+      return getAfter(/databases/$(database)/documents/circles/$(circleId)).data.visibility == 'public'
+        && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.joinPolicy == 'open';
     }
 
     match /users/{userId} {
@@ -30,11 +54,34 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /users/{userId}/blocks/{blockedUserId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.blockedUserId == blockedUserId
+        && blockedUserId != request.auth.uid;
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
     match /users/{userId}/circleMemberships/{circleId} {
       allow read: if signedIn() && request.auth.uid == userId;
       allow create: if signedIn()
         && request.auth.uid == userId
-        && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId;
+        && (
+          getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId
+          || isPublicOpenCircleAfter(circleId)
+        )
+        && (
+          (
+            request.auth.uid == getAfter(/databases/$(database)/documents/circles/$(circleId)).data.ownerId
+            && request.resource.data.role == 'owner'
+          )
+          || (
+            request.auth.uid != getAfter(/databases/$(database)/documents/circles/$(circleId)).data.ownerId
+            && request.resource.data.role == 'member'
+          )
+        );
       allow update: if signedIn()
         && (
           request.auth.uid == userId
@@ -43,7 +90,8 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['circleName', 'updatedAt'])
             && request.resource.data.circleName == getAfter(/databases/$(database)/documents/circles/$(circleId)).data.name
           )
-        );
+        )
+        && request.resource.data.role == resource.data.role;
       // A non-owner may leave, while the circle owner may remove another member.
       // The owner can remove their own membership only while deleting the circle.
       allow delete: if signedIn()
@@ -56,16 +104,59 @@ service cloud.firestore {
 
     match /circles/{circleId} {
       allow get: if signedIn();
-      allow list: if false;
+      allow list: if signedIn() && resource.data.visibility == 'public';
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.inviteCode == circleId;
+        && request.resource.data.inviteCode == circleId
+        && request.resource.data.memberCount == 1
+        && request.resource.data.visibility == 'private'
+        && request.resource.data.joinPolicy == 'invite_only'
+        || (
+          signedIn()
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.inviteCode == null
+          && request.resource.data.memberCount == 1
+          && request.resource.data.visibility == 'public'
+          && request.resource.data.joinPolicy == 'open'
+        );
       allow update: if signedIn()
-        && isCircleOwner(circleId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'name', 'updatedAt'])
-        && request.resource.data.ownerId == resource.data.ownerId
-        && request.resource.data.inviteCode == resource.data.inviteCode
-        && request.resource.data.activityType == resource.data.activityType;
+        && (
+          (
+            isCircleOwner(circleId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'discoverableArea', 'name', 'updatedAt'])
+            && request.resource.data.ownerId == resource.data.ownerId
+            && request.resource.data.inviteCode == resource.data.inviteCode
+            && request.resource.data.activityType == resource.data.activityType
+          )
+          || (
+            isPublicOpenCircle(circleId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+            && request.resource.data.memberCount == resource.data.memberCount + 1
+            && request.resource.data.memberCount <= maxCircleMembers()
+            && !exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          )
+          || (
+            signedIn()
+            && resource.data.inviteCode == circleId
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+            && request.resource.data.memberCount == resource.data.memberCount + 1
+            && request.resource.data.memberCount <= maxCircleMembers()
+            && !exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          )
+          || (
+            (
+              isCircleOwner(circleId)
+              || (
+                exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+                && !existsAfter(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+              )
+            )
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+            && request.resource.data.memberCount == resource.data.memberCount - 1
+          )
+        );
       allow delete: if signedIn() && isCircleOwner(circleId);
 
       match /members/{memberId} {
@@ -74,7 +165,25 @@ service cloud.firestore {
         allow create, update: if signedIn()
           && request.auth.uid == memberId
           && request.resource.data.userId == request.auth.uid
-          && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId;
+          && (
+            getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId
+            || (
+              isPublicOpenCircleAfter(circleId)
+              && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.memberCount <= maxCircleMembers()
+            )
+          )
+          && (
+            (
+              request.auth.uid == getAfter(/databases/$(database)/documents/circles/$(circleId)).data.ownerId
+              && request.resource.data.role == 'owner'
+            )
+            || (
+              request.auth.uid != getAfter(/databases/$(database)/documents/circles/$(circleId)).data.ownerId
+              && request.resource.data.role == 'member'
+            )
+          )
+          && (!exists(/databases/$(database)/documents/circles/$(circleId)/members/$(memberId))
+            || request.resource.data.role == resource.data.role);
         // Matches the membership rule above, so the two records are removed atomically.
         allow delete: if signedIn()
           && (
@@ -101,6 +210,55 @@ service cloud.firestore {
           && request.auth.uid == userId
           && request.resource.data.userId == request.auth.uid
           && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow delete: if false;
+      }
+
+      match /days/{dateKey} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create, update, delete: if false;
+
+        match /scores/{userId} {
+          allow get, list: if signedIn()
+            && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+          allow create, update, delete: if false;
+        }
+      }
+
+      match /weeklyRecaps/{weekKey} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create, update, delete: if false;
+      }
+
+      match /cheers/{cheerId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          && request.resource.data.circleId == circleId
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.recipientId is string
+          && request.resource.data.recipientId != request.auth.uid
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.resource.data.recipientId))
+          && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(request.resource.data.recipientId))
+          && !exists(/databases/$(database)/documents/users/$(request.resource.data.recipientId)/blocks/$(request.auth.uid))
+          && request.resource.data.cheerType in ['nice_work', 'keep_going', 'almost_there', 'lets_walk', 'congrats'];
+        allow update, delete: if false;
+      }
+
+      match /reports/{reportId} {
+        allow create: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          && request.resource.data.circleId == circleId
+          && request.resource.data.reporterId == request.auth.uid
+          && request.resource.data.status == 'open'
+          && request.resource.data.targetId is string
+          && request.resource.data.targetType in ['circle', 'member', 'cheer', 'profile']
+          && request.resource.data.reason in ['spam', 'harassment', 'unsafe', 'privacy', 'other'];
+        allow get, list: if isCircleModerator(circleId);
+        allow update: if isCircleModerator(circleId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolution', 'resolvedAt', 'resolvedBy', 'status', 'updatedAt']);
         allow delete: if false;
       }
     }

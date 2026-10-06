@@ -1,39 +1,61 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
+  limit,
+  query,
   runTransaction,
   serverTimestamp,
   setDoc,
   type Unsubscribe,
+  where,
   writeBatch,
 } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 
 import { database, requireFirebase } from '@/lib/firebase';
-import { getLocalDateKey } from '@/lib/daily-steps';
+import { getDateKeyInTimeZone } from '@/domain/dates';
 import { getAvatarChoiceFromUrl, getDefaultAvatarChoice, isAvatarStyle, type AvatarStyle } from '@/lib/avatar';
+import {
+  getDefaultJoinPolicy,
+  isCircleJoinPolicy,
+  isCircleVisibility,
+  isValidCompetitionTimeZone,
+  MAX_CIRCLE_MEMBERS,
+  type CircleJoinPolicy,
+  type CircleRole,
+  type CircleVisibility,
+} from '@/domain/circles';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export type Circle = {
   activityType: CircleActivityType;
+  competitionTimeZone: string;
   description: string;
+  discoverableArea: string | null;
   id: string;
-  inviteCode: string;
+  inviteCode: string | null;
+  joinPolicy: CircleJoinPolicy;
+  memberCount: number;
   name: string;
   ownerId: string;
+  visibility: CircleVisibility;
 };
 
-export type CircleActivityType = 'walk' | 'run';
+export type CircleActivityType = 'walk';
 
 export type CircleSummary = Pick<Circle, 'activityType' | 'id' | 'name'>;
+
+export type PublicCircleSummary = Pick<Circle, 'activityType' | 'competitionTimeZone' | 'discoverableArea' | 'id' | 'joinPolicy' | 'memberCount' | 'name' | 'visibility'>;
 
 export type CircleMember = {
   avatarSeed: string;
   avatarStyle: AvatarStyle;
   displayName: string;
+  role: CircleRole;
   userId: string;
 };
 
@@ -44,13 +66,14 @@ export type CircleDetails = {
 
 export type CircleDailySteps = Record<string, number>;
 
-function getMemberData(user: User) {
+function getMemberData(user: User, role: CircleRole = 'member') {
   const avatar = getAvatarChoiceFromUrl(user.photoURL) ?? getDefaultAvatarChoice(user.uid);
   return {
     avatarSeed: avatar.seed,
     avatarStyle: avatar.style,
     displayName: user.displayName?.trim() || 'Stride Circle member',
     joinedAt: serverTimestamp(),
+    role,
     userId: user.uid,
   };
 }
@@ -71,13 +94,48 @@ function normaliseInviteCode(code: string) {
   return code.trim().toUpperCase().replace(/\s/g, '');
 }
 
-function getActivityType(value: unknown): CircleActivityType {
-  return value === 'run' ? 'run' : 'walk';
+function getActivityType(): CircleActivityType {
+  // Run was supported by the legacy prototype. New product flows are
+  // walking-only, so legacy values are safely normalized on read.
+  return 'walk';
 }
 
-export async function createCircle(input: { activityType: CircleActivityType; name: string; user: User }) {
+function getVisibility(value: unknown): CircleVisibility {
+  return isCircleVisibility(value) ? value : 'private';
+}
+
+function getJoinPolicy(value: unknown, visibility: CircleVisibility): CircleJoinPolicy {
+  return isCircleJoinPolicy(value) ? value : getDefaultJoinPolicy(visibility);
+}
+
+function getCompetitionTimeZone(value: unknown): string {
+  return typeof value === 'string' && isValidCompetitionTimeZone(value) ? value : 'UTC';
+}
+
+function getMemberCount(value: unknown) {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function getDiscoverableArea(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+export async function createCircle(input: {
+  activityType: CircleActivityType;
+  competitionTimeZone?: string;
+  discoverableArea?: string;
+  name: string;
+  user: User;
+  visibility?: CircleVisibility;
+}) {
   const name = input.name.trim();
   if (!name) throw new Error('Enter a name for your circle.');
+
+  const visibility = input.visibility ?? 'private';
+  const joinPolicy = getDefaultJoinPolicy(visibility);
+  const discoverableArea = visibility === 'public' ? getDiscoverableArea(input.discoverableArea) : null;
+  const competitionTimeZone = input.competitionTimeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (!isValidCompetitionTimeZone(competitionTimeZone)) throw new Error('Choose a valid competition timezone.');
 
   const db = requireFirebase(database, 'Firestore');
 
@@ -94,18 +152,24 @@ export async function createCircle(input: { activityType: CircleActivityType; na
 
       transaction.set(circleReference, {
         activityType: input.activityType,
+        competitionTimeZone,
         createdAt: serverTimestamp(),
         description: '',
-        inviteCode,
+        discoverableArea,
+        inviteCode: visibility === 'private' ? inviteCode : null,
+        joinPolicy,
+        memberCount: 1,
         name,
         ownerId: input.user.uid,
+        visibility,
       });
-      transaction.set(memberReference, getMemberData(input.user));
+      transaction.set(memberReference, getMemberData(input.user, 'owner'));
       transaction.set(membershipReference, {
         activityType: input.activityType,
         circleId: inviteCode,
         circleName: name,
         joinedAt: serverTimestamp(),
+        role: 'owner',
       });
       transaction.set(profileReference, { selectedCircleId: inviteCode, updatedAt: serverTimestamp() }, { merge: true });
 
@@ -183,24 +247,102 @@ export async function joinCircle(input: { inviteCode: string; user: User }) {
 
   await runTransaction(db, async (transaction) => {
     const circleSnapshot = await transaction.get(circleReference);
+    const memberSnapshot = await transaction.get(memberReference);
     if (!circleSnapshot.exists()) throw new Error('That invite code does not match a circle.');
 
     const circle = circleSnapshot.data();
+    const visibility = getVisibility(circle.visibility);
+    const joinPolicy = getJoinPolicy(circle.joinPolicy, visibility);
+    const memberCount = getMemberCount(circle.memberCount);
+    if (visibility !== 'private' || joinPolicy !== 'invite_only') throw new Error('Use public discovery to join this circle.');
+    if (memberCount >= MAX_CIRCLE_MEMBERS) throw new Error('This circle is full.');
     if (typeof circle.name !== 'string') throw new Error('This circle cannot be joined right now.');
 
     transaction.set(memberReference, getMemberData(input.user), { merge: true });
     transaction.set(
       membershipReference,
       {
-        activityType: getActivityType(circle.activityType),
+        activityType: getActivityType(),
         circleId: inviteCode,
         circleName: circle.name,
         joinedAt: serverTimestamp(),
+        role: 'member',
       },
       { merge: true },
     );
+    if (!memberSnapshot.exists()) {
+      const memberCount = getMemberCount(circle.memberCount);
+      transaction.update(circleReference, { memberCount: memberCount + 1, updatedAt: serverTimestamp() });
+    }
     transaction.set(profileReference, { selectedCircleId: inviteCode, updatedAt: serverTimestamp() }, { merge: true });
   });
+}
+
+export async function joinPublicCircle(input: { circleId: string; user: User }) {
+  const db = requireFirebase(database, 'Firestore');
+  const circleReference = doc(db, 'circles', input.circleId);
+  const memberReference = doc(db, 'circles', input.circleId, 'members', input.user.uid);
+  const membershipReference = getUserMembershipReference(input.user.uid, input.circleId);
+  const profileReference = doc(db, 'users', input.user.uid);
+
+  await runTransaction(db, async (transaction) => {
+    const circleSnapshot = await transaction.get(circleReference);
+    const memberSnapshot = await transaction.get(memberReference);
+    if (!circleSnapshot.exists()) throw new Error('That public circle is no longer available.');
+
+    const circle = circleSnapshot.data();
+    const visibility = getVisibility(circle.visibility);
+    const joinPolicy = getJoinPolicy(circle.joinPolicy, visibility);
+    const memberCount = getMemberCount(circle.memberCount);
+    if (visibility !== 'public' || joinPolicy !== 'open') throw new Error('This circle is not open for public joining.');
+    if (memberCount >= MAX_CIRCLE_MEMBERS) throw new Error('This circle is full.');
+    if (typeof circle.name !== 'string') throw new Error('This circle cannot be joined right now.');
+
+    transaction.set(memberReference, getMemberData(input.user), { merge: true });
+    transaction.set(
+      membershipReference,
+      {
+        activityType: getActivityType(),
+        circleId: input.circleId,
+        circleName: circle.name,
+        joinedAt: serverTimestamp(),
+        role: 'member',
+      },
+      { merge: true },
+    );
+    if (!memberSnapshot.exists()) transaction.update(circleReference, { memberCount: memberCount + 1, updatedAt: serverTimestamp() });
+    transaction.set(profileReference, { selectedCircleId: input.circleId, updatedAt: serverTimestamp() }, { merge: true });
+  });
+}
+
+export function watchPublicCircles(
+  onChange: (circles: PublicCircleSummary[]) => void,
+  onError: () => void,
+): Unsubscribe {
+  const db = requireFirebase(database, 'Firestore');
+  return onSnapshot(
+    query(collection(db, 'circles'), where('visibility', '==', 'public'), limit(50)),
+    (snapshot) => {
+      const circles = snapshot.docs.flatMap((circleSnapshot) => {
+        const data = circleSnapshot.data();
+        const visibility = getVisibility(data.visibility);
+        if (visibility !== 'public' || typeof data.name !== 'string') return [];
+
+        return [{
+          activityType: getActivityType(),
+          competitionTimeZone: getCompetitionTimeZone(data.competitionTimeZone),
+          id: circleSnapshot.id,
+          joinPolicy: getJoinPolicy(data.joinPolicy, visibility),
+          memberCount: getMemberCount(data.memberCount),
+          name: data.name,
+          discoverableArea: getDiscoverableArea(data.discoverableArea),
+          visibility,
+        }];
+      });
+      onChange(circles);
+    },
+    onError,
+  );
 }
 
 export async function selectCircle(input: { circleId: string; userId: string }) {
@@ -221,21 +363,36 @@ export async function selectCircle(input: { circleId: string; userId: string }) 
  */
 export async function removeCircleMember(input: { circleId: string; memberId: string }) {
   const db = requireFirebase(database, 'Firestore');
-  const batch = writeBatch(db);
+  const circleReference = doc(db, 'circles', input.circleId);
+  const memberReference = doc(db, 'circles', input.circleId, 'members', input.memberId);
+  const membershipReference = getUserMembershipReference(input.memberId, input.circleId);
 
-  batch.delete(doc(db, 'circles', input.circleId, 'members', input.memberId));
-  batch.delete(getUserMembershipReference(input.memberId, input.circleId));
+  await runTransaction(db, async (transaction) => {
+    const circleSnapshot = await transaction.get(circleReference);
+    const memberSnapshot = await transaction.get(memberReference);
+    if (!circleSnapshot.exists() || !memberSnapshot.exists()) return;
 
-  await batch.commit();
+    const memberCount = getMemberCount(circleSnapshot.data().memberCount);
+    transaction.delete(memberReference);
+    transaction.delete(membershipReference);
+    transaction.update(circleReference, {
+      memberCount: Math.max(0, memberCount - 1),
+      updatedAt: serverTimestamp(),
+    });
+  });
 }
 
 export async function saveCircleDailySteps(input: {
   circleId: string;
+  dateKey?: string;
   steps: number;
   userId: string;
 }) {
   const db = requireFirebase(database, 'Firestore');
-  const dateKey = getLocalDateKey();
+  const circleSnapshot = await getDoc(doc(db, 'circles', input.circleId));
+  if (!circleSnapshot.exists()) throw new Error('This circle is no longer available.');
+
+  const dateKey = input.dateKey ?? getDateKeyInTimeZone(new Date(), getCompetitionTimeZone(circleSnapshot.data().competitionTimeZone));
   const entryReference = doc(
     db,
     'circles',
@@ -316,7 +473,7 @@ export function watchUserCircles(
         if (typeof data.circleName !== 'string') return [];
 
         return [{
-          activityType: getActivityType(data.activityType),
+          activityType: getActivityType(),
           id: membership.id,
           name: data.circleName,
         }];
@@ -360,12 +517,17 @@ export function watchCircleDetails(
       }
 
       circle = {
-        activityType: getActivityType(data.activityType),
+          activityType: getActivityType(),
+        competitionTimeZone: getCompetitionTimeZone(data.competitionTimeZone),
         description: typeof data.description === 'string' ? data.description : '',
+        discoverableArea: getDiscoverableArea(data.discoverableArea),
         id: circleSnapshot.id,
-        inviteCode: typeof data.inviteCode === 'string' ? data.inviteCode : circleSnapshot.id,
+        inviteCode: typeof data.inviteCode === 'string' ? data.inviteCode : null,
+        joinPolicy: getJoinPolicy(data.joinPolicy, getVisibility(data.visibility)),
+        memberCount: getMemberCount(data.memberCount),
         name: data.name,
         ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+        visibility: getVisibility(data.visibility),
       };
       publish();
     },
@@ -382,6 +544,7 @@ export function watchCircleDetails(
           avatarSeed: typeof data.avatarSeed === 'string' ? data.avatarSeed : fallbackAvatar.seed,
           avatarStyle: isAvatarStyle(data.avatarStyle) ? data.avatarStyle : fallbackAvatar.style,
           displayName: data.displayName,
+          role: data.role === 'owner' || data.role === 'moderator' ? data.role : 'member',
           userId: data.userId,
         }];
       });

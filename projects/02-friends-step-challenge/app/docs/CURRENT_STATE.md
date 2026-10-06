@@ -1,0 +1,60 @@
+# Current implementation state
+
+This is a concise implementation snapshot for coding agents. Product scope and decisions remain in [PRODUCT_SCOPE.md](PRODUCT_SCOPE.md) and [DECISIONS.md](DECISIONS.md); the source code and tests are the final evidence of behavior.
+
+## Application
+
+Stride Circle is an Expo SDK 57 / React Native 0.86 / TypeScript mobile app for social walking. It runs on iOS, Android, and a web fallback used for previews and browser-safe checks.
+
+The visible navigation is Home, Circles, and History. Profile and the optional walking-activity flow remain reachable from Home. The route inventory is in [FEATURE_MAP.md](FEATURE_MAP.md).
+
+## Current services
+
+- Firebase Authentication: email/password and Google sign-in.
+- Cloud Firestore: profiles, circle membership, circles, daily steps, standings data, saved walks, cheers, blocks, and reports.
+- Cloud Functions 2nd gen: initial callable circle operations plus scheduled daily score finalization and weekly recap generation.
+- Health data: native HealthKit on iOS, Health Connect on Android, and a guarded iOS Expo Pedometer fallback for development builds.
+- Expo Location and React Native Maps: optional private GPS walking sessions.
+- DiceBear CDN: selectable profile characters with initials fallback.
+
+There is no notification, analytics, crash-monitoring, Firebase Storage, or client App Check integration yet.
+
+## Implemented behavior
+
+- Authentication and profile creation/editing.
+- Private invite-only circles and public open circles with a 20-member cap.
+- Fixed circle competition timezones and live daily standings.
+- Personal cumulative daily steps, bounded synchronization, offline outbox retry, goals, streaks, milestones, and goal celebrations.
+- Fixed cheers with Firestore duplicate protection.
+- Personal History calendar, recap, saved walks, and private saved route details.
+- Optional foreground GPS walk recording with pause/resume/finish and native map rendering.
+- Loading, empty, error, stale, permission, reduced-motion, and narrow-layout states for the redesigned Home and History surfaces.
+
+## Transitional architecture
+
+The target feature/domain/data/service boundaries are documented in [ARCHITECTURE.md](ARCHITECTURE.md), but the migration is incomplete. Home and History have coordinator/presentation splits; many other routes still call transitional repositories in `src/lib` directly. Circle mutations are still partly direct client Firestore writes even though initial Cloud Functions exist. Legacy run records remain readable, but new activity UI is walking-only.
+
+## Not complete
+
+- Approval joining, moderator assignment, complete moderation UI, public-circle safety tooling, account deletion, privacy/legal surfaces, notifications, analytics, crash monitoring, and full App Check wiring.
+- Full server-authoritative circle mutation/projection integration.
+- Weekly recap UI and broader challenge/reward systems.
+- Function integration tests, broader Rules coverage, deterministic authenticated E2E, and native UI automation.
+- Physical-device proof for HealthKit/Health Connect permissions, background delivery, revocation, restart recovery, timezones, and release builds.
+
+## Verification currently available
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm test`
+- `npm run test:rn`
+- `npm run emulators:test` for Firestore Rules tests
+- `npm run functions:build`
+- `npm run verify` (alias `verify:quick`) for the normal incremental per-edit loop, without Metro/browser startup
+- `npm run verify:fast` for the deterministic local verification set
+- `npm run verify:visual` for explicitly requested/necessary Home/History rendered preview checks
+- `npm run verify:full` for fast checks plus Expo Doctor, emulator Rules tests, and Home/History preview checks at milestones/releases or on request
+- Isolated Home and History preview servers with Playwright checks under `scripts/`
+- Manual web/native verification contract under `.agents/skills/verify-stride-circle/`
+
+The verification runner owns the local Metro and preview-server lifecycle. Browser previews and emulator checks still do not prove native HealthKit, Health Connect, GPS, background delivery, signed entitlements, or physical-device behavior. General quality CI remains outside this phase.

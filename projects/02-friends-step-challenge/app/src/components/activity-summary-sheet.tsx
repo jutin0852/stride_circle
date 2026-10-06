@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/theme';
 
 type ActivitySummarySheetProps = {
-  activityType: 'run' | 'walk';
   distanceMeters: number;
   durationMs: number;
   isSaving: boolean;
@@ -26,10 +25,9 @@ function formatPace(distanceMeters: number, durationMs: number) {
   return `${Math.floor(secondsPerKm / 60)}:${String(Math.round(secondsPerKm % 60)).padStart(2, '0')}`;
 }
 
-export function ActivitySummarySheet({ activityType, distanceMeters, durationMs, isSaving, onDiscard, onSave, saveError, visible }: ActivitySummarySheetProps) {
+export function ActivitySummarySheet({ distanceMeters, durationMs, isSaving, onDiscard, onSave, saveError, visible }: ActivitySummarySheetProps) {
   const insets = useSafeAreaInsets();
   const canSave = distanceMeters >= 10;
-  const activityLabel = activityType === 'run' ? 'Run' : 'Walk';
 
   return (
     <Modal animationType="slide" onRequestClose={onDiscard} statusBarTranslucent transparent visible={visible}>
@@ -37,10 +35,10 @@ export function ActivitySummarySheet({ activityType, distanceMeters, durationMs,
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={styles.grabber} />
           <View style={styles.headerRow}>
-            <View style={styles.activityIcon}><MaterialCommunityIcons color={colors.accent} name={activityType === 'run' ? 'run' : 'walk'} size={24} /></View>
-            <View style={styles.headerCopy}><Text style={styles.eyebrow}>ACTIVITY COMPLETE</Text><Text accessibilityRole="header" style={styles.title}>{activityLabel} summary</Text></View>
+            <View style={styles.activityIcon}><MaterialCommunityIcons color={colors.accent} name="walk" size={24} /></View>
+            <View style={styles.headerCopy}><Text style={styles.eyebrow}>WALK COMPLETE</Text><Text accessibilityRole="header" style={styles.title}>Walk summary</Text></View>
           </View>
-          <Text style={styles.description}>Review your activity before adding it to your private history.</Text>
+          <Text style={styles.description}>Review your walk before adding it to your private history.</Text>
           <View style={styles.metrics}>
             <Metric icon="map-outline" label="DISTANCE" value={`${(distanceMeters / 1_000).toFixed(2)} km`} />
             <Metric icon="time-outline" label="DURATION" value={formatDuration(durationMs)} />
