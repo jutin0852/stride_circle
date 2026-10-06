@@ -1,1 +1,1 @@
-Cloud sync test
+Cloud to local sync is working.
