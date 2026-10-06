@@ -103,7 +103,7 @@ export const createCircle = onCall(async (request) => {
   const joinPolicy = getCircleJoinPolicy(data.joinPolicy, visibility);
   const competitionTimeZone = getCompetitionTimeZone(data.competitionTimeZone);
   const discoverableArea = visibility === 'public' ? getString(data, 'discoverableArea').slice(0, 60) || null : null;
-  const activityType = data.activityType === 'run' ? 'run' : 'walk';
+  const activityType = 'walk';
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const circleId = createInviteCode();
@@ -187,7 +187,7 @@ export const joinPublicCircle = onCall(async (request) => {
       userId,
     });
     transaction.create(membershipRef, {
-      activityType: circle.activityType === 'run' ? 'run' : 'walk',
+      activityType: 'walk',
       circleId,
       circleName: typeof circle.name === 'string' ? circle.name : 'Stride Circle',
       joinedAt: FieldValue.serverTimestamp(),

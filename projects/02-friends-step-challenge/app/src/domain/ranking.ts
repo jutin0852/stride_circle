@@ -14,9 +14,11 @@ export function rankScores(scores: ScoreInput[]): RankedScore[] {
     return first.userId.localeCompare(second.userId);
   });
 
+  let currentRank = 0;
   return ordered.map((score, index) => {
     const previous = ordered[index - 1];
-    const rank = previous && previous.verifiedSteps === score.verifiedSteps ? index : index + 1;
+    if (!previous || previous.verifiedSteps !== score.verifiedSteps) currentRank = index + 1;
+    const rank = currentRank;
     return { ...score, isWinner: ordered[0]?.verifiedSteps === score.verifiedSteps, rank };
   });
 }

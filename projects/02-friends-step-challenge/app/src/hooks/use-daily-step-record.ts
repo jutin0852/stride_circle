@@ -1,10 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
+import { getCircleDayStart } from '@/features/home/home-model';
+import { getDateKeyInTimeZone } from '@/domain/dates';
 import { saveCircleDailySteps } from '@/lib/circles';
-import { loadDailySteps, saveDailySteps } from '@/lib/daily-steps';
+import { getLocalDateKey, loadDailySteps, saveDailySteps } from '@/lib/daily-steps';
+import {
+  getPendingDailyStepSync,
+  removePendingDailyStepSync,
+  savePendingDailyStepSync,
+  type PendingDailyStepSync,
+} from '@/services/health-data/daily-step-sync-queue';
 import type { HealthDataSource } from '@/services/health-data';
 
 type DailyStepSyncStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+const SYNC_DELAY_MS = 15_000;
+const SYNC_MAX_WAIT_MS = 60_000;
+
+type DailyStepSyncSnapshot = PendingDailyStepSync & {
+  readSteps?: (input: { start: Date; end: Date }) => Promise<number>;
+};
 
 export function useDailyStepRecord(input: {
   circleId: string | undefined;
@@ -12,60 +28,208 @@ export function useDailyStepRecord(input: {
   source?: HealthDataSource | 'ios-pedometer';
   steps: number;
   userId: string | undefined;
+  dateKey?: string;
+  circleTimeZone?: string;
+  circleDateKey?: string;
+  readSteps?: (input: { start: Date; end: Date }) => Promise<number>;
 }) {
+  const dateKey = input.dateKey ?? getLocalDateKey();
+  const key = `${input.userId ?? ''}:${dateKey}`;
+  const [recordKey, setRecordKey] = useState('');
   const [savedSteps, setSavedSteps] = useState<number | null>(null);
   const [syncStatus, setSyncStatus] = useState<DailyStepSyncStatus>('idle');
   const latestSyncKeyRef = useRef<string | null>(null);
+  const pendingSnapshotRef = useRef<DailyStepSyncSnapshot | null>(null);
+  const syncInFlightRef = useRef<Promise<void> | null>(null);
+  const trailingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxWaitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+  const flushSyncRef = useRef<() => void>(() => undefined);
+
+  const clearSyncTimers = useCallback(() => {
+    if (trailingTimerRef.current) clearTimeout(trailingTimerRef.current);
+    if (maxWaitTimerRef.current) clearTimeout(maxWaitTimerRef.current);
+    trailingTimerRef.current = null;
+    maxWaitTimerRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearSyncTimers();
+    };
+  }, [clearSyncTimers]);
 
   useEffect(() => {
     const userId = input.userId;
     if (!userId) return;
 
     let cancelled = false;
-    void loadDailySteps(userId)
-      .then((steps) => {
-        if (cancelled) return;
+    void Promise.allSettled([
+      loadDailySteps(userId, dateKey),
+      getPendingDailyStepSync(userId, dateKey),
+    ]).then(([serverResult, pendingResult]) => {
+      if (cancelled) return;
 
-        setSavedSteps(steps);
-        setSyncStatus('idle');
-      })
-      .catch(() => {
-        if (!cancelled) setSyncStatus('error');
-      });
+      const serverSteps = serverResult.status === 'fulfilled' ? serverResult.value : null;
+      const pendingSteps = pendingResult.status === 'fulfilled' ? pendingResult.value[0]?.steps ?? null : null;
+      setSavedSteps(pendingSteps ?? serverSteps);
+      setRecordKey(key);
+      setSyncStatus(serverResult.status === 'rejected' && pendingSteps === null ? 'error' : 'idle');
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [input.userId]);
+  }, [dateKey, input.userId, key]);
+
+  const syncSnapshot = useCallback(async (snapshot: DailyStepSyncSnapshot) => {
+    await saveDailySteps({
+      dateKey: snapshot.dateKey,
+      source: snapshot.source,
+      steps: snapshot.steps,
+      userId: snapshot.userId,
+    });
+
+    if (!snapshot.circleId) return;
+
+    const end = new Date();
+    const circleDateKey = snapshot.circleTimeZone
+      ? getDateKeyInTimeZone(end, snapshot.circleTimeZone)
+      : snapshot.circleDateKey;
+
+    // This snapshot belongs to a previous competition day. Keep the personal
+    // record, but do not write it into the current circle day.
+    if (snapshot.circleDateKey && snapshot.circleDateKey !== circleDateKey) return;
+
+    let circleSteps = snapshot.steps;
+    if (snapshot.circleTimeZone && snapshot.circleDateKey !== snapshot.dateKey && snapshot.readSteps) {
+      // Only perform a second cumulative read when the circle day is genuinely
+      // different from the user's local day. The common case reuses the read
+      // that produced the personal total.
+      circleSteps = await snapshot.readSteps({
+        start: getCircleDayStart(end, snapshot.circleTimeZone),
+        end,
+      });
+    }
+
+    await saveCircleDailySteps({
+      circleId: snapshot.circleId,
+      dateKey: circleDateKey,
+      steps: circleSteps,
+      userId: snapshot.userId,
+    });
+  }, []);
+
+  const flushSync = useCallback(() => {
+    clearSyncTimers();
+    if (syncInFlightRef.current) return;
+
+    const snapshot = pendingSnapshotRef.current;
+    pendingSnapshotRef.current = null;
+    if (!snapshot) return;
+
+    if (mountedRef.current) setSyncStatus('saving');
+
+    const operation = (async () => {
+      const { readSteps: _readSteps, ...pendingSnapshot } = snapshot;
+      let queued = false;
+
+      try {
+        // Queue before the network write so a process death or offline gap
+        // cannot lose the latest cumulative total between those two steps.
+        await savePendingDailyStepSync(pendingSnapshot);
+        queued = true;
+      } catch {
+        // Continue with the network attempt; the server may still be online
+        // even if local storage is temporarily unavailable.
+      }
+
+      try {
+        await syncSnapshot(snapshot);
+        if (queued) await removePendingDailyStepSync(pendingSnapshot);
+        latestSyncKeyRef.current = `${snapshot.userId}:${snapshot.dateKey}:${snapshot.circleId ?? 'private'}:${snapshot.circleDateKey ?? ''}:${snapshot.source ?? 'unknown'}:${snapshot.steps}`;
+        if (mountedRef.current && snapshot.userId === input.userId && snapshot.dateKey === dateKey) {
+          setRecordKey(key);
+          setSavedSteps((current) => Math.max(current ?? 0, snapshot.steps));
+          setSyncStatus('saved');
+        }
+      } catch {
+        // Persist the latest cumulative total locally. Firebase's web SDK does
+        // not provide durable Firestore persistence in this React Native setup,
+        // so the explicit outbox is what survives a process restart/offline gap.
+        if (!queued) {
+          try {
+            await savePendingDailyStepSync(pendingSnapshot);
+          } catch {
+            // The visible error still tells the user that the latest total was
+            // not saved when local storage is unavailable as well.
+          }
+        }
+        if (mountedRef.current) setSyncStatus('error');
+      }
+    })();
+
+    syncInFlightRef.current = operation;
+    void operation.finally(() => {
+      if (syncInFlightRef.current === operation) syncInFlightRef.current = null;
+      if (pendingSnapshotRef.current && mountedRef.current) flushSyncRef.current();
+    });
+  }, [clearSyncTimers, dateKey, input.userId, key, syncSnapshot]);
+
+  useEffect(() => {
+    flushSyncRef.current = flushSync;
+  }, [flushSync]);
 
   useEffect(() => {
     const userId = input.userId;
     if (!userId || !input.shouldSave) return;
-    const syncKey = `${input.circleId ?? 'private'}:${input.source ?? 'unknown'}:${input.steps}`;
+
+    const syncKey = `${key}:${input.circleId ?? 'private'}:${input.circleDateKey ?? ''}:${input.source ?? 'unknown'}:${input.steps}`;
     if (latestSyncKeyRef.current === syncKey) return;
 
-    const timeout = setTimeout(() => {
-      setSyncStatus('saving');
+    const snapshot: DailyStepSyncSnapshot = {
+      circleDateKey: input.circleDateKey,
+      circleId: input.circleId,
+      circleTimeZone: input.circleTimeZone,
+      dateKey,
+      readSteps: input.readSteps,
+      source: input.source,
+      steps: input.steps,
+      updatedAt: Date.now(),
+      userId,
+    };
+    pendingSnapshotRef.current = snapshot;
 
-      void saveDailySteps({ source: input.source, steps: input.steps, userId })
-        .then(() => {
-          if (!input.circleId) return;
-          return saveCircleDailySteps({
-            circleId: input.circleId,
-            steps: input.steps,
-            userId,
-          });
-        })
-        .then(() => {
-          latestSyncKeyRef.current = syncKey;
-          setSavedSteps(input.steps);
-          setSyncStatus('saved');
-        })
-        .catch(() => setSyncStatus('error'));
-    }, 15_000);
+    if (trailingTimerRef.current) clearTimeout(trailingTimerRef.current);
+    trailingTimerRef.current = setTimeout(flushSync, SYNC_DELAY_MS);
+    if (!maxWaitTimerRef.current) maxWaitTimerRef.current = setTimeout(flushSync, SYNC_MAX_WAIT_MS);
+  }, [dateKey, flushSync, input.circleDateKey, input.circleId, input.circleTimeZone, input.readSteps, input.shouldSave, input.source, input.steps, input.userId, key]);
 
-    return () => clearTimeout(timeout);
-  }, [input.circleId, input.shouldSave, input.source, input.steps, input.userId]);
+  useEffect(() => {
+    const userId = input.userId;
+    if (!userId) return;
 
-  return { savedSteps, syncStatus };
+    const flushPending = () => {
+      void getPendingDailyStepSync(userId, dateKey).then((entries) => {
+        const entry = entries[0];
+        const currentSnapshot = pendingSnapshotRef.current;
+        if (entry && !syncInFlightRef.current && (!currentSnapshot || entry.updatedAt >= currentSnapshot.updatedAt)) {
+          pendingSnapshotRef.current = { ...entry, readSteps: input.readSteps };
+          flushSync();
+          return;
+        }
+        if (pendingSnapshotRef.current && !syncInFlightRef.current) flushSync();
+      });
+    };
+
+    flushPending();
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') flushPending();
+    });
+    return () => subscription.remove();
+  }, [dateKey, flushSync, input.readSteps, input.userId]);
+
+  return recordKey === key ? { savedSteps, syncStatus } : { savedSteps: null, syncStatus: 'idle' as const };
 }

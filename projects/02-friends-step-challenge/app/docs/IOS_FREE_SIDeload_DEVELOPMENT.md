@@ -42,3 +42,14 @@ Open Stride Circle from the iPhone Home Screen and connect it to the displayed d
 
 The build includes the HealthKit native module, but free signing can restrict sensitive entitlements. If the HealthKit permission sheet does not appear or HealthKit access fails, the build can still be used for UI and application-flow testing, but real HealthKit validation will require Apple-authorized signing.
 
+## Temporary step testing without HealthKit signing
+
+For foreground step testing on an iPhone installed through a free-signed build, start Metro with the Pedometer provider override:
+
+```powershell
+$env:EXPO_PUBLIC_HEALTH_DATA_PROVIDER = "pedometer"
+npx expo start --dev-client --lan
+```
+
+The app will request iPhone motion access and read the device's foreground step total through Expo Pedometer. This is a temporary development path: it does not validate HealthKit permissions, does not provide reliable background updates, and must not be used as the production provider. Close and restart Metro without the override to return to the default HealthKit provider.
+

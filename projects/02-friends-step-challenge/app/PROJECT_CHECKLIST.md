@@ -1,6 +1,6 @@
 # Stride Circle launch checklist
 
-This checklist follows the canonical first-edition scope in [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md). Check an item only after it works on a real iPhone and Android device, or after the relevant emulator/integration test passes.
+This checklist follows the canonical first-edition scope in [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md). A checked implementation item means the code or configuration exists; release verification items remain unchecked until the relevant real-device or emulator/integration proof passes.
 
 ## Foundation
 
@@ -22,10 +22,10 @@ This checklist follows the canonical first-edition scope in [docs/PRODUCT_SCOPE.
 - [x] Circle roles include owner, moderator, and member in the data model.
 - [x] Circle competition timezone is stored and used for daily score boundaries.
 - [x] Public circles can store a broad discovery-area label without exact location.
-- [ ] Move circle creation, joining, leaving, deletion, and moderation behind Cloud Functions 2nd gen.
+- [ ] Move the remaining circle creation, joining, leaving, deletion, and moderation client mutations behind Cloud Functions 2nd gen. Initial callable functions exist, but the app still uses direct Firestore for several operations.
 - [ ] Add approval join policy and owner/moderator management UI.
-- [ ] Add server-generated daily score projections and weekly recaps.
-- [ ] Add daily and weekly standings with deterministic tie handling.
+- [x] Add initial server-generated daily score projections and weekly recap jobs in Cloud Functions; connect and validate their projections in the app before launch.
+- [x] Add daily live standings with deterministic tie handling. Weekly standings/recap presentation remains incomplete.
 
 ## Health data
 
@@ -35,17 +35,14 @@ This checklist follows the canonical first-edition scope in [docs/PRODUCT_SCOPE.
 - [x] Android foreground-only pedometer values are not saved as daily totals.
 - [x] Add the native HealthKit provider for iOS.
 - [x] Add the native Health Connect provider for Android.
-- [ ] Add permission revocation detection, recovery, and visible sync states.
-- [ ] Add offline queueing and retryable synchronization.
+- [x] Add permission re-check/recovery states and bounded offline queueing/retry synchronization in code; physical-provider validation remains below.
 - [ ] Validate background and device-restart behavior on real devices.
 
 ## Motivation and safety
 
-- [ ] Add daily and weekly streak projections.
-- [ ] Add milestones, goal celebrations, and weekly recaps.
-- [ ] Add fixed cheers with anti-spam limits.
-- [ ] Add reporting for circles, members, cheers, and profiles.
-- [ ] Add blocking and blocked-surface filtering.
+- [x] Add personal daily streaks, milestones, goal celebrations, and fixed cheers in the current client experience; weekly recap UI remains incomplete.
+- [ ] Add reporting UI for circles, members, cheers, and profiles. Firestore Rules primitives exist.
+- [ ] Add complete blocking UI and blocked-surface filtering. Block records and limited cheer filtering exist.
 - [ ] Add owner removal and moderator assignment through backend authorization.
 - [ ] Add admin report review tooling and abuse runbook.
 - [ ] Add privacy policy, Terms, and health-data disclosures.
@@ -53,7 +50,7 @@ This checklist follows the canonical first-edition scope in [docs/PRODUCT_SCOPE.
 ## Backend and quality
 
 - [x] Add Cloud Functions 2nd gen package and idempotent circle/score mutations.
-- [ ] Add scheduled daily finalization, weekly recap, notification, and cleanup jobs.
+- [x] Add scheduled daily finalization and weekly recap jobs in code; notification and cleanup jobs remain incomplete.
 - [ ] Add Firebase App Check and production monitoring.
 - [x] Add Security Rules tests against Auth/Firestore emulators.
 - [ ] Add function integration tests and rule coverage review.

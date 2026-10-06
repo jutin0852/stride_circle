@@ -1,18 +1,14 @@
-import { getLocalDateKey, type DailyStepHistoryRecord } from '@/lib/daily-steps';
+import { isValidDateKey, localDateKey, shiftDateKey, type StepDay } from '@/domain/walking-history';
 
 export const STREAK_PROTECTION_AFTER_DAYS = 7;
 
 export type StreakSummary = {
   currentStreak: number;
+  bestStreak: number;
   goalMetToday: boolean;
   protectedDateKey: string | null;
+  protectedDateKeys: string[];
 };
-
-function dateBefore(date: Date, count: number) {
-  const result = new Date(date);
-  result.setDate(date.getDate() - count);
-  return result;
-}
 
 /**
  * A completed day counts when its saved steps reach the goal. After seven
@@ -21,38 +17,30 @@ function dateBefore(date: Date, count: number) {
  */
 export function getStreakSummary(input: {
   goal: number;
-  records: DailyStepHistoryRecord[];
+  records: StepDay[];
   todaySteps: number;
   now?: Date;
 }): StreakSummary {
-  const now = input.now ?? new Date();
-  const todayKey = getLocalDateKey(now);
-  const byDate = new Map(input.records.map((record) => [record.dateKey, record.steps]));
+  const todayKey = localDateKey(input.now ?? new Date());
+  const records = input.records.filter((record) => isValidDateKey(record.dateKey) && record.dateKey <= todayKey && Number.isFinite(record.steps) && record.steps >= 0);
+  const byDate = new Map(records.map((record) => [record.dateKey, record.steps]));
   const savedTodaySteps = byDate.get(todayKey) ?? 0;
-  const goalMetToday = Math.max(input.todaySteps, savedTodaySteps) >= input.goal;
-  const pastRecords = input.records.filter((record) => record.dateKey !== todayKey);
-  const earliest = pastRecords.reduce<Date | null>((current, record) => {
-    const [year, month, day] = record.dateKey.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return !current || date < current ? date : current;
-  }, null);
-
-  if (!earliest) return { currentStreak: goalMetToday ? 1 : 0, goalMetToday, protectedDateKey: null };
+  const goalMetToday = input.goal > 0 && Math.max(input.todaySteps, savedTodaySteps) >= input.goal;
+  const earliest = records.map((record) => record.dateKey).sort()[0] ?? todayKey;
 
   let streak = 0;
+  let bestStreak = 0;
   let successfulDaysSinceProtection = 0;
   let protectedDateKey: string | null = null;
-  const yesterday = dateBefore(now, 1);
-  const numberOfPastDays = Math.ceil((yesterday.getTime() - earliest.getTime()) / 86_400_000);
+  const protectedDateKeys: string[] = [];
 
-  for (let offset = numberOfPastDays; offset >= 0; offset -= 1) {
-    const date = dateBefore(yesterday, offset);
-    const dateKey = getLocalDateKey(date);
-    const goalMet = (byDate.get(dateKey) ?? 0) >= input.goal;
+  for (let dateKey = earliest; dateKey < todayKey; dateKey = shiftDateKey(dateKey, 1)) {
+    const goalMet = input.goal > 0 && (byDate.get(dateKey) ?? 0) >= input.goal;
 
     if (goalMet) {
       streak += 1;
       successfulDaysSinceProtection += 1;
+      bestStreak = Math.max(bestStreak, streak);
       continue;
     }
 
@@ -60,6 +48,8 @@ export function getStreakSummary(input: {
       streak += 1;
       successfulDaysSinceProtection = 0;
       protectedDateKey = dateKey;
+      protectedDateKeys.push(dateKey);
+      bestStreak = Math.max(bestStreak, streak);
       continue;
     }
 
@@ -70,7 +60,9 @@ export function getStreakSummary(input: {
 
   return {
     currentStreak: streak + (goalMetToday ? 1 : 0),
+    bestStreak: Math.max(bestStreak, streak + (goalMetToday ? 1 : 0)),
     goalMetToday,
     protectedDateKey,
+    protectedDateKeys,
   };
 }

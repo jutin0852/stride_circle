@@ -5,6 +5,10 @@ Last reviewed: 2026-10-02
 
 This is the implementation contract for the Stride Circle redesign. The screenshot reference establishes the visual language; the launch brief remains authoritative for product behavior, privacy, and scope.
 
+## Home approval update — 2026-10-05
+
+For Home, the user-approved **B — Better together** direction in [HOME_B_IMPLEMENTATION_HANDOFF.md](HOME_B_IMPLEMENTATION_HANDOFF.md) supersedes this document's older cream/lime palette and Home composition. Routine health sync controls/status are removed from healthy Home; private settings holds connection details and recovery. Preserve exceptions for unavailable/incomplete data. Other screens are not automatically redesigned by this decision. Custom motion remains proposed, pending review.
+
 ## North star
 
 Make walking feel like a shared daily event.

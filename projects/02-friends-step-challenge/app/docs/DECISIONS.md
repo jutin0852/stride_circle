@@ -1,7 +1,7 @@
 # Stride Circle decision log
 
 Status: active launch decisions  
-Last reviewed: 2026-10-02
+Last reviewed: 2026-10-05
 
 ## D-001 — Keep Firebase for the rebuild
 
@@ -62,3 +62,15 @@ Reason: existing user history is valuable and a destructive migration would remo
 Decision: direct client mutations are transitional only. Before public launch, circle membership, finalization, recap generation, notifications, moderation, and account deletion move behind idempotent Cloud Functions 2nd gen.
 
 Reason: authoritative outcomes and cross-document invariants cannot depend on a trusted mobile client.
+
+## D-011 — Lock concept B for Home
+
+Decision: approve B — Better together, with one connected personal-progress/featured-circle panel, compact standings tiles and original playful companion. Preserve the reference and implementation contract in [HOME_B_IMPLEMENTATION_HANDOFF.md](HOME_B_IMPLEMENTATION_HANDOFF.md). This supersedes older Home styling only; it does not approve a new full-app redesign or production changes. Static implementation can precede custom motion after explicit authorization; motion still requires review.
+
+Reason: the user selected B and wants a stable implementation handoff rather than further design generation.
+
+## D-012 — Routine health refresh is invisible on Home
+
+Decision: healthy Home has no Sync button, syncing indicator, provider explanation or routine update timestamp. Connection setup, source explanation, diagnostics and recovery belong in private settings. Home shows only actionable exceptions for unavailable/incomplete data; unknown is never zero. Automatic background delivery is OS-controlled and must be verified separately.
+
+Reason: Home should communicate walking progress and shared circle activity, not internal synchronization work. This changes presentation, not score provenance or the requirement for truthful recovery states.

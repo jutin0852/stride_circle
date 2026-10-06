@@ -45,7 +45,7 @@ export type Circle = {
   visibility: CircleVisibility;
 };
 
-export type CircleActivityType = 'walk' | 'run';
+export type CircleActivityType = 'walk';
 
 export type CircleSummary = Pick<Circle, 'activityType' | 'id' | 'name'>;
 
@@ -94,8 +94,10 @@ function normaliseInviteCode(code: string) {
   return code.trim().toUpperCase().replace(/\s/g, '');
 }
 
-function getActivityType(value: unknown): CircleActivityType {
-  return value === 'run' ? 'run' : 'walk';
+function getActivityType(): CircleActivityType {
+  // Run was supported by the legacy prototype. New product flows are
+  // walking-only, so legacy values are safely normalized on read.
+  return 'walk';
 }
 
 function getVisibility(value: unknown): CircleVisibility {
@@ -260,7 +262,7 @@ export async function joinCircle(input: { inviteCode: string; user: User }) {
     transaction.set(
       membershipReference,
       {
-        activityType: getActivityType(circle.activityType),
+        activityType: getActivityType(),
         circleId: inviteCode,
         circleName: circle.name,
         joinedAt: serverTimestamp(),
@@ -300,7 +302,7 @@ export async function joinPublicCircle(input: { circleId: string; user: User }) 
     transaction.set(
       membershipReference,
       {
-        activityType: getActivityType(circle.activityType),
+        activityType: getActivityType(),
         circleId: input.circleId,
         circleName: circle.name,
         joinedAt: serverTimestamp(),
@@ -327,7 +329,7 @@ export function watchPublicCircles(
         if (visibility !== 'public' || typeof data.name !== 'string') return [];
 
         return [{
-          activityType: getActivityType(data.activityType),
+          activityType: getActivityType(),
           competitionTimeZone: getCompetitionTimeZone(data.competitionTimeZone),
           id: circleSnapshot.id,
           joinPolicy: getJoinPolicy(data.joinPolicy, visibility),
@@ -382,6 +384,7 @@ export async function removeCircleMember(input: { circleId: string; memberId: st
 
 export async function saveCircleDailySteps(input: {
   circleId: string;
+  dateKey?: string;
   steps: number;
   userId: string;
 }) {
@@ -389,7 +392,7 @@ export async function saveCircleDailySteps(input: {
   const circleSnapshot = await getDoc(doc(db, 'circles', input.circleId));
   if (!circleSnapshot.exists()) throw new Error('This circle is no longer available.');
 
-  const dateKey = getDateKeyInTimeZone(new Date(), getCompetitionTimeZone(circleSnapshot.data().competitionTimeZone));
+  const dateKey = input.dateKey ?? getDateKeyInTimeZone(new Date(), getCompetitionTimeZone(circleSnapshot.data().competitionTimeZone));
   const entryReference = doc(
     db,
     'circles',
@@ -470,7 +473,7 @@ export function watchUserCircles(
         if (typeof data.circleName !== 'string') return [];
 
         return [{
-          activityType: getActivityType(data.activityType),
+          activityType: getActivityType(),
           id: membership.id,
           name: data.circleName,
         }];
@@ -514,7 +517,7 @@ export function watchCircleDetails(
       }
 
       circle = {
-        activityType: getActivityType(data.activityType),
+          activityType: getActivityType(),
         competitionTimeZone: getCompetitionTimeZone(data.competitionTimeZone),
         description: typeof data.description === 'string' ? data.description : '',
         discoverableArea: getDiscoverableArea(data.discoverableArea),

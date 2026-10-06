@@ -45,7 +45,7 @@ schemaVersion
 name
 description
 ownerId
-activityType              // walk at launch; run is legacy/deferred
+activityType              // walk at launch; legacy run values are read as walk
 visibility                // private | public
 joinPolicy                // invite_only | open | approval
 inviteCode                // private only; null for public

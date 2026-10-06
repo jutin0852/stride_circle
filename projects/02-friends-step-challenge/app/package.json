@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/test": "^1.63.0",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
@@ -48,12 +49,20 @@
     "web": "expo start --web",
     "lint": "eslint src",
     "test": "vitest run",
-    "test:rn": "jest --config jest.config.js --runInBand --passWithNoTests",
+    "test:rn": "node scripts/run-rn-tests.mjs",
     "test:rules": "jest --config jest.rules.config.js --runInBand",
     "emulators": "firebase emulators:start --project demo-stride-circle",
     "emulators:test": "node scripts/run-emulator-tests.mjs",
     "typecheck": "tsc --noEmit",
-    "functions:build": "npm --prefix functions run build"
+    "functions:lint": "npm --prefix functions run lint",
+    "functions:build": "npm --prefix functions run build",
+    "functions": "npm run functions:lint && npm run functions:build",
+    "doctor": "npx expo-doctor",
+    "verify:quick": "node scripts/verify.mjs --quick",
+    "verify:fast": "node scripts/verify.mjs --fast",
+    "verify": "node scripts/verify.mjs --quick",
+    "verify:visual": "node scripts/verify.mjs --visual",
+    "verify:full": "node scripts/verify.mjs --full"
   },
   "private": true
 }

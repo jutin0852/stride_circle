@@ -5,6 +5,8 @@ import { radii, semanticColors, spacing } from '@/design-system/tokens';
 type ProgressBarProps = {
   accessibilityLabel?: string;
   max?: number;
+  fillColor?: string;
+  trackColor?: string;
   tone?: 'brand' | 'success' | 'coral';
   value: number;
 };
@@ -15,12 +17,12 @@ const fillColors = {
   coral: semanticColors.celebrationSurface,
 } as const;
 
-export function ProgressBar({ accessibilityLabel = 'Progress', max = 1, tone = 'brand', value }: ProgressBarProps) {
+export function ProgressBar({ accessibilityLabel = 'Progress', fillColor, max = 1, tone = 'brand', trackColor, value }: ProgressBarProps) {
   const percentage = max > 0 ? Math.min(Math.max(value / max, 0), 1) : 0;
 
   return (
-    <View accessibilityLabel={accessibilityLabel} accessibilityRole="progressbar" accessibilityValue={{ max, min: 0, now: Math.min(Math.max(value, 0), max) }} style={styles.track}>
-      <View style={[styles.fill, { backgroundColor: fillColors[tone], width: `${percentage * 100}%` }]} />
+    <View accessibilityLabel={accessibilityLabel} accessibilityRole="progressbar" accessibilityValue={{ max, min: 0, now: Math.min(Math.max(value, 0), max) }} style={[styles.track, trackColor && { backgroundColor: trackColor }]}>
+      <View style={[styles.fill, { backgroundColor: fillColor ?? fillColors[tone], width: `${percentage * 100}%` }]} />
     </View>
   );
 }

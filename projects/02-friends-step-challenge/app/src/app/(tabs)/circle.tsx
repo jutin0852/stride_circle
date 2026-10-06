@@ -118,7 +118,6 @@ export default function CirclesRoute() {
 
       {showSetup ? (
         <SetupCard
-          activityType={activityType}
           circleName={circleName}
           discoverableArea={discoverableArea}
           inviteCode={inviteCode}
@@ -150,7 +149,7 @@ function CircleRow({ circle, index }: { circle: CircleSummary; index: number }) 
       <CircleAvatar circle={circle} index={index} />
       <View style={styles.rowText}>
         <Text numberOfLines={1} style={styles.rowTitle}>{circle.name}</Text>
-        <Text style={styles.rowSubtitle}>{circle.activityType === 'run' ? 'Running circle' : 'Walking circle'}</Text>
+        <Text style={styles.rowSubtitle}>Walking circle</Text>
       </View>
       <Ionicons color={colors.muted} name="chevron-forward" size={20} />
     </Pressable>
@@ -158,7 +157,7 @@ function CircleRow({ circle, index }: { circle: CircleSummary; index: number }) 
 }
 
 function PublicCircleRow({ circle, disabled, index, onJoin }: { circle: PublicCircleSummary; disabled: boolean; index: number; onJoin: () => void }) {
-  return <View style={styles.publicRow}><CircleAvatar circle={circle} index={index} /><View style={styles.rowText}><Text numberOfLines={1} style={styles.rowTitle}>{circle.name}</Text><Text style={styles.rowSubtitle}>{circle.memberCount}/{MAX_CIRCLE_MEMBERS} members · {circle.activityType === 'run' ? 'Running' : 'Walking'}{circle.discoverableArea ? ` · ${circle.discoverableArea}` : ''}</Text></View><Pressable accessibilityRole="button" disabled={disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS} onPress={onJoin} style={({ pressed }) => [styles.joinButton, (disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS) && styles.joinButtonDisabled, pressed && !disabled && styles.pressed]}><Text style={styles.joinButtonText}>{circle.memberCount >= MAX_CIRCLE_MEMBERS ? 'Full' : disabled ? 'Joined' : 'Join'}</Text></Pressable></View>;
+  return <View style={styles.publicRow}><CircleAvatar circle={circle} index={index} /><View style={styles.rowText}><Text numberOfLines={1} style={styles.rowTitle}>{circle.name}</Text><Text style={styles.rowSubtitle}>{circle.memberCount}/{MAX_CIRCLE_MEMBERS} members · Walking{circle.discoverableArea ? ` · ${circle.discoverableArea}` : ''}</Text></View><Pressable accessibilityRole="button" disabled={disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS} onPress={onJoin} style={({ pressed }) => [styles.joinButton, (disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS) && styles.joinButtonDisabled, pressed && !disabled && styles.pressed]}><Text style={styles.joinButtonText}>{circle.memberCount >= MAX_CIRCLE_MEMBERS ? 'Full' : disabled ? 'Joined' : 'Join'}</Text></Pressable></View>;
 }
 
 function CircleAvatar({ circle, index }: { circle: CircleSummary; index: number }) {
@@ -188,9 +187,9 @@ function EmptyState({ buttonLabel, description, onPress, title }: { buttonLabel:
 }
 
 function SetupCard({
-  activityType, circleName, discoverableArea, inviteCode, isSubmitting, mode, onCircleNameChange, onClose, onCreate, onDiscoverableAreaChange, onInviteCodeChange, onJoin, onModeChange, onVisibilityChange, visibility,
+  circleName, discoverableArea, inviteCode, isSubmitting, mode, onCircleNameChange, onClose, onCreate, onDiscoverableAreaChange, onInviteCodeChange, onJoin, onModeChange, onVisibilityChange, visibility,
 }: {
-  activityType: CircleActivityType; circleName: string; discoverableArea: string; inviteCode: string; isSubmitting: boolean; mode: 'create' | 'join'; visibility: CircleVisibility;
+  circleName: string; discoverableArea: string; inviteCode: string; isSubmitting: boolean; mode: 'create' | 'join'; visibility: CircleVisibility;
   onCircleNameChange: (value: string) => void; onClose: () => void; onCreate: () => void; onDiscoverableAreaChange: (value: string) => void;
   onInviteCodeChange: (value: string) => void; onJoin: () => void; onModeChange: (mode: 'create' | 'join') => void; onVisibilityChange: (visibility: CircleVisibility) => void;
 }) {
@@ -200,14 +199,14 @@ function SetupCard({
       <View style={styles.segment}><Segment active={mode === 'create'} label="Create" onPress={() => onModeChange('create')} /><Segment active={mode === 'join'} label="Join" onPress={() => onModeChange('join')} /></View>
       {mode === 'create' ? <>
         <Text style={styles.fieldLabel}>CIRCLE TYPE</Text>
-        <Text style={styles.hint}>Walking circles use your daily health-data step total. Running circles will return in a later edition.</Text>
+        <Text style={styles.hint}>Walking circles use your daily health-data step total.</Text>
         <Text style={styles.fieldLabel}>CIRCLE NAME</Text>
-        <TextInput accessibilityLabel="Circle name" autoCapitalize="words" maxLength={40} onChangeText={onCircleNameChange} placeholder={activityType === 'run' ? 'e.g. Saturday Runners' : 'e.g. Saturday Walkers'} placeholderTextColor={colors.muted} style={styles.input} value={circleName} />
+        <TextInput accessibilityLabel="Circle name" autoCapitalize="words" maxLength={40} onChangeText={onCircleNameChange} placeholder="e.g. Saturday Walkers" placeholderTextColor={colors.muted} style={styles.input} value={circleName} />
         <Text style={styles.fieldLabel}>VISIBILITY</Text>
         <View style={styles.segment}><Segment active={visibility === 'private'} label="Private" onPress={() => onVisibilityChange('private')} /><Segment active={visibility === 'public'} label="Public" onPress={() => onVisibilityChange('public')} /></View>
         {visibility === 'public' ? <><Text style={styles.fieldLabel}>DISCOVERY AREA</Text><TextInput accessibilityLabel="Discovery area" autoCapitalize="words" maxLength={60} onChangeText={onDiscoverableAreaChange} placeholder="e.g. Yaba or Ikeja" placeholderTextColor={colors.muted} style={styles.input} value={discoverableArea} /><Text style={styles.hint}>Use a city or broad neighborhood only. Never enter a home address.</Text></> : null}
         <Text style={styles.hint}>{visibility === 'private' ? 'Only people with your invite code can join.' : `Anyone can discover and join. Circles are limited to ${MAX_CIRCLE_MEMBERS} members.`}</Text>
-        <ActionButton disabled={isSubmitting} label={`Create ${activityType === 'run' ? 'running' : 'walking'} circle`} onPress={onCreate} />
+        <ActionButton disabled={isSubmitting} label="Create walking circle" onPress={onCreate} />
       </> : <>
         <Text style={styles.fieldLabel}>INVITE CODE</Text>
         <TextInput accessibilityLabel="Circle invite code" autoCapitalize="characters" autoCorrect={false} maxLength={8} onChangeText={onInviteCodeChange} placeholder="ABCDEFGH" placeholderTextColor={colors.muted} style={[styles.input, styles.codeInput]} value={inviteCode} />

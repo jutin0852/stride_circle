@@ -4,13 +4,16 @@ import {
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  where,
 } from 'firebase/firestore';
 
 import { database, requireFirebase } from '@/lib/firebase';
+import { isValidDateKey } from '@/domain/walking-history';
 import type { HealthDataSource } from '@/services/health-data';
 
 export type DailyStepRecord = {
@@ -21,6 +24,28 @@ export type DailyStepRecord = {
 };
 
 export type DailyStepHistoryRecord = Pick<DailyStepRecord, 'dateKey' | 'steps'>;
+
+/** Bounded overview plus a separate month query: older months remain browsable. */
+export function watchStepHistory(
+  userId: string,
+  range: { from: string; to: string } | null,
+  onChange: (records: DailyStepHistoryRecord[]) => void,
+  onError: () => void,
+) {
+  const db = requireFirebase(database, 'Firestore');
+  const reference = collection(db, 'users', userId, 'dailySteps');
+  const historyQuery = range
+    ? query(reference, where('dateKey', '>=', range.from), where('dateKey', '<=', range.to), orderBy('dateKey', 'desc'))
+    : query(reference, orderBy('dateKey', 'desc'), limit(400));
+  return onSnapshot(historyQuery, (snapshot) => {
+    onChange(snapshot.docs.flatMap((document) => {
+      const data = document.data();
+      if (typeof data.steps !== 'number' || !Number.isFinite(data.steps) || data.steps < 0) return [];
+      const dateKey = typeof data.dateKey === 'string' ? data.dateKey : document.id;
+      return isValidDateKey(dateKey) ? [{ dateKey, steps: data.steps }] : [];
+    }));
+  }, onError);
+}
 
 function getDailyStepReference(userId: string, dateKey: string) {
   const db = requireFirebase(database, 'Firestore');

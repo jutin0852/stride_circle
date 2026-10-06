@@ -26,7 +26,7 @@ export default function CircleDetailRoute() {
   const selectedDateKey = selectedDateKeyOverride ?? currentDateKey;
   const isCurrentDay = selectedDateKey === currentDateKey;
   const selectedDay = recentDays.find((day) => day.dateKey === selectedDateKey);
-  const { steps, status: stepsStatus } = useCircleDailySteps(details?.circle.activityType === 'walk' ? details.circle.id : undefined, selectedDateKey, competitionTimeZone);
+  const { steps, status: stepsStatus } = useCircleDailySteps(details?.circle.id, selectedDateKey, competitionTimeZone);
 
   const friends = useMemo(
     () => (details?.members ?? []).map((member, index): Friend => ({
@@ -47,8 +47,6 @@ export default function CircleDetailRoute() {
     return <View style={styles.error}><Text style={styles.errorTitle}>This circle is unavailable</Text><Text style={styles.errorText}>It may have been removed, or you may no longer be a member.</Text><Pressable onPress={() => router.back()} style={styles.backAction}><Text style={styles.backActionText}>Back to circles</Text></Pressable></View>;
   }
 
-  const isWalking = details.circle.activityType === 'walk';
-
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
       <View style={styles.nav}>
@@ -57,18 +55,18 @@ export default function CircleDetailRoute() {
       </View>
 
       <View style={styles.hero}>
-        <Text style={styles.activityType}>{isWalking ? 'WALKING CIRCLE' : 'RUNNING CIRCLE'}</Text>
+        <Text style={styles.activityType}>WALKING CIRCLE</Text>
         <Text style={styles.title}>{details.circle.name}</Text>
         <Text style={styles.description}>{details.circle.description || `${details.members.length} ${details.members.length === 1 ? 'member' : 'members'} moving together.`}</Text>
       </View>
 
-      {isWalking ? <>
+      <>
         <View style={styles.historyHeader}><Text style={styles.sectionTitle}>Circle race</Text><Text style={styles.historyLabel}>{selectedDay?.longLabel ?? 'Today'}</Text></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayPicker}>
           {recentDays.map((day) => <Pressable accessibilityRole="tab" accessibilityState={{ selected: day.dateKey === selectedDateKey }} key={day.dateKey} onPress={() => setSelectedDateKeyOverride(day.dateKey)} style={({ pressed }) => [styles.day, day.dateKey === selectedDateKey && styles.dayActive, pressed && styles.dayPressed]}><Text style={[styles.dayText, day.dateKey === selectedDateKey && styles.dayTextActive]}>{day.label}</Text><Text style={[styles.dayDate, day.dateKey === selectedDateKey && styles.dayTextActive]}>{day.dayOfMonth}</Text></Pressable>)}
         </ScrollView>
         {stepsStatus === 'loading' ? <LoadingRows /> : stepsStatus === 'error' ? <Text style={styles.muted}>We could not load this day’s scores.</Text> : friends.length > 0 ? <><DailyRaceTrack friends={friends} isCurrentDay={isCurrentDay} /><View style={styles.todayHeader}><Text style={styles.sectionTitle}>{isCurrentDay ? 'Today’s standings' : `${selectedDay?.label ?? 'Day'} standings`}</Text><Text style={styles.todayDate}>{isCurrentDay ? 'LIVE' : 'FINAL'}</Text></View><Leaderboard friends={friends} /></> : <Text style={styles.muted}>No members have joined yet.</Text>}
-      </> : <View style={styles.comingSoon}><Text style={styles.comingSoonTitle}>Run recording is next</Text><Text style={styles.comingSoonText}>This circle is ready. Distance, pace, and live running scores will appear here when activity recording is added.</Text></View>}
+       </>
 
     </ScrollView>
   );
