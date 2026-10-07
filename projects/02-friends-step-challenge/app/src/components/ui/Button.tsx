@@ -19,7 +19,7 @@ export function Button({ children, disabled, loading = false, onPress, size = 'l
   const { colors } = useAppTheme();
   const isDisabled = Boolean(disabled || loading);
   const variantStyles: Record<ButtonVariant, ViewStyle> = {
-    primary: { backgroundColor: colors.brandAction },
+    primary: { backgroundColor: colors.brandAction, borderBottomWidth: 4, borderColor: colors.brandActionPressed, borderWidth: 2 },
     secondary: { backgroundColor: colors.brandDark },
     tertiary: { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 1 },
     danger: { backgroundColor: colors.dangerSurface, borderColor: colors.dangerContent, borderWidth: 1 },
@@ -53,5 +53,5 @@ export function Button({ children, disabled, loading = false, onPress, size = 'l
 const styles = StyleSheet.create({
   base: { alignItems: 'center', borderRadius: radii.md, flexDirection: 'row', gap: spacing.sm, justifyContent: 'center' },
   disabled: { opacity: opacity.disabled },
-  pressed: { opacity: opacity.pressed, transform: [{ scale: 0.985 }] },
+  pressed: { borderBottomWidth: 2, opacity: opacity.pressed, transform: [{ translateY: 2 }] },
 });

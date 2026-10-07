@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/auth/auth-provider';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
+import { AppText } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, signOutCurrentUser } from '@/lib/auth';
 import { useAppColors } from '@/design-system/use-app-theme';
@@ -27,8 +28,8 @@ export default function ProfileRoute() {
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
-      <Text style={styles.eyebrow}>YOUR PROFILE</Text>
-      <Text style={styles.title}>{displayName}</Text>
+      <AppText style={styles.eyebrow}>YOUR PROFILE</AppText>
+      <AppText style={styles.title}>{displayName}</AppText>
 
       <Pressable
         accessibilityHint="Opens profile editing"
@@ -38,14 +39,14 @@ export default function ProfileRoute() {
       >
         <DicebearAvatar choice={avatar} fallback={getInitials(displayName)} size={78} />
         <View style={styles.profileText}>
-          <Text style={styles.profileTitle}>{displayName}</Text>
-          <Text style={styles.profileCaption}>Tap to edit your profile</Text>
+          <AppText style={styles.profileTitle}>{displayName}</AppText>
+          <AppText style={styles.profileCaption}>Tap to edit your profile</AppText>
         </View>
         <View style={styles.editIcon}><Ionicons color={colors.accentPressed} name="pencil" size={17} /></View>
       </Pressable>
 
       <Pressable accessibilityRole="button" onPress={() => void handleSignOut()} style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
-        <Text style={styles.signOutText}>Sign out</Text>
+        <AppText style={styles.signOutText}>Sign out</AppText>
       </Pressable>
     </ScrollView>
   );
@@ -57,6 +58,6 @@ function getInitials(name: string) {
 
 function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background }, content: { gap: 14, padding: 24, paddingBottom: 36 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1.2 },
-  profileCard: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 22, borderWidth: 1, flexDirection: 'row', marginTop: 8, padding: 18 }, profileText: { flex: 1, gap: 4, marginLeft: 14 }, profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, profileCaption: { color: colors.muted, fontSize: 13 }, editIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 14, height: 40, justifyContent: 'center', width: 40 },
-  signOut: { alignItems: 'center', borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, pressed: { opacity: 0.84, transform: [{ scale: 0.98 }] },
+  profileCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 22, borderWidth: 2, flexDirection: 'row', marginTop: 8, padding: 18 }, profileText: { flex: 1, gap: 4, marginLeft: 14 }, profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, profileCaption: { color: colors.muted, fontSize: 13 }, editIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 14, height: 40, justifyContent: 'center', width: 40 },
+  signOut: { alignItems: 'center', borderBottomWidth: 2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, pressed: { opacity: 0.84, transform: [{ translateY: 2 }] },
 }); }

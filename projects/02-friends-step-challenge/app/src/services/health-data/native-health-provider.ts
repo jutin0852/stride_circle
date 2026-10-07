@@ -25,7 +25,9 @@ function isAndroid() {
 }
 
 export function shouldUsePedometerFallback(platform: string | undefined, providerSetting: string | undefined) {
-  return platform === 'ios' && providerSetting?.trim().toLowerCase() === 'pedometer';
+  // iOS defaults to foreground pedometer for free-signed builds; HealthKit is
+  // selected explicitly only in a build with the required entitlement.
+  return platform === 'ios' && providerSetting?.trim().toLowerCase() !== 'healthkit';
 }
 
 /**

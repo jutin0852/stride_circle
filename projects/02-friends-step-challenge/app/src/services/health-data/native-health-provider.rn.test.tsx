@@ -16,11 +16,23 @@ jest.mock('@/services/health-data/expo-pedometer-provider', () => ({
 }));
 
 describe('health provider development override', () => {
-  it('uses the Expo Pedometer on iOS when explicitly selected', () => {
+  it('uses the foreground Pedometer by default on iOS free-signed builds', () => {
+    expect(shouldUsePedometerFallback('ios', undefined)).toBe(true);
+  });
+
+  it('uses the foreground Pedometer when explicitly selected on iOS', () => {
     expect(shouldUsePedometerFallback('ios', 'pedometer')).toBe(true);
+  });
+
+  it('uses HealthKit on iOS only when explicitly requested', () => {
+    expect(shouldUsePedometerFallback('ios', 'healthkit')).toBe(false);
   });
 
   it('does not let the iOS override disable Android Health Connect', () => {
     expect(shouldUsePedometerFallback('android', 'pedometer')).toBe(false);
+  });
+
+  it('does not select a native step provider for web', () => {
+    expect(shouldUsePedometerFallback('web', undefined)).toBe(false);
   });
 });

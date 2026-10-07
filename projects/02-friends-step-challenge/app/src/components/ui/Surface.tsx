@@ -14,7 +14,12 @@ type SurfaceProps = ViewProps & {
 export function Surface({ children, padding = 'xl', radius = 'lg', style, variant = 'card', ...props }: SurfaceProps) {
   const { colors, isDark } = useAppTheme();
   const variantStyles: Record<SurfaceVariant, ViewStyle> = {
-    card: { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+    card: {
+      backgroundColor: colors.card,
+      borderBottomWidth: isDark ? 0 : 4,
+      borderColor: isDark ? colors.border : colors.borderStrong,
+      borderWidth: isDark ? 1 : 2,
+    },
     raised: { backgroundColor: colors.raised, ...(isDark ? { borderColor: colors.borderSubtle, borderWidth: 1 } : elevation.card) },
     soft: { backgroundColor: colors.soft },
     brand: { backgroundColor: colors.brandAction },
