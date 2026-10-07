@@ -25,7 +25,12 @@ function isAndroid() {
 }
 
 function shouldUsePedometerFallback() {
-  return process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER?.trim().toLowerCase() === 'pedometer';
+  const configuredProvider = process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER?.trim().toLowerCase();
+
+  // Free-signed iOS builds cannot carry the HealthKit entitlement. Use the
+  // foreground Pedometer path unless Apple Health is explicitly requested.
+  // Android keeps its Health Connect default.
+  return !isAndroid() && configuredProvider !== 'healthkit';
 }
 
 /**
