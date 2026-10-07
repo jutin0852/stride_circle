@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
+import { AppText } from '@/components/ui';
 import { getPersonalProgress, type HomeHealthState } from './home-model';
 import { homeColors, homeDarkColors, homeMotion } from './tokens';
 import { useReducedHomeMotion } from './use-home-motion';
@@ -21,9 +22,9 @@ export type HomeViewProps = {
   social: { name: string; steps: number; status: 'loading' | 'idle' | 'sending' | 'sent' | 'error'; onCheer: () => Promise<void> } | null;
 };
 
-type HomeTheme = typeof homeColors;
-function Copy({ children, colors, style, ...props }: React.ComponentProps<typeof Text> & { colors: HomeTheme }) {
-  return <Text {...props} style={[styles.copy, { color: colors.ink }, style]}>{children}</Text>;
+type HomeTheme = Record<keyof typeof homeColors, string>;
+function Copy({ children, colors, style, ...props }: React.ComponentProps<typeof AppText> & { colors: HomeTheme }) {
+  return <AppText {...props} style={[styles.copy, { color: colors.ink }, style]}>{children}</AppText>;
 }
 
 function Action({ children, onPress, label, disabled, busy, colors, secondary = false }: {
@@ -159,7 +160,7 @@ export function HomeView(props: HomeViewProps) {
           <Ionicons name="flame-outline" color={colors.coral} size={24} /><Copy colors={colors} style={styles.streakText}>{props.streak === null ? '—' : `${props.streak}-day streak`}</Copy>
         </Pressable>
       </View>
-      <Copy accessibilityRole="header" colors={colors} style={styles.title}>Your walking day,{ '\n' }<Text style={{ color: colors.edge }}>together.</Text></Copy>
+      <Copy accessibilityRole="header" colors={colors} style={styles.title}>Your walking day,{ '\n' }<AppText style={{ color: colors.edge, fontWeight: '800' }}>together.</AppText></Copy>
       <View style={[styles.hero, { backgroundColor: colors.ice, borderColor: colors.panelLine, padding: narrow ? 12 : 16 }]}>
         <View style={styles.progressCopy}>
           <Progress steps={props.steps} goal={props.goal} health={props.health} colors={colors} reduced={reduced} onGoal={props.onGoal} />
@@ -205,7 +206,7 @@ export function HomeView(props: HomeViewProps) {
         </View>
         <Animated.View style={{ transform: [{ scale: cheerScale }] }}><Pressable accessibilityRole="button" accessibilityLabel={props.social.status === 'sent' ? 'Cheer sent' : `Send Nice work to ${props.social.name}`} accessibilityState={{ disabled: ['loading', 'sending', 'sent'].includes(props.social.status), busy: props.social.status === 'sending' }} disabled={['loading', 'sending', 'sent'].includes(props.social.status)} onPress={() => void props.social?.onCheer()} style={({ pressed }) => [styles.cheer, { transform: [{ translateY: pressed ? 2 : 0 }], opacity: props.social?.status === 'loading' ? 0.5 : 1 }]}>
           {props.social.status === 'sending' ? <ActivityIndicator color="#5C440B" /> : <Ionicons name={props.social.status === 'sent' ? 'checkmark' : 'heart-outline'} color="#5C440B" size={18} />}
-          <Text style={styles.cheerLabel}>{props.social.status === 'sent' ? 'Cheer sent' : props.social.status === 'loading' ? 'Loading…' : props.social.status === 'sending' ? 'Sending…' : 'Nice work'}</Text>
+          <AppText style={styles.cheerLabel}>{props.social.status === 'sent' ? 'Cheer sent' : props.social.status === 'loading' ? 'Loading…' : props.social.status === 'sending' ? 'Sending…' : 'Nice work'}</AppText>
         </Pressable></Animated.View>
       </View> : null}
     </ScrollView>

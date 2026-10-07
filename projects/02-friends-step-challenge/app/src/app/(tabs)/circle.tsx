@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '@/auth/auth-provider';
 import { Skeleton } from '@/components/skeleton';
+import { AppText } from '@/components/ui';
 import { useCurrentCircle } from '@/hooks/use-current-circle';
 import { createCircle, joinCircle, joinPublicCircle, type CircleActivityType, type CircleSummary, type PublicCircleSummary, watchPublicCircles } from '@/lib/circles';
 import { MAX_CIRCLE_MEMBERS, type CircleVisibility } from '@/domain/circles';
 import { colors } from '@/theme';
 
-const AVATAR_COLORS = ['#2563EB', '#3B82F6', '#60A5FA', '#1D4ED8', '#0EA5E9', '#6366F1'];
+const AVATAR_COLORS = [colors.accent, colors.accentPressed, colors.success, '#62C9EB', '#317F1B', '#F77768'];
 
 export default function CirclesRoute() {
   const { user } = useAuth();
@@ -86,12 +87,12 @@ export default function CirclesRoute() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.eyebrow}>COMMUNITY</Text>
-          <Text style={styles.title}>Circles</Text>
+          <AppText style={styles.eyebrow}>COMMUNITY</AppText>
+          <AppText style={styles.title}>Circles</AppText>
         </View>
         {circles.length > 0 ? (
           <Pressable accessibilityRole="button" onPress={() => setShowSetup(true)} style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-            <Ionicons color={colors.accentPressed} name="add" size={18} /><Text style={styles.addButtonText}>Add</Text>
+            <Ionicons color={colors.accentPressed} name="add" size={18} /><AppText style={styles.addButtonText}>Add</AppText>
           </Pressable>
         ) : null}
       </View>
@@ -110,10 +111,10 @@ export default function CirclesRoute() {
 
       <View style={styles.discoverySection}>
         <View>
-          <Text style={styles.sectionEyebrow}>DISCOVER</Text>
-          <Text style={styles.sectionTitle}>Public circles</Text>
+          <AppText style={styles.sectionEyebrow}>DISCOVER</AppText>
+          <AppText style={styles.sectionTitle}>Public circles</AppText>
         </View>
-        {publicCircleStatus === 'loading' ? <CircleListSkeleton /> : publicCircleStatus === 'error' ? <Text style={styles.discoveryMessage}>Public circles are unavailable right now.</Text> : publicCircles.length === 0 ? <Text style={styles.discoveryMessage}>No public circles are available yet.</Text> : <View style={styles.list}>{publicCircles.map((circle, index) => <PublicCircleRow circle={circle} disabled={isSubmitting || circles.some((owned) => owned.id === circle.id)} index={index} key={circle.id} onJoin={() => void handleJoinPublic(circle.id)} />)}</View>}
+        {publicCircleStatus === 'loading' ? <CircleListSkeleton /> : publicCircleStatus === 'error' ? <AppText style={styles.discoveryMessage}>Public circles are unavailable right now.</AppText> : publicCircles.length === 0 ? <AppText style={styles.discoveryMessage}>No public circles are available yet.</AppText> : <View style={styles.list}>{publicCircles.map((circle, index) => <PublicCircleRow circle={circle} disabled={isSubmitting || circles.some((owned) => owned.id === circle.id)} index={index} key={circle.id} onJoin={() => void handleJoinPublic(circle.id)} />)}</View>}
       </View>
 
       {showSetup ? (
@@ -148,8 +149,8 @@ function CircleRow({ circle, index }: { circle: CircleSummary; index: number }) 
     >
       <CircleAvatar circle={circle} index={index} />
       <View style={styles.rowText}>
-        <Text numberOfLines={1} style={styles.rowTitle}>{circle.name}</Text>
-        <Text style={styles.rowSubtitle}>Walking circle</Text>
+        <AppText numberOfLines={1} style={styles.rowTitle}>{circle.name}</AppText>
+        <AppText style={styles.rowSubtitle}>Walking circle</AppText>
       </View>
       <Ionicons color={colors.muted} name="chevron-forward" size={20} />
     </Pressable>
@@ -157,14 +158,14 @@ function CircleRow({ circle, index }: { circle: CircleSummary; index: number }) 
 }
 
 function PublicCircleRow({ circle, disabled, index, onJoin }: { circle: PublicCircleSummary; disabled: boolean; index: number; onJoin: () => void }) {
-  return <View style={styles.publicRow}><CircleAvatar circle={circle} index={index} /><View style={styles.rowText}><Text numberOfLines={1} style={styles.rowTitle}>{circle.name}</Text><Text style={styles.rowSubtitle}>{circle.memberCount}/{MAX_CIRCLE_MEMBERS} members · Walking{circle.discoverableArea ? ` · ${circle.discoverableArea}` : ''}</Text></View><Pressable accessibilityRole="button" disabled={disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS} onPress={onJoin} style={({ pressed }) => [styles.joinButton, (disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS) && styles.joinButtonDisabled, pressed && !disabled && styles.pressed]}><Text style={styles.joinButtonText}>{circle.memberCount >= MAX_CIRCLE_MEMBERS ? 'Full' : disabled ? 'Joined' : 'Join'}</Text></Pressable></View>;
+  return <View style={styles.publicRow}><CircleAvatar circle={circle} index={index} /><View style={styles.rowText}><AppText numberOfLines={1} style={styles.rowTitle}>{circle.name}</AppText><AppText style={styles.rowSubtitle}>{circle.memberCount}/{MAX_CIRCLE_MEMBERS} members · Walking{circle.discoverableArea ? ` · ${circle.discoverableArea}` : ''}</AppText></View><Pressable accessibilityRole="button" disabled={disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS} onPress={onJoin} style={({ pressed }) => [styles.joinButton, (disabled || circle.memberCount >= MAX_CIRCLE_MEMBERS) && styles.joinButtonDisabled, pressed && !disabled && styles.pressed]}><AppText style={styles.joinButtonText}>{circle.memberCount >= MAX_CIRCLE_MEMBERS ? 'Full' : disabled ? 'Joined' : 'Join'}</AppText></Pressable></View>;
 }
 
 function CircleAvatar({ circle, index }: { circle: CircleSummary; index: number }) {
   const initials = circle.name.split(' ').filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase();
   return (
     <View style={[styles.avatar, { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}>
-      <Text style={styles.avatarText}>{initials || 'SC'}</Text>
+      <AppText style={styles.avatarText}>{initials || 'SC'}</AppText>
     </View>
   );
 }
@@ -177,10 +178,10 @@ function EmptyState({ buttonLabel, description, onPress, title }: { buttonLabel:
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}><Ionicons color={colors.accent} name="people-outline" size={27} /></View>
-      <Text style={styles.emptyTitle}>{title}</Text>
-      <Text style={styles.emptyDescription}>{description}</Text>
+      <AppText style={styles.emptyTitle}>{title}</AppText>
+      <AppText style={styles.emptyDescription}>{description}</AppText>
       <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}>
-        <Text style={styles.primaryActionText}>{buttonLabel}</Text>
+        <AppText style={styles.primaryActionText}>{buttonLabel}</AppText>
       </Pressable>
     </View>
   );
@@ -195,22 +196,22 @@ function SetupCard({
 }) {
   return (
     <View style={styles.setup}>
-      <View style={styles.setupHeader}><Text style={styles.setupTitle}>{mode === 'create' ? 'Create a circle' : 'Join a circle'}</Text><Pressable accessibilityLabel="Close" accessibilityRole="button" onPress={onClose} style={styles.close}><Ionicons color={colors.muted} name="close" size={23} /></Pressable></View>
+      <View style={styles.setupHeader}><AppText style={styles.setupTitle}>{mode === 'create' ? 'Create a circle' : 'Join a circle'}</AppText><Pressable accessibilityLabel="Close" accessibilityRole="button" onPress={onClose} style={styles.close}><Ionicons color={colors.muted} name="close" size={23} /></Pressable></View>
       <View style={styles.segment}><Segment active={mode === 'create'} label="Create" onPress={() => onModeChange('create')} /><Segment active={mode === 'join'} label="Join" onPress={() => onModeChange('join')} /></View>
       {mode === 'create' ? <>
-        <Text style={styles.fieldLabel}>CIRCLE TYPE</Text>
-        <Text style={styles.hint}>Walking circles use your daily health-data step total.</Text>
-        <Text style={styles.fieldLabel}>CIRCLE NAME</Text>
+        <AppText style={styles.fieldLabel}>CIRCLE TYPE</AppText>
+        <AppText style={styles.hint}>Walking circles use your daily health-data step total.</AppText>
+        <AppText style={styles.fieldLabel}>CIRCLE NAME</AppText>
         <TextInput accessibilityLabel="Circle name" autoCapitalize="words" maxLength={40} onChangeText={onCircleNameChange} placeholder="e.g. Saturday Walkers" placeholderTextColor={colors.muted} style={styles.input} value={circleName} />
-        <Text style={styles.fieldLabel}>VISIBILITY</Text>
+        <AppText style={styles.fieldLabel}>VISIBILITY</AppText>
         <View style={styles.segment}><Segment active={visibility === 'private'} label="Private" onPress={() => onVisibilityChange('private')} /><Segment active={visibility === 'public'} label="Public" onPress={() => onVisibilityChange('public')} /></View>
-        {visibility === 'public' ? <><Text style={styles.fieldLabel}>DISCOVERY AREA</Text><TextInput accessibilityLabel="Discovery area" autoCapitalize="words" maxLength={60} onChangeText={onDiscoverableAreaChange} placeholder="e.g. Yaba or Ikeja" placeholderTextColor={colors.muted} style={styles.input} value={discoverableArea} /><Text style={styles.hint}>Use a city or broad neighborhood only. Never enter a home address.</Text></> : null}
-        <Text style={styles.hint}>{visibility === 'private' ? 'Only people with your invite code can join.' : `Anyone can discover and join. Circles are limited to ${MAX_CIRCLE_MEMBERS} members.`}</Text>
+        {visibility === 'public' ? <><AppText style={styles.fieldLabel}>DISCOVERY AREA</AppText><TextInput accessibilityLabel="Discovery area" autoCapitalize="words" maxLength={60} onChangeText={onDiscoverableAreaChange} placeholder="e.g. Yaba or Ikeja" placeholderTextColor={colors.muted} style={styles.input} value={discoverableArea} /><AppText style={styles.hint}>Use a city or broad neighborhood only. Never enter a home address.</AppText></> : null}
+        <AppText style={styles.hint}>{visibility === 'private' ? 'Only people with your invite code can join.' : `Anyone can discover and join. Circles are limited to ${MAX_CIRCLE_MEMBERS} members.`}</AppText>
         <ActionButton disabled={isSubmitting} label="Create walking circle" onPress={onCreate} />
       </> : <>
-        <Text style={styles.fieldLabel}>INVITE CODE</Text>
+        <AppText style={styles.fieldLabel}>INVITE CODE</AppText>
         <TextInput accessibilityLabel="Circle invite code" autoCapitalize="characters" autoCorrect={false} maxLength={8} onChangeText={onInviteCodeChange} placeholder="ABCDEFGH" placeholderTextColor={colors.muted} style={[styles.input, styles.codeInput]} value={inviteCode} />
-        <Text style={styles.hint}>Ask the circle creator to share their private code.</Text>
+        <AppText style={styles.hint}>Ask the circle creator to share their private code.</AppText>
         <ActionButton disabled={isSubmitting} label="Join circle" onPress={onJoin} />
       </>}
     </View>
@@ -218,11 +219,11 @@ function SetupCard({
 }
 
 function Segment({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.segmentButton, active && styles.segmentButtonActive]}><Text style={[styles.segmentText, active && styles.segmentTextActive]}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.segmentButton, active && styles.segmentButtonActive]}><AppText style={[styles.segmentText, active && styles.segmentTextActive]}>{label}</AppText></Pressable>;
 }
 
 function ActionButton({ disabled, label, onPress }: { disabled: boolean; label: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[styles.primaryAction, disabled && styles.disabled]}>{disabled ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryActionText}>{label}</Text>}</Pressable>;
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[styles.primaryAction, disabled && styles.disabled]}>{disabled ? <ActivityIndicator color="#FFFFFF" /> : <AppText style={styles.primaryActionText}>{label}</AppText>}</Pressable>;
 }
 
 function getMessage(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
@@ -230,7 +231,7 @@ function getMessage(error: unknown) { return error instanceof Error ? error.mess
 const styles = StyleSheet.create({
   page: { backgroundColor: colors.background }, content: { gap: 16, padding: 24, paddingBottom: 36 }, header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1.2 },
-  addButton: { alignItems: 'center', backgroundColor: '#EAF0FF', borderRadius: 13, flexDirection: 'row', gap: 3, paddingHorizontal: 12, paddingVertical: 10 }, addButtonText: { color: colors.accentPressed, fontSize: 13, fontWeight: '800' },
+  addButton: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 13, flexDirection: 'row', gap: 3, paddingHorizontal: 12, paddingVertical: 10 }, addButtonText: { color: colors.accentPressed, fontSize: 13, fontWeight: '800' },
   loading: { alignItems: 'center', minHeight: 180, justifyContent: 'center' }, list: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 22, borderWidth: 1, overflow: 'hidden' },
   row: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 78, paddingHorizontal: 15 }, publicRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 78, paddingHorizontal: 15 }, skeletonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 78, paddingHorizontal: 15 }, skeletonAvatar: { borderRadius: 24, height: 48, width: 48 }, skeletonCopy: { flex: 1, marginLeft: 12 }, rowPressed: { backgroundColor: colors.soft },
   avatar: { alignItems: 'center', borderRadius: 24, height: 48, justifyContent: 'center', width: 48 }, avatarText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },

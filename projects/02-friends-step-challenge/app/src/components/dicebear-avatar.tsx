@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 
 import { getAvatarUrl, type AvatarChoice } from '@/lib/avatar';
+import { colors } from '@/theme';
 
 export function DicebearAvatar({ choice, fallback, size = 44 }: { choice: AvatarChoice; fallback: string; size?: number }) {
   const [failed, setFailed] = useState(false);
@@ -15,6 +16,6 @@ export function DicebearAvatar({ choice, fallback, size = 44 }: { choice: Avatar
 }
 
 const styles = StyleSheet.create({
-  frame: { alignItems: 'center', backgroundColor: '#E8F0FF', justifyContent: 'center', overflow: 'hidden' },
-  fallback: { color: '#2563EB', fontWeight: '800' },
+  frame: { alignItems: 'center', backgroundColor: colors.soft, justifyContent: 'center', overflow: 'hidden' },
+  fallback: { color: colors.accentPressed, fontWeight: '800' },
 });

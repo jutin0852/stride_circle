@@ -12,7 +12,7 @@ import { useCircleDetails } from '@/hooks/use-circle-details';
 import { getDateKeyDaysBefore, getDateKeyInTimeZone } from '@/domain/dates';
 import { colors } from '@/theme';
 
-const AVATAR_COLORS = ['#2563EB', '#3B82F6', '#60A5FA', '#1D4ED8', '#0EA5E9', '#6366F1'];
+const AVATAR_COLORS = [colors.accent, colors.accentPressed, colors.success, '#62C9EB', '#317F1B', '#F77768'];
 
 export default function CircleDetailRoute() {
   const { circleId: rawCircleId } = useLocalSearchParams<{ circleId: string }>();

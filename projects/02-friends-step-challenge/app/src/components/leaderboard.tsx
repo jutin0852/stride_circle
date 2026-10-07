@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     minHeight: 72,
     paddingHorizontal: 15,
   },
-  youRow: { backgroundColor: "#EFF6FF" },
+  youRow: { backgroundColor: colors.soft },
   rank: {
     color: colors.muted,
     fontSize: 15,

@@ -3,7 +3,7 @@ import { ActivityIndicator, Platform, StyleSheet, useColorScheme, View } from 'r
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/auth-provider';
-import { semanticColors } from '@/design-system/tokens';
+import { fontFamilies, semanticColors } from '@/design-system/tokens';
 import { homeColors, homeDarkColors } from '@/features/home/tokens';
 
 export default function TabsLayout() {
@@ -25,7 +25,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.muted,
         tabBarActiveBackgroundColor: colors.ice,
         tabBarItemStyle: { borderRadius: 14, marginHorizontal: 6 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '800' },
+        tabBarLabelStyle: { fontFamily: fontFamilies.bold, fontSize: 11 },
         tabBarIconStyle: { height: 24, width: 24 },
         tabBarStyle: {
           backgroundColor: Platform.OS === 'android' ? colors.panelEdge : colors.canvas,
