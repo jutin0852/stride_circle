@@ -110,6 +110,12 @@ Maps use a platform-specific implementation: native builds use the real map expe
 
 For GPS and pedometer testing, use a physical device and grant the relevant permissions.
 
+## Standalone iPhone builds
+
+This project includes a no-paid-developer-account workflow for personal iPhone testing. The root workflow [iOS unsigned IPA](../../../.github/workflows/ios-unsigned-ipa.yml) runs on a GitHub-hosted macOS runner, generates the native iOS project from Expo configuration, builds a device app without Apple signing credentials, and uploads an IPA artifact. Import that IPA into SideStore, which signs it with the Apple Account on the iPhone. Set the app's public Firebase and Google OAuth configuration in GitHub Actions variables or secrets before the first build; the exact names are listed in [SIDESTORE.md](SIDESTORE.md).
+
+Follow [SIDESTORE.md](SIDESTORE.md) for first-time setup, installation, updates, the seven-day free-account limits, and the current iOS capability constraints.
+
 ## Automated verification
 
 From the repository root, enter the app directory and install the locked dependencies

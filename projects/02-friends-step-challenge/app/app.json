@@ -38,6 +38,8 @@
       "expo-splash-screen"
     ],
     "ios": {
+      "bundleIdentifier": "com.stridecircle.app",
+      "buildNumber": "1",
       "supportsTablet": true
     },
     "android": {
