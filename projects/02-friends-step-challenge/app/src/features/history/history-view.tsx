@@ -53,7 +53,7 @@ export function HistoryView(props: HistoryViewProps) {
 const styles = StyleSheet.create({
   page: { backgroundColor: historyColors.screen }, scroll: { alignItems: 'center' },
   content: { width: '100%', maxWidth: 600, paddingBottom: spacing.xxxl },
-  header: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', paddingHorizontal: spacing.xs, paddingBottom: 4 }, heading: { flex: 1, gap: 1 },
-  kicker: { color: homeColors.edge }, title: { color: homeColors.ink, fontSize: 24, lineHeight: 28, letterSpacing: -0.6 },
-  headerIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: homeColors.ice, borderColor: homeColors.panelLine, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', paddingHorizontal: spacing.xs, paddingBottom: 16 }, heading: { flex: 1, gap: 1 },
+  kicker: { color: homeColors.edge }, title: { color: homeColors.ink, fontSize: 30, lineHeight: 34, letterSpacing: -0.7 },
+  headerIcon: { width: 46, height: 46, borderRadius: 16, backgroundColor: historyColors.paper, borderColor: homeColors.panelLine, borderWidth: 2, alignItems: 'center', justifyContent: 'center', shadowColor: homeColors.panelLine, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2 },
 });

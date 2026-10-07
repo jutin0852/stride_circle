@@ -17,14 +17,14 @@ describe('walking calendar states', () => {
     const { props } = setup({ records: [{ dateKey: '2026-10-01', steps: 8000 }, { dateKey: '2026-10-02', steps: 4000 }] });
     const screen = await render(<WalkingCalendar {...props} />);
     const grid = screen.getByTestId('history-calendar-grid');
-    expect(StyleSheet.flatten(grid.props.style).height).toBe(212);
+    expect(StyleSheet.flatten(grid.props.style).height).toBe(252);
     expect(screen.getAllByTestId('history-calendar-week')).toHaveLength(5);
     for (const row of screen.getAllByTestId('history-calendar-week')) {
-      expect(StyleSheet.flatten(row.props.style).height).toBe(40);
+      expect(StyleSheet.flatten(row.props.style).height).toBe(48);
       expect(row.children).toHaveLength(7);
     }
-    await fireEvent(grid, 'layout', { nativeEvent: { layout: { width: 332, height: 212 } } });
-    expect(screen.getByTestId('history-journey').props.height).toBe(212);
+    await fireEvent(grid, 'layout', { nativeEvent: { layout: { width: 332, height: 252 } } });
+    expect(screen.getByTestId('history-journey').props.height).toBe(252);
     expect(screen.getByTestId('history-journey').props.width).toBe(332);
   });
   it('shows saved progress and lets a user select a past day', async () => {

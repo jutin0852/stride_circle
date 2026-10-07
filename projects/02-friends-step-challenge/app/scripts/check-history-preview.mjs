@@ -21,11 +21,12 @@ try {
     await expect(page.getByRole('button', { name: 'Next month', exact: true })).toBeDisabled();
     const day = page.getByRole('button', { name: /Friday, October 2, 2026/ });
     const bounds = await day.boundingBox();
-    // Seven columns and the approved 3px gaps keep the visual calendar dense;
-    // the native target adds hitSlop around the compact visual cell.
-    if (bounds.width < 26 || bounds.height < 34) throw new Error(`Day target too small at ${width}px: ${bounds.width}×${bounds.height}`);
+    // Seven columns and the approved 3px gaps preserve the reference's 48px
+    // regular rows (45px on the smallest phones); the native target adds
+    // hitSlop around the visual cell.
+    if (bounds.width < 33 || bounds.height < 45) throw new Error(`Day target too small at ${width}px: ${bounds.width}×${bounds.height}`);
     const gridBounds = await page.getByTestId('history-calendar-grid').boundingBox();
-    const expectedGridHeight = width < 360 ? 192 : 212;
+    const expectedGridHeight = width < 360 ? 237 : 252;
     if (Math.abs(gridBounds.height - expectedGridHeight) > 1) throw new Error(`Calendar stretched at ${width}px: ${gridBounds.height}px`);
     const journey = await page.getByTestId('history-journey').locator('path').getAttribute('d');
     if (!journey.includes('L ')) throw new Error('Populated calendar journey has no connecting segments');

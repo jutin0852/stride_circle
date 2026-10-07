@@ -18,8 +18,8 @@ type Props = {
 };
 
 const GRID_GAP = 3;
-const COMPACT_CELL_HEIGHT = 36;
-const REGULAR_CELL_HEIGHT = 40;
+const COMPACT_CELL_HEIGHT = 45;
+const REGULAR_CELL_HEIGHT = 48;
 
 export function WalkingCalendar(props: Props) {
   const { month, today, selected, records, goal, goalReady, protectedDays, status } = props;
@@ -41,15 +41,15 @@ export function WalkingCalendar(props: Props) {
 
   return <View style={[styles.card, props.compact && styles.compactCard]}>
     <View style={[styles.calendarHeader, props.compact && styles.calendarHeaderCompact]}>
-      <View style={[styles.calendarTitle, props.compact && styles.calendarTitleCompact]}><View style={styles.titleCopy}><AppText accessibilityRole="header" variant="titleSmall" style={styles.title}>{'Your walking\nmonth'}</AppText></View></View>
+      <View style={[styles.calendarTitle, props.compact && styles.calendarTitleCompact]}><View style={styles.titleCopy}><AppText accessibilityRole="header" variant="titleSmall" style={[styles.title, props.compact && styles.titleCompact]}>Your walking month</AppText></View></View>
       <View style={[styles.monthNav, props.compact && styles.monthNavCompact]}>
-        <IconButton accessibilityLabel="Previous month" onPress={() => props.onMonthChange(-1)} style={styles.navButton}><Ionicons name="chevron-back" size={18} color={historyColors.blueDeep} /></IconButton>
-        <AppText variant="label" style={styles.month}>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(dateFromKey(month))}</AppText>
-        <IconButton accessibilityLabel="Next month" disabled={isCurrentMonth} accessibilityState={{ disabled: isCurrentMonth }} onPress={() => props.onMonthChange(1)} style={nextMonthButtonStyle}><Ionicons name="chevron-forward" size={18} color={historyColors.blueDeep} /></IconButton>
+        <IconButton accessibilityLabel="Previous month" onPress={() => props.onMonthChange(-1)} style={[styles.navButton, props.compact && styles.navButtonCompact]}><Ionicons name="chevron-back" size={22} color={historyColors.blueDeep} /></IconButton>
+        <AppText variant="label" style={[styles.month, props.compact && styles.monthCompact]}>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(dateFromKey(month))}</AppText>
+        <IconButton accessibilityLabel="Next month" disabled={isCurrentMonth} accessibilityState={{ disabled: isCurrentMonth }} onPress={() => props.onMonthChange(1)} style={[nextMonthButtonStyle, props.compact && styles.navButtonCompact]}><Ionicons name="chevron-forward" size={22} color={historyColors.blueDeep} /></IconButton>
       </View>
     </View>
     {status === 'error' ? <View style={styles.inset}><StateCard tone="error" title="This month couldn’t load" description="Check your connection. Your saved history is still yours." actionLabel="Try again" onAction={props.onRetry} /></View> : <>
-      <View style={[styles.grid, !props.compact && styles.gridInset]}>
+      <View style={styles.grid}>
         <View style={styles.weekdays}>{['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((label) => <AppText key={label} variant="label" tone="secondary" style={styles.weekday}>{label}</AppText>)}</View>
         <View testID="history-calendar-grid" onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)} style={[styles.cells, { height: gridHeight }]} accessibilityLabel={status === 'loading' ? 'Loading monthly history' : undefined}>
           {route ? <Svg testID="history-journey" pointerEvents="none" width={gridWidth} height={gridHeight} style={styles.journey} viewBox={`0 0 ${gridWidth} ${gridHeight}`}><Path d={route} fill="none" stroke={historyColors.route} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" /></Svg> : null}
@@ -115,26 +115,26 @@ function Legend({ kind, label }: { kind: 'route' | 'goal' | 'protected' | 'below
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: historyColors.paper, borderRadius: radii.xl, borderColor: '#D5E9F0', borderWidth: 2, borderBottomWidth: 5, overflow: 'visible' },
-  compactCard: { marginHorizontal: -12 },
-  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6, gap: 6 },
+  card: { backgroundColor: historyColors.paper, borderRadius: radii.xl, borderColor: '#D5E9F0', borderWidth: 2, borderBottomWidth: 5, overflow: 'visible', paddingHorizontal: 14, paddingTop: 16, paddingBottom: 14 },
+  compactCard: { paddingHorizontal: 9, paddingTop: 13, paddingBottom: 12 },
+  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 },
   calendarHeaderCompact: { alignItems: 'center', flexWrap: 'nowrap' },
   calendarTitle: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' }, calendarTitleCompact: { flexBasis: 'auto', flexGrow: 1, flexShrink: 1, width: 'auto' },
   titleCopy: { flexShrink: 1, minWidth: 0 },
-  title: { color: historyColors.ink, fontSize: 16, lineHeight: 18, letterSpacing: -0.2 }, monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0 }, monthNavCompact: { width: 'auto', justifyContent: 'center', marginLeft: 'auto' },
-  navButton: { backgroundColor: 'transparent', borderColor: 'transparent', width: 32, height: 32, padding: 2 }, month: { minWidth: 88, textAlign: 'center', color: historyColors.ink, fontSize: 11, lineHeight: 15 },
-  grid: { paddingBottom: 0 }, gridInset: { paddingHorizontal: 2 }, weekdays: { flexDirection: 'row', marginBottom: 2 }, weekday: { width: '14.285714%', textAlign: 'center', fontSize: 9, lineHeight: 12, letterSpacing: 0.2, paddingVertical: 2 },
+  title: { color: historyColors.ink, fontSize: 19, lineHeight: 23, letterSpacing: -0.35 }, titleCompact: { fontSize: 17, lineHeight: 20 }, monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2 }, monthNavCompact: { width: 'auto', justifyContent: 'center', marginLeft: 'auto' },
+  navButton: { backgroundColor: 'transparent', borderColor: 'transparent', width: 42, height: 42, padding: 2 }, navButtonCompact: { width: 34, height: 36 }, month: { minWidth: 108, textAlign: 'center', color: historyColors.ink, fontSize: 14, lineHeight: 18 }, monthCompact: { minWidth: 86, fontSize: 12, lineHeight: 16 },
+  grid: { paddingBottom: 0 }, weekdays: { flexDirection: 'row', marginBottom: 5 }, weekday: { width: '14.285714%', textAlign: 'center', fontSize: 11, lineHeight: 16, letterSpacing: 0.4, paddingVertical: 4 },
   cells: { position: 'relative', overflow: 'visible', flexGrow: 0, flexShrink: 0 },
   weekRow: { flexDirection: 'row', columnGap: GRID_GAP, flexGrow: 0, flexShrink: 0 },
   cell: { flexGrow: 0, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
   unmeasuredCell: { flex: 1 },
   journey: { position: 'absolute', left: 0, top: 0 },
-  date: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: historyColors.paper }, dateCompact: { width: 26, height: 26, borderRadius: 9 },
+  date: { width: 36, height: 36, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: historyColors.paper }, dateCompact: { width: 33, height: 33, borderRadius: 12 },
   dateGoal: { backgroundColor: '#62C9EB', borderColor: '#1587AA', borderBottomWidth: 3 }, dateProtected: { backgroundColor: historyColors.yellowPale, borderColor: '#D9AE2E' }, dateBelow: { backgroundColor: historyColors.coralPale, borderColor: '#DC8270' },
   today: { borderColor: historyColors.blueDeep }, selected: { backgroundColor: historyColors.paper, borderColor: '#27343A', borderWidth: 3, transform: [{ translateY: 0 }] }, selectedToday: { borderColor: historyColors.ink },
-  dayNumber: { color: historyColors.ink, fontSize: 11, lineHeight: 14, fontVariant: ['tabular-nums'] }, dayNumberGoal: { color: '#073B50' }, dayNumberState: { color: historyColors.yellowDeep },
+  dayNumber: { color: historyColors.ink, fontSize: 14, lineHeight: 17, fontVariant: ['tabular-nums'] }, dayNumberGoal: { color: '#073B50' }, dayNumberState: { color: historyColors.yellowDeep },
   goalMarker: { position: 'absolute', right: 1, bottom: 1, width: 10, height: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 5, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: '#21825A' }, goalMarkerText: { color: historyColors.paper, fontSize: 7, lineHeight: 8, fontWeight: '900' },
   protectedMarker: { position: 'absolute', right: 1, top: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: historyColors.paper }, belowMarker: { position: 'absolute', right: 2, bottom: 2, width: 9, height: 9, borderRadius: 5, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: historyColors.coral }, todayMarker: { position: 'absolute', top: 2, left: '50%', width: 5, height: 5, marginLeft: -2.5, borderRadius: 3, backgroundColor: '#0783AA', borderWidth: 1.5, borderColor: historyColors.paper },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 5, rowGap: 2, paddingHorizontal: 2, paddingTop: 7, paddingBottom: 0 }, legendItem: { flexDirection: 'row', alignItems: 'center', gap: 3 }, legendText: { fontSize: 8, lineHeight: 11 }, legendShape: { width: 9, height: 9 }, legendRoute: { width: 14, height: 2, borderRadius: 2, backgroundColor: historyColors.route }, legendGoal: { borderRadius: 3, backgroundColor: '#62C9EB', borderBottomWidth: 1, borderBottomColor: '#1587AA' }, legendProtected: { borderRadius: 3, backgroundColor: '#FFF0B2', borderWidth: 1, borderColor: '#D6AA23' }, legendBelow: { borderRadius: 5, backgroundColor: historyColors.coralPale, borderWidth: 1, borderColor: '#DC8270' }, legendSelected: { borderRadius: 3, backgroundColor: 'transparent', borderWidth: 1, borderColor: historyColors.ink },
-  detail: { position: 'relative', marginHorizontal: 1, marginTop: 8, marginBottom: 6, padding: 10, paddingLeft: 10, gap: 1, borderWidth: 1, borderColor: '#CFE5EC', borderRadius: 12, backgroundColor: historyColors.panel, shadowColor: historyColors.shade, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.75, shadowRadius: 0, elevation: 1 }, detailConnector: { position: 'absolute', top: -10, width: 2, height: 9, backgroundColor: '#78CDE7' }, detailDate: { color: historyColors.blueDeep, fontSize: 9, lineHeight: 12, letterSpacing: 0.8 }, stepsRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 3 }, selectedSteps: { fontSize: 24, lineHeight: 27 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 4 }, progressTrack: { flex: 1, minWidth: 0 }, progressPercent: { minWidth: 28, textAlign: 'right', color: historyColors.ink, fontSize: 9, lineHeight: 12 }, detailCaption: { fontSize: 10, lineHeight: 14, color: historyColors.muted }, detailSkeleton: { width: '100%', height: 60, backgroundColor: '#DCEEF3' }, inset: { padding: spacing.lg }, disabled: { opacity: 0.35 }, pressed: { opacity: 0.7 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8, paddingHorizontal: 2, paddingTop: 12, paddingBottom: 1 }, legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 }, legendText: { fontSize: 11, lineHeight: 14 }, legendShape: { width: 12, height: 12 }, legendRoute: { width: 14, height: 2, borderRadius: 2, backgroundColor: historyColors.route }, legendGoal: { borderRadius: 4, backgroundColor: '#62C9EB', borderBottomWidth: 1, borderBottomColor: '#1587AA' }, legendProtected: { borderRadius: 4, backgroundColor: '#FFF0B2', borderWidth: 1, borderColor: '#D6AA23' }, legendBelow: { borderRadius: 6, backgroundColor: historyColors.coralPale, borderWidth: 1, borderColor: '#DC8270' }, legendSelected: { borderRadius: 4, backgroundColor: 'transparent', borderWidth: 2, borderColor: historyColors.ink },
+  detail: { position: 'relative', marginHorizontal: 1, marginTop: 16, marginBottom: 0, paddingTop: 14, paddingRight: 13, paddingBottom: 12, paddingLeft: 16, gap: 1, borderLeftWidth: 3, borderColor: historyColors.blue, borderTopRightRadius: 16, borderBottomRightRadius: 16, backgroundColor: historyColors.panel }, detailConnector: { position: 'absolute', top: -15, width: 2, height: 15, backgroundColor: '#78CDE7' }, detailDate: { color: historyColors.blueDeep, fontSize: 11, lineHeight: 14, letterSpacing: 1 }, stepsRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 7, marginTop: 4 }, selectedSteps: { fontSize: 27, lineHeight: 32 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 9 }, progressTrack: { flex: 1, minWidth: 0 }, progressPercent: { minWidth: 32, textAlign: 'right', color: historyColors.ink, fontSize: 12, lineHeight: 15 }, detailCaption: { fontSize: 12, lineHeight: 17, color: historyColors.muted, marginTop: 5 }, detailSkeleton: { width: '100%', height: 75, backgroundColor: '#DCEEF3' }, inset: { padding: spacing.lg }, disabled: { opacity: 0.35 }, pressed: { opacity: 0.7 },
 });
