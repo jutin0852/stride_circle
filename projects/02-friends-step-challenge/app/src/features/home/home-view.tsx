@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
+import { AppText } from '@/components/ui';
 import { getPersonalProgress, type HomeHealthState } from './home-model';
-import { homeColors, homeDarkColors, homeMotion } from './tokens';
+import { homeMotion, homeTheme } from './tokens';
 import { useReducedHomeMotion } from './use-home-motion';
 import { WalkingCompanion } from './walking-companion';
 
@@ -21,17 +22,17 @@ export type HomeViewProps = {
   social: { name: string; steps: number; status: 'loading' | 'idle' | 'sending' | 'sent' | 'error'; onCheer: () => Promise<void> } | null;
 };
 
-type HomeTheme = typeof homeColors;
-function Copy({ children, colors, style, ...props }: React.ComponentProps<typeof Text> & { colors: HomeTheme }) {
-  return <Text {...props} style={[styles.copy, { color: colors.ink }, style]}>{children}</Text>;
+type HomeTheme = ReturnType<typeof homeTheme>;
+function Copy({ children, colors, style, ...props }: React.ComponentProps<typeof AppText> & { colors: HomeTheme }) {
+  return <AppText {...props} style={[styles.copy, { color: colors.ink }, style]}>{children}</AppText>;
 }
 
 function Action({ children, onPress, label, disabled, busy, colors, secondary = false }: {
   children: React.ReactNode; onPress: () => void; label?: string; disabled?: boolean; busy?: boolean; colors: HomeTheme; secondary?: boolean;
 }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled || !!busy, busy: !!busy }} disabled={disabled || busy} onPress={onPress}
-    style={({ pressed }) => [styles.action, { backgroundColor: secondary ? colors.canvas : colors.blue, borderColor: secondary ? colors.line : '#087CA5', borderBottomWidth: pressed ? 2 : 5, transform: [{ translateY: pressed ? 2 : 0 }], opacity: disabled ? 0.55 : 1 }]}>
-    {busy ? <ActivityIndicator color={colors.ink} /> : <Copy colors={colors} style={[styles.actionLabel, !secondary && { color: '#102F3C' }]}>{children}</Copy>}
+    style={({ pressed }) => [styles.action, { backgroundColor: secondary ? colors.canvas : colors.blue, borderColor: secondary ? colors.line : colors.edge, borderBottomWidth: pressed ? 2 : 5, transform: [{ translateY: pressed ? 2 : 0 }], opacity: disabled ? 0.55 : 1 }]}>
+    {busy ? <ActivityIndicator color={colors.ink} /> : <Copy colors={colors} style={[styles.actionLabel, !secondary && { color: colors.onAction }]}>{children}</Copy>}
   </Pressable>;
 }
 
@@ -109,7 +110,7 @@ function Companion({ goalEvent, happy, helpful, reduced, colors, size }: { goalE
 }
 
 export function HomeView(props: HomeViewProps) {
-  const colors = useColorScheme() === 'dark' ? homeDarkColors : homeColors;
+  const colors = homeTheme(useColorScheme() === 'dark');
   const { width, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const narrow = width < 350 || fontScale > 1.3;
@@ -159,7 +160,7 @@ export function HomeView(props: HomeViewProps) {
           <Ionicons name="flame-outline" color={colors.coral} size={24} /><Copy colors={colors} style={styles.streakText}>{props.streak === null ? '—' : `${props.streak}-day streak`}</Copy>
         </Pressable>
       </View>
-      <Copy accessibilityRole="header" colors={colors} style={styles.title}>Your walking day,{ '\n' }<Text style={{ color: colors.edge }}>together.</Text></Copy>
+      <Copy accessibilityRole="header" colors={colors} style={styles.title}>Your walking day,{ '\n' }<AppText style={{ color: colors.edge, fontWeight: '800' }}>together.</AppText></Copy>
       <View style={[styles.hero, { backgroundColor: colors.ice, borderColor: colors.panelLine, padding: narrow ? 12 : 16 }]}>
         <View style={styles.progressCopy}>
           <Progress steps={props.steps} goal={props.goal} health={props.health} colors={colors} reduced={reduced} onGoal={props.onGoal} />
@@ -203,9 +204,9 @@ export function HomeView(props: HomeViewProps) {
         <View style={styles.fill}><Copy colors={colors} style={styles.remaining}>{props.social.name} is making strides</Copy><Copy colors={colors} style={{ color: colors.muted, fontSize: 13 }}>{props.social.steps.toLocaleString()} steps · {props.circle.name}</Copy>
           {props.social.status === 'error' ? <Copy colors={colors} accessibilityRole="alert" style={{ color: colors.coral, fontSize: 13 }}>Cheer couldn’t send. Try again.</Copy> : null}
         </View>
-        <Animated.View style={{ transform: [{ scale: cheerScale }] }}><Pressable accessibilityRole="button" accessibilityLabel={props.social.status === 'sent' ? 'Cheer sent' : `Send Nice work to ${props.social.name}`} accessibilityState={{ disabled: ['loading', 'sending', 'sent'].includes(props.social.status), busy: props.social.status === 'sending' }} disabled={['loading', 'sending', 'sent'].includes(props.social.status)} onPress={() => void props.social?.onCheer()} style={({ pressed }) => [styles.cheer, { transform: [{ translateY: pressed ? 2 : 0 }], opacity: props.social?.status === 'loading' ? 0.5 : 1 }]}>
-          {props.social.status === 'sending' ? <ActivityIndicator color="#5C440B" /> : <Ionicons name={props.social.status === 'sent' ? 'checkmark' : 'heart-outline'} color="#5C440B" size={18} />}
-          <Text style={styles.cheerLabel}>{props.social.status === 'sent' ? 'Cheer sent' : props.social.status === 'loading' ? 'Loading…' : props.social.status === 'sending' ? 'Sending…' : 'Nice work'}</Text>
+        <Animated.View style={{ transform: [{ scale: cheerScale }] }}><Pressable accessibilityRole="button" accessibilityLabel={props.social.status === 'sent' ? 'Cheer sent' : `Send Nice work to ${props.social.name}`} accessibilityState={{ disabled: ['loading', 'sending', 'sent'].includes(props.social.status), busy: props.social.status === 'sending' }} disabled={['loading', 'sending', 'sent'].includes(props.social.status)} onPress={() => void props.social?.onCheer()} style={({ pressed }) => [styles.cheer, { backgroundColor: colors.cheerBackground, borderColor: colors.cheerBorder, transform: [{ translateY: pressed ? 2 : 0 }], opacity: props.social?.status === 'loading' ? 0.5 : 1 }]}>
+          {props.social.status === 'sending' ? <ActivityIndicator color={colors.cheerText} /> : <Ionicons name={props.social.status === 'sent' ? 'checkmark' : 'heart-outline'} color={colors.cheerText} size={18} />}
+          <AppText style={[styles.cheerLabel, { color: colors.cheerText }]}>{props.social.status === 'sent' ? 'Cheer sent' : props.social.status === 'loading' ? 'Loading…' : props.social.status === 'sending' ? 'Sending…' : 'Nice work'}</AppText>
         </Pressable></Animated.View>
       </View> : null}
     </ScrollView>
@@ -246,6 +247,6 @@ const styles = StyleSheet.create({
   companion: { position: 'absolute', top: 28, right: 14 }, shadow: { position: 'absolute', height: 5, bottom: 5, borderRadius: 20 }, sparkles: { position: 'absolute', top: 0, left: 0, right: 0 },
   circleCard: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 20, gap: 12 }, eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1 }, circleHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 }, circleTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 }, switcher: { minHeight: 48, minWidth: 48, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, circleSummary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }, deadline: { gap: 2 }, standings: { gap: 6 }, standing: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, minHeight: 44, borderWidth: 1, borderRadius: 12 }, rank: { width: 24, textAlign: 'center', fontSize: 13, fontWeight: '800' }, standingName: { fontSize: 15, fontWeight: '700' }, standingSteps: { fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 },
   action: { minHeight: 48, borderRadius: 12, borderWidth: 2, padding: 10, alignItems: 'center', justifyContent: 'center' }, actionLabel: { fontWeight: '800', textAlign: 'center' }, waiting: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 96 }, empty: { gap: 12 },
-  social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF5D2', borderColor: '#A17A12', borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { color: '#5C440B', fontSize: 14, fontWeight: '800' },
+  social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { fontSize: 14, fontWeight: '800' },
   notice: { padding: 16, borderWidth: 1, borderRadius: 16 }, textAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }, modalBackdrop: { flex: 1, backgroundColor: '#00000066', justifyContent: 'flex-end' }, sheet: { maxHeight: '85%', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 20, gap: 12 }, sheetContent: { gap: 16, paddingBottom: 8 },
 });

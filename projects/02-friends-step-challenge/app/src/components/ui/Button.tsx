@@ -1,7 +1,8 @@
 import { ActivityIndicator, Pressable, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
-import { controlHeights, opacity, radii, semanticColors, spacing } from '@/design-system/tokens';
+import { controlHeights, opacity, radii, spacing } from '@/design-system/tokens';
+import { useAppTheme } from '@/design-system/use-app-theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
 export type ButtonSize = 'small' | 'medium' | 'large';
@@ -14,15 +15,15 @@ type ButtonProps = Omit<PressableProps, 'children'> & {
   variant?: ButtonVariant;
 };
 
-const variantStyles: Record<ButtonVariant, ViewStyle> = {
-  primary: { backgroundColor: semanticColors.brandAction },
-  secondary: { backgroundColor: semanticColors.brandDark },
-  tertiary: { backgroundColor: 'transparent', borderColor: semanticColors.border, borderWidth: 1 },
-  danger: { backgroundColor: semanticColors.dangerSurface, borderColor: semanticColors.dangerContent, borderWidth: 1 },
-};
-
 export function Button({ children, disabled, loading = false, onPress, size = 'large', style, trailing, variant = 'primary', ...props }: ButtonProps) {
+  const { colors } = useAppTheme();
   const isDisabled = Boolean(disabled || loading);
+  const variantStyles: Record<ButtonVariant, ViewStyle> = {
+    primary: { backgroundColor: colors.brandAction },
+    secondary: { backgroundColor: colors.brandDark },
+    tertiary: { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 1 },
+    danger: { backgroundColor: colors.dangerSurface, borderColor: colors.dangerContent, borderWidth: 1 },
+  };
 
   return (
     <Pressable
@@ -41,7 +42,7 @@ export function Button({ children, disabled, loading = false, onPress, size = 'l
         typeof style === 'function' ? style({ pressed }) : style,
       ]}
     >
-      {loading ? <ActivityIndicator color={variant === 'primary' || variant === 'secondary' ? semanticColors.contentOnBrand : semanticColors.contentPrimary} /> : <>
+      {loading ? <ActivityIndicator color={variant === 'primary' || variant === 'secondary' ? colors.contentOnBrand : colors.contentPrimary} /> : <>
         <AppText tone={variant === 'primary' ? 'onBrand' : variant === 'danger' ? 'danger' : variant === 'secondary' ? 'inverse' : 'primary'} variant="button">{children}</AppText>
         {trailing}
       </>}

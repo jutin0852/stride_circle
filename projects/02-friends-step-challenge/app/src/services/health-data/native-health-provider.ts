@@ -24,8 +24,8 @@ function isAndroid() {
   return process.env.EXPO_OS === 'android';
 }
 
-function shouldUsePedometerFallback() {
-  return process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER?.trim().toLowerCase() === 'pedometer';
+export function shouldUsePedometerFallback(platform: string | undefined, providerSetting: string | undefined) {
+  return platform === 'ios' && providerSetting?.trim().toLowerCase() === 'pedometer';
 }
 
 /**
@@ -37,7 +37,10 @@ function shouldUsePedometerFallback() {
 export function createHealthDataProvider(): HealthDataProvider {
   const fallback = createExpoPedometerProvider();
   const nativeSource = isAndroid() ? 'health-connect' : 'healthkit';
-  let activeProvider: HealthDataProvider | null = shouldUsePedometerFallback() ? fallback : null;
+  let activeProvider: HealthDataProvider | null = shouldUsePedometerFallback(
+    process.env.EXPO_OS,
+    process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER,
+  ) ? fallback : null;
   let readQueue: Promise<unknown> = Promise.resolve();
 
   async function getAvailableNativeModule() {

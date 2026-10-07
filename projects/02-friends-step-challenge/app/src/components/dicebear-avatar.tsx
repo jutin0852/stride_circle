@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 
 import { getAvatarUrl, type AvatarChoice } from '@/lib/avatar';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 export function DicebearAvatar({ choice, fallback, size = 44 }: { choice: AvatarChoice; fallback: string; size?: number }) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [failed, setFailed] = useState(false);
 
   return (
@@ -14,7 +17,7 @@ export function DicebearAvatar({ choice, fallback, size = 44 }: { choice: Avatar
   );
 }
 
-const styles = StyleSheet.create({
-  frame: { alignItems: 'center', backgroundColor: '#E8F0FF', justifyContent: 'center', overflow: 'hidden' },
-  fallback: { color: '#2563EB', fontWeight: '800' },
-});
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
+  frame: { alignItems: 'center', backgroundColor: colors.soft, justifyContent: 'center', overflow: 'hidden' },
+  fallback: { color: colors.accentPressed, fontWeight: '800' },
+}); }

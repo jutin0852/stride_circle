@@ -6,10 +6,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-router",
       "expo-web-browser",
+      "expo-system-ui",
       [
         "expo-splash-screen",
         {
@@ -18,7 +19,7 @@
           "imageWidth": 280,
           "resizeMode": "contain",
           "dark": {
-            "backgroundColor": "#2563EB",
+            "backgroundColor": "#111F29",
             "image": "./assets/stride-circle-splash.png"
           }
         }
@@ -49,7 +50,11 @@
     "ios": {
       "bundleIdentifier": "com.stridecircle.app",
       "buildNumber": "1",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.background-delivery": true
+      }
     },
     "android": {
       "adaptiveIcon": {
