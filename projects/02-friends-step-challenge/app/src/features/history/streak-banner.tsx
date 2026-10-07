@@ -19,14 +19,14 @@ export function StreakEmblem({ large = false, compact = false }: { large?: boole
 export function StreakBanner({ summary, onPress }: { summary: StreakSummary; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={`${summary.currentStreak} day walking streak. View your milestones`} onPress={onPress} style={({ pressed }) => [styles.banner, pressed && styles.pressed]}>
     <View style={styles.copy}><AppText variant="bodySmall" style={styles.copyStrong}>Look at you, showing up.</AppText></View>
-    <View style={styles.streakDays}><Ionicons name="flame" size={28} color={historyColors.coral} /><AppText variant="numeric" style={styles.streakNumber}>{summary.currentStreak}</AppText><AppText variant="label" tone="secondary">day streak</AppText></View>
+    <View style={styles.streakDays}><Ionicons name="flame" size={22} color={historyColors.coral} /><AppText variant="numeric" style={styles.streakNumber}>{summary.currentStreak}</AppText><AppText variant="label" tone="secondary" style={styles.streakLabel}>day streak</AppText></View>
   </Pressable>;
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 2, paddingHorizontal: 2, paddingBottom: 12 },
-  copy: { flex: 1 }, copyStrong: { color: historyColors.ink, fontWeight: '800' },
-  streakDays: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs }, streakNumber: { color: historyColors.ink, fontSize: 27, lineHeight: 30 },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 1, paddingHorizontal: 2, paddingBottom: 8 },
+  copy: { flex: 1 }, copyStrong: { color: historyColors.ink, fontWeight: '800', fontSize: 12, lineHeight: 16 },
+  streakDays: { flexDirection: 'row', alignItems: 'center', gap: 3 }, streakNumber: { color: historyColors.ink, fontSize: 23, lineHeight: 26 }, streakLabel: { fontSize: 10, lineHeight: 13 },
   emblem: { width: 86, height: 94, justifyContent: 'center', alignItems: 'center' },
   emblemLarge: { width: 140, height: 144 },
   emblemCompact: { width: 66, height: 70 },

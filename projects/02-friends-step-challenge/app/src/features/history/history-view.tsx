@@ -38,8 +38,8 @@ export function HistoryView(props: HistoryViewProps) {
   const streakError = overview.status === 'error' || goal.status === 'error';
   return <>
     <ScrollView style={styles.page} refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} tintColor={homeColors.edge} />} contentContainerStyle={styles.scroll}>
-      <View style={[styles.content, { paddingHorizontal: compact ? spacing.lg : 18, paddingTop: insets.top + 6 }]}>
-        <View style={styles.header}><View style={styles.heading}><AppText variant="eyebrow" style={styles.kicker}>YOUR JOURNEY</AppText><AppText accessibilityRole="header" variant="headline" style={styles.title}>History</AppText></View><View accessible={false} style={styles.headerIcon}><Ionicons name="calendar-outline" size={24} color={homeColors.edge} /></View></View>
+      <View style={[styles.content, { paddingHorizontal: compact ? spacing.lg : 18, paddingTop: insets.top + 4 }]}>
+        <View style={styles.header}><View style={styles.heading}><AppText variant="eyebrow" style={styles.kicker}>YOUR JOURNEY</AppText><AppText accessibilityRole="header" variant="headline" style={styles.title}>History</AppText></View><View accessible={false} style={styles.headerIcon}><Ionicons name="calendar-outline" size={20} color={homeColors.edge} /></View></View>
         {streakReady ? <StreakBanner summary={summary} onPress={() => setMilestonesVisible(true)} /> : streakError ? <StateCard tone="error" title="Your streak couldn’t load" description="We need your saved steps and daily goal before calculating milestones." actionLabel="Try again" onAction={props.onRefresh} /> : <Skeleton style={{ width: '100%', height: 82, borderRadius: 20, backgroundColor: '#DCEEF3' }} />}
         <WalkingCalendar month={month} today={today} selected={selected} records={calendar.records} goal={goal.goal} goalReady={goal.status === 'ready'} protectedDays={streakReady ? summary.protectedDateKeys : []} status={calendar.status} compact={compact} onMonthChange={props.onMonthChange} onSelect={props.onSelect} onRetry={calendar.refresh} />
         <HistoryRecap records={overview.records} today={today} goal={goal.goal} goalReady={goal.status === 'ready'} status={overview.status} onRetry={overview.refresh} />
@@ -53,7 +53,7 @@ export function HistoryView(props: HistoryViewProps) {
 const styles = StyleSheet.create({
   page: { backgroundColor: historyColors.screen }, scroll: { alignItems: 'center' },
   content: { width: '100%', maxWidth: 600, paddingBottom: spacing.xxxl },
-  header: { flexDirection: 'row', gap: spacing.md, alignItems: 'center', paddingHorizontal: spacing.xs, paddingBottom: 8 }, heading: { flex: 1, gap: 2 },
-  kicker: { color: homeColors.edge }, title: { color: homeColors.ink, fontSize: 30, lineHeight: 34, letterSpacing: -0.8 },
-  headerIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: homeColors.ice, borderColor: homeColors.panelLine, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', paddingHorizontal: spacing.xs, paddingBottom: 4 }, heading: { flex: 1, gap: 1 },
+  kicker: { color: homeColors.edge }, title: { color: homeColors.ink, fontSize: 24, lineHeight: 28, letterSpacing: -0.6 },
+  headerIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: homeColors.ice, borderColor: homeColors.panelLine, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });
