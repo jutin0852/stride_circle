@@ -2,6 +2,7 @@ import { createContext, use, useEffect, useState, type PropsWithChildren } from 
 import { onAuthStateChanged, type User } from 'firebase/auth';
 
 import { auth, firebaseIsConfigured } from '@/lib/firebase';
+import { restoreBackgroundRecording, stopBackgroundRecordingOnSignOut } from '@/lib/background-activity';
 
 type AuthContextValue = {
   isConfigured: boolean;
@@ -19,6 +20,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!auth) return;
 
     return onAuthStateChanged(auth, (nextUser) => {
+      if (!nextUser) void stopBackgroundRecordingOnSignOut().catch(() => {});
+      else if (process.env.EXPO_OS !== 'web') void restoreBackgroundRecording(nextUser.uid).catch(() => {});
       setUser(nextUser);
       setIsLoading(false);
     });

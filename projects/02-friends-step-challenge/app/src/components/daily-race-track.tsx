@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { type Friend, formatSteps } from '@/data/circle';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 import { Avatar } from './avatar';
 
 type DailyRaceTrackProps = {
@@ -15,6 +16,8 @@ type DailyRaceTrackProps = {
  * movement instead of suggesting that a member must reach a fixed target.
  */
 export function DailyRaceTrack({ friends, isCurrentDay }: DailyRaceTrackProps) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const highestSteps = Math.max(...friends.map((friend) => friend.steps), 0);
   const first = friends[0];
   const second = friends[1];
@@ -78,7 +81,7 @@ function getTrackProgress(steps: number, highestSteps: number) {
   return 8 + (steps / highestSteps) * 76;
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   card: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 24, borderWidth: 1, gap: 18, overflow: 'hidden', padding: 18 },
   header: { alignItems: 'flex-start', flexDirection: 'row', gap: 12, justifyContent: 'space-between' },
   title: { color: colors.ink, fontSize: 19, fontWeight: '800', letterSpacing: -0.3 },
@@ -97,8 +100,8 @@ const styles = StyleSheet.create({
   lane: { flex: 1, height: 42, overflow: 'hidden', position: 'relative' },
   laneLine: { borderColor: colors.border, borderStyle: 'dashed', borderTopWidth: 2, left: 0, position: 'absolute', right: 0, top: 20 },
   avatarPosition: { marginLeft: -17, position: 'absolute', top: 3 },
-  medal: { alignItems: 'center', backgroundColor: colors.accentPressed, borderColor: '#FFFFFF', borderRadius: 10, borderWidth: 2, height: 20, justifyContent: 'center', position: 'absolute', right: -6, top: -8, width: 20, zIndex: 2 },
+  medal: { alignItems: 'center', backgroundColor: colors.accentPressed, borderColor: colors.card, borderRadius: 10, borderWidth: 2, height: 20, justifyContent: 'center', position: 'absolute', right: -6, top: -8, width: 20, zIndex: 2 },
   steps: { color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'], fontWeight: '800', textAlign: 'right', width: 42 },
   youText: { color: colors.accentPressed },
   note: { color: colors.muted, fontSize: 12, lineHeight: 17 },
-});
+}); }

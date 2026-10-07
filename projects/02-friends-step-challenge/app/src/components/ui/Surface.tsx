@@ -1,6 +1,7 @@
 import { StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 
-import { elevation, radii, semanticColors, spacing } from '@/design-system/tokens';
+import { elevation, radii, spacing } from '@/design-system/tokens';
+import { useAppTheme } from '@/design-system/use-app-theme';
 
 export type SurfaceVariant = 'card' | 'raised' | 'soft' | 'brand' | 'outline';
 
@@ -10,15 +11,20 @@ type SurfaceProps = ViewProps & {
   variant?: SurfaceVariant;
 };
 
-const variantStyles: Record<SurfaceVariant, ViewStyle> = {
-  card: { backgroundColor: semanticColors.card, borderBottomWidth: 4, borderColor: semanticColors.borderStrong, borderWidth: 2 },
-  raised: { backgroundColor: semanticColors.raised, ...elevation.card },
-  soft: { backgroundColor: semanticColors.soft },
-  brand: { backgroundColor: semanticColors.brandAction },
-  outline: { backgroundColor: 'transparent', borderColor: semanticColors.border, borderWidth: 1 },
-};
-
 export function Surface({ children, padding = 'xl', radius = 'lg', style, variant = 'card', ...props }: SurfaceProps) {
+  const { colors, isDark } = useAppTheme();
+  const variantStyles: Record<SurfaceVariant, ViewStyle> = {
+    card: {
+      backgroundColor: colors.card,
+      borderBottomWidth: isDark ? 0 : 4,
+      borderColor: isDark ? colors.border : colors.borderStrong,
+      borderWidth: isDark ? 1 : 2,
+    },
+    raised: { backgroundColor: colors.raised, ...(isDark ? { borderColor: colors.borderSubtle, borderWidth: 1 } : elevation.card) },
+    soft: { backgroundColor: colors.soft },
+    brand: { backgroundColor: colors.brandAction },
+    outline: { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 1 },
+  };
   return <View {...props} style={[styles.base, variantStyles[variant], { borderRadius: radii[radius], padding: spacing[padding] }, style]}>{children}</View>;
 }
 

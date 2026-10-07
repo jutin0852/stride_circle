@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/auth/auth-provider';
@@ -7,9 +8,11 @@ import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { AppText } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, signOutCurrentUser } from '@/lib/auth';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 export default function ProfileRoute() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const profile = useUserProfile(user);
   const displayName = profile.displayName;
@@ -53,8 +56,8 @@ function getInitials(name: string) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC';
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background }, content: { gap: 14, padding: 24, paddingBottom: 36 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1.2 },
   profileCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 22, borderWidth: 2, flexDirection: 'row', marginTop: 8, padding: 18 }, profileText: { flex: 1, gap: 4, marginLeft: 14 }, profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, profileCaption: { color: colors.muted, fontSize: 13 }, editIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 14, height: 40, justifyContent: 'center', width: 40 },
   signOut: { alignItems: 'center', borderBottomWidth: 2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, pressed: { opacity: 0.84, transform: [{ translateY: 2 }] },
-});
+}); }

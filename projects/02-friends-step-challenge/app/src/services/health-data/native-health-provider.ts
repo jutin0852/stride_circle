@@ -24,13 +24,10 @@ function isAndroid() {
   return process.env.EXPO_OS === 'android';
 }
 
-function shouldUsePedometerFallback() {
-  const configuredProvider = process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER?.trim().toLowerCase();
-
-  // Free-signed iOS builds cannot carry the HealthKit entitlement. Use the
-  // foreground Pedometer path unless Apple Health is explicitly requested.
-  // Android keeps its Health Connect default.
-  return !isAndroid() && configuredProvider !== 'healthkit';
+export function shouldUsePedometerFallback(platform: string | undefined, providerSetting: string | undefined) {
+  // iOS defaults to foreground pedometer for free-signed builds; HealthKit is
+  // selected explicitly only in a build with the required entitlement.
+  return platform === 'ios' && providerSetting?.trim().toLowerCase() !== 'healthkit';
 }
 
 /**
@@ -42,7 +39,10 @@ function shouldUsePedometerFallback() {
 export function createHealthDataProvider(): HealthDataProvider {
   const fallback = createExpoPedometerProvider();
   const nativeSource = isAndroid() ? 'health-connect' : 'healthkit';
-  let activeProvider: HealthDataProvider | null = shouldUsePedometerFallback() ? fallback : null;
+  let activeProvider: HealthDataProvider | null = shouldUsePedometerFallback(
+    process.env.EXPO_OS,
+    process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER,
+  ) ? fallback : null;
   let readQueue: Promise<unknown> = Promise.resolve();
 
   async function getAvailableNativeModule() {

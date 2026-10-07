@@ -5,9 +5,11 @@ Last reviewed: 2026-10-02
 
 This is the implementation contract for the Stride Circle redesign. The screenshot reference establishes the visual language; the launch brief remains authoritative for product behavior, privacy, and scope.
 
-## Home approval update — 2026-10-05
+## Home and appearance approval updates — 2026-10-07
 
-For Home, the user-approved **B — Better together** direction in [HOME_B_IMPLEMENTATION_HANDOFF.md](HOME_B_IMPLEMENTATION_HANDOFF.md) supersedes this document's older cream/lime palette and Home composition. Routine health sync controls/status are removed from healthy Home; private settings holds connection details and recovery. Preserve exceptions for unavailable/incomplete data. Other screens are not automatically redesigned by this decision. Custom motion remains proposed, pending review.
+For Home, the user-approved **B — Better together** direction in [HOME_B_IMPLEMENTATION_HANDOFF.md](HOME_B_IMPLEMENTATION_HANDOFF.md) supersedes this document's older cream/lime palette and Home composition. Routine health sync controls/status are removed from healthy Home; private settings holds connection details and recovery. Preserve exceptions for unavailable/incomplete data. Custom motion remains proposed, pending review.
+
+The approved OpenDesign **Dark Mode Color System** is implemented as a system-appearance variant, not a new screen redesign. Light appearance remains unchanged. Dark appearance uses the layered blue-charcoal, cyan, green, amber, and coral roles in `darkModePalette` within [`src/design-system/tokens.ts`](../src/design-system/tokens.ts); shared primitives and feature screens map those roles without changing their behavior or layout. Avoid pure-black canvases, white cards in dark mode, or reusing light-mode surface hex values. `app.json` follows the device appearance, and the native app must be rebuilt after this config change.
 
 ## North star
 
@@ -37,14 +39,14 @@ Sync steps → see circle progress → choose to walk → compete or cheer → c
 
 ## Visual personality
 
-Stride Circle is warm, optimistic, and editorial. It should feel more like a friendly neighborhood walking club than a medical dashboard or a competitive sports tracker.
+Stride Circle is optimistic and playful, but should feel like a friendly neighborhood walking club rather than a medical dashboard or a competitive sports tracker. The approved Home B light appearance uses its current bright cyan direction; dark appearance uses the separate layered palette described above.
 
 Use:
 
-- Warm cream canvas and card surfaces.
-- Deep teal-black ink for strong hierarchy.
-- Lime for the primary invitation to act.
-- Coral, lavender, sky, and peach as celebratory supporting colors.
+- Distinct canvas, card, and raised-surface roles in both appearances.
+- High-contrast primary and secondary text without pure white cards in dark mode.
+- Cyan for the primary action; success green, protected amber, coral, and streak orange remain semantically distinct.
+- Inclusive, illustrated avatars and celebratory supporting colors.
 - Rounded cards with restrained borders and soft elevation.
 - Inclusive, illustrated avatars and landscape scenes.
 - Large numeric moments for steps, rank, streaks, and milestones.
@@ -59,7 +61,7 @@ Avoid:
 
 ## Token source of truth
 
-The code source is [`src/design-system/tokens.ts`](../src/design-system/tokens.ts). The existing [`src/theme.ts`](../src/theme.ts) exports compatibility aliases while screens migrate to the new system.
+The code source of truth is [`src/design-system/tokens.ts`](../src/design-system/tokens.ts). Screens should read colors through `useAppTheme()` or `useAppColors()` so system-appearance changes update the UI. [`src/theme.ts`](../src/theme.ts) remains a fixed light-mode compatibility export for older external imports; do not use it for new screen styles.
 
 ### Color roles
 
@@ -70,8 +72,8 @@ The code source is [`src/design-system/tokens.ts`](../src/design-system/tokens.t
 | Soft | `semanticColors.soft` | Secondary panels and progress tracks |
 | Primary content | `semanticColors.contentPrimary` | Headings, totals, primary labels |
 | Secondary content | `semanticColors.contentSecondary` | Supporting copy and metadata |
-| Brand action | `semanticColors.brandAction` | Primary lime CTA and progress fill |
-| Brand dark | `semanticColors.brandDark` | Selected tabs and high-contrast controls |
+| Brand action | `semanticColors.brandAction` | Primary cyan CTA and progress fill |
+| Brand dark | `semanticColors.brandDark` | Secondary/high-contrast controls |
 | Success | `semanticColors.successSurface` / `successContent` | Goal completion, verified sync |
 | Warning | `semanticColors.warningSurface` / `warningContent` | Stale data, pending permission |
 | Danger | `semanticColors.dangerSurface` / `dangerContent` | Errors, destructive actions, reports |
@@ -121,7 +123,7 @@ Numeric values use tabular numerals and should remain readable when formatted wi
 
 ### Elevation and motion
 
-- Use `elevation.card` for raised content that needs separation from the cream canvas.
+- Use `elevation.card` for raised content that needs separation from the current canvas.
 - Use `elevation.floating` for menus, sheets, and temporary overlays.
 - Prefer borders over shadows for ordinary cards.
 - Use `motion.fast` for press feedback, `motion.standard` for state changes, and `motion.expressive` only for celebrations.
@@ -209,7 +211,7 @@ Every feature screen needs these states before it is considered complete:
 - Do not communicate rank, sync status, or errors by color alone.
 - Support Dynamic Type and avoid fixed-height containers around multi-line copy.
 - Use `accessibilityRole`, `accessibilityState`, and `accessibilityValue` for buttons, tabs, progress, and selected states.
-- Keep contrast strong on cream surfaces and test lime controls with dark text.
+- Keep contrast strong in both appearances and use the dark foreground token on cyan primary controls.
 - Reduced motion must preserve meaning, not remove completion feedback.
 
 ## Content rules

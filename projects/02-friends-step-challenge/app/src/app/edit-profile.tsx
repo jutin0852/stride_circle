@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -8,9 +8,11 @@ import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { AppText } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, updateUserDisplayName } from '@/lib/auth';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 export default function EditProfileRoute() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const profile = useUserProfile(user);
   const displayName = profile.displayName;
@@ -48,7 +50,7 @@ export default function EditProfileRoute() {
       <View style={styles.nameCard}><AppText style={styles.fieldLabel}>DISPLAY NAME</AppText><TextInput accessibilityLabel="Display name" autoCapitalize="words" maxLength={40} onChangeText={setDraftName} style={styles.input} value={draftName} /></View>
 
       <Pressable accessibilityRole="button" disabled={isSaving} onPress={() => void handleSave()} style={({ pressed }) => [styles.saveButton, isSaving && styles.disabled, pressed && !isSaving && styles.pressed]}>
-        {isSaving ? <ActivityIndicator color={colors.accentText} /> : <AppText style={styles.saveText}>Save changes</AppText>}
+        {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <AppText style={styles.saveText}>Save changes</AppText>}
       </Pressable>
     </ScrollView>
   );
@@ -56,7 +58,7 @@ export default function EditProfileRoute() {
 
 function getInitials(name: string) { return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC'; }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background }, content: { gap: 14, padding: 24, paddingBottom: 40 }, nav: { flexDirection: 'row' }, roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, height: 40, justifyContent: 'center', width: 40 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 32, fontWeight: '800', letterSpacing: -1.1 }, sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800', marginTop: 10 },
-  characterCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 20, borderWidth: 2, flexDirection: 'row', padding: 16 }, characterCopy: { flex: 1, marginLeft: 13 }, characterCaption: { color: colors.muted, fontSize: 13, lineHeight: 18 }, nameCard: { backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 18, borderWidth: 2, gap: 7, padding: 17 }, fieldLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }, input: { backgroundColor: colors.background, borderColor: colors.border, borderRadius: 13, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 51, paddingHorizontal: 14 }, saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderBottomWidth: 4, borderColor: colors.accentBorder, borderRadius: 15, borderWidth: 2, justifyContent: 'center', marginTop: 10, minHeight: 55 }, saveText: { color: colors.accentText, fontSize: 15, fontWeight: '800' }, disabled: { opacity: 0.6 }, pressed: { borderBottomWidth: 2, opacity: 0.84, transform: [{ translateY: 2 }] },
-});
+  characterCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 20, borderWidth: 2, flexDirection: 'row', padding: 16 }, characterCopy: { flex: 1, marginLeft: 13 }, characterCaption: { color: colors.muted, fontSize: 13, lineHeight: 18 }, nameCard: { backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 18, borderWidth: 2, gap: 7, padding: 17 }, fieldLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }, input: { backgroundColor: colors.background, borderColor: colors.border, borderRadius: 13, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 51, paddingHorizontal: 14 }, saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderBottomWidth: 4, borderColor: colors.brandActionPressed, borderRadius: 15, borderWidth: 2, justifyContent: 'center', marginTop: 10, minHeight: 55 }, saveText: { color: colors.onAccent, fontSize: 15, fontWeight: '800' }, disabled: { opacity: 0.6 }, pressed: { borderBottomWidth: 2, opacity: 0.84, transform: [{ translateY: 2 }] },
+}); }

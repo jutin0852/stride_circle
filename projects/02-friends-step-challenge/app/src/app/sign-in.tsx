@@ -1,7 +1,7 @@
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/auth-provider';
 import { GoogleMark } from '@/components/google-mark';
 import { createAccount, getAuthErrorMessage, signInWithEmail, signInWithGoogleIdToken } from '@/lib/auth';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,6 +17,8 @@ type Mode = 'sign-in' | 'sign-up';
 type Field = 'displayName' | 'email' | 'password';
 
 export default function SignInRoute() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { isConfigured, isLoading, user } = useAuth();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<Mode>('sign-in');
@@ -150,14 +152,14 @@ export default function SignInRoute() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background, flex: 1 },
   loadingPage: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: 14, justifyContent: 'center' },
-  loadingMark: { alignItems: 'center', backgroundColor: colors.hero, borderColor: colors.accentBorder, borderRadius: 18, borderWidth: 2, height: 58, justifyContent: 'center', width: 58 },
+  loadingMark: { alignItems: 'center', backgroundColor: colors.hero, borderColor: colors.brandActionPressed, borderRadius: 18, borderWidth: 2, height: 58, justifyContent: 'center', width: 58 },
   loadingText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
   content: { gap: 22, minHeight: '100%', paddingHorizontal: 28 },
   brand: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  brandMark: { alignItems: 'center', backgroundColor: colors.accent, borderColor: colors.accentBorder, borderRadius: 10, borderWidth: 2, height: 30, justifyContent: 'center', width: 30 }, brandMarkText: { color: colors.accentText, fontSize: 11, fontWeight: '900', letterSpacing: -0.4 }, brandName: { color: colors.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+  brandMark: { alignItems: 'center', backgroundColor: colors.accent, borderColor: colors.brandActionPressed, borderRadius: 10, borderWidth: 2, height: 30, justifyContent: 'center', width: 30 }, brandMarkText: { color: colors.onAccent, fontSize: 11, fontWeight: '900', letterSpacing: -0.4 }, brandName: { color: colors.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
   intro: { gap: 9, marginTop: 58 },
   title: { color: colors.ink, fontSize: 39, fontWeight: '900', letterSpacing: -1.8, lineHeight: 43 },
   subtitle: { color: colors.muted, fontSize: 16, lineHeight: 23 },
@@ -165,10 +167,10 @@ const styles = StyleSheet.create({
   form: { gap: 12 }, field: { gap: 9 }, fieldLabel: { color: colors.ink, fontSize: 16, fontWeight: '700' },
   input: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: 58, paddingHorizontal: 16 }, inputFocused: { borderColor: colors.accentPressed, borderWidth: 2 },
   passwordField: { gap: 9 }, passwordInputWrapper: { position: 'relative' }, passwordInput: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: 58, paddingHorizontal: 16, paddingRight: 42 }, passwordToggle: { position: 'absolute', right: 12, top: '50%', transform: [{ translateY: -11 }], alignItems: 'center', justifyContent: 'center' }, passwordTogglePressed: { opacity: 0.6 },
-  primaryButton: { alignItems: 'center', backgroundColor: colors.accent, borderBottomWidth: 4, borderColor: colors.accentBorder, borderRadius: 16, borderWidth: 2, minHeight: 58, justifyContent: 'center', marginTop: 8 }, primaryButtonText: { color: colors.accentText, fontSize: 16, fontWeight: '900' },
-  disabledButton: { opacity: 0.48 }, error: { color: colors.danger, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  primaryButton: { alignItems: 'center', backgroundColor: colors.accent, borderBottomWidth: 4, borderColor: colors.brandActionPressed, borderRadius: 16, borderWidth: 2, minHeight: 58, justifyContent: 'center', marginTop: 8 }, primaryButtonText: { color: colors.onAccent, fontSize: 16, fontWeight: '900' },
+  disabledButton: { opacity: 0.48 }, error: { color: colors.dangerContent, fontSize: 13, fontWeight: '700', lineHeight: 18 },
   googleButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 30, borderWidth: 1, flexDirection: 'row', justifyContent: 'center', minHeight: 58, position: 'relative' }, googleIcon: { left: 18, position: 'absolute' }, googleText: { color: colors.ink, fontSize: 17, fontWeight: '800' },
   buttonPressed: { borderBottomWidth: 2, opacity: 0.88, transform: [{ translateY: 2 }] },
   legal: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 2, textAlign: 'center' },
   modeButton: { alignItems: 'center', marginTop: 2, padding: 11 }, modeButtonPressed: { opacity: 0.68 }, modeText: { color: colors.accentPressed, fontSize: 14, fontWeight: '800' },
-});
+}); }

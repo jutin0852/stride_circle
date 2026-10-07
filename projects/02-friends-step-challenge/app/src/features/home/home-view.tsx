@@ -7,7 +7,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { AppText } from '@/components/ui';
 import { getPersonalProgress, type HomeHealthState } from './home-model';
-import { homeColors, homeDarkColors, homeMotion } from './tokens';
+import { homeMotion, homeTheme } from './tokens';
 import { useReducedHomeMotion } from './use-home-motion';
 import { WalkingCompanion } from './walking-companion';
 
@@ -23,7 +23,7 @@ export type HomeViewProps = {
   social: { name: string; steps: number; status: 'loading' | 'idle' | 'sending' | 'sent' | 'error'; onCheer: () => Promise<void> } | null;
 };
 
-type HomeTheme = Record<keyof typeof homeColors, string>;
+type HomeTheme = ReturnType<typeof homeTheme>;
 function Copy({ children, colors, style, ...props }: React.ComponentProps<typeof AppText> & { colors: HomeTheme }) {
   return <AppText {...props} style={[styles.copy, { color: colors.ink }, style]}>{children}</AppText>;
 }
@@ -32,8 +32,8 @@ function Action({ children, onPress, label, disabled, busy, colors, secondary = 
   children: React.ReactNode; onPress: () => void; label?: string; disabled?: boolean; busy?: boolean; colors: HomeTheme; secondary?: boolean;
 }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled || !!busy, busy: !!busy }} disabled={disabled || busy} onPress={onPress}
-    style={({ pressed }) => [styles.action, { backgroundColor: secondary ? colors.canvas : colors.blue, borderColor: secondary ? colors.line : '#087CA5', borderBottomWidth: pressed ? 2 : 5, transform: [{ translateY: pressed ? 2 : 0 }], opacity: disabled ? 0.55 : 1 }]}>
-    {busy ? <ActivityIndicator color={colors.ink} /> : <Copy colors={colors} style={[styles.actionLabel, !secondary && { color: '#102F3C' }]}>{children}</Copy>}
+    style={({ pressed }) => [styles.action, { backgroundColor: secondary ? colors.canvas : colors.blue, borderColor: secondary ? colors.line : colors.edge, borderBottomWidth: pressed ? 2 : 5, transform: [{ translateY: pressed ? 2 : 0 }], opacity: disabled ? 0.55 : 1 }]}>
+    {busy ? <ActivityIndicator color={colors.ink} /> : <Copy colors={colors} style={[styles.actionLabel, !secondary && { color: colors.onAction }]}>{children}</Copy>}
   </Pressable>;
 }
 
@@ -112,7 +112,7 @@ function Companion({ goalEvent, happy, helpful, reduced, colors, size }: { goalE
 
 export function HomeView(props: HomeViewProps) {
   const colorScheme = useColorScheme();
-  const colors = colorScheme === 'dark' ? homeDarkColors : homeColors;
+  const colors = homeTheme(colorScheme === 'dark');
   const { width, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const narrow = width < 350 || fontScale > 1.3;
@@ -219,19 +219,18 @@ export function HomeView(props: HomeViewProps) {
         <View style={styles.fill}><Copy colors={colors} style={styles.remaining}>{props.social.name} is making strides</Copy><Copy colors={colors} style={{ color: colors.muted, fontSize: 13 }}>{props.social.steps.toLocaleString()} steps · {props.circle.name}</Copy>
           {props.social.status === 'error' ? <Copy colors={colors} accessibilityRole="alert" style={{ color: colors.coral, fontSize: 13 }}>Cheer couldn’t send. Try again.</Copy> : null}
         </View>
-        <Animated.View style={{ transform: [{ scale: cheerScale }] }}><Pressable accessibilityRole="button" accessibilityLabel={props.social.status === 'sent' ? 'Cheer sent' : `Send Nice work to ${props.social.name}`} accessibilityState={{ disabled: ['loading', 'sending', 'sent'].includes(props.social.status), busy: props.social.status === 'sending' }} disabled={['loading', 'sending', 'sent'].includes(props.social.status)} onPress={() => void props.social?.onCheer()} style={({ pressed }) => [styles.cheer, { transform: [{ translateY: pressed ? 2 : 0 }], opacity: props.social?.status === 'loading' ? 0.5 : 1 }]}>
-          {props.social.status === 'sending' ? <ActivityIndicator color="#5C440B" /> : <Ionicons name={props.social.status === 'sent' ? 'checkmark' : 'heart-outline'} color="#5C440B" size={18} />}
-          <AppText style={styles.cheerLabel}>{props.social.status === 'sent' ? 'Cheer sent' : props.social.status === 'loading' ? 'Loading…' : props.social.status === 'sending' ? 'Sending…' : 'Nice work'}</AppText>
+        <Animated.View style={{ transform: [{ scale: cheerScale }] }}><Pressable accessibilityRole="button" accessibilityLabel={props.social.status === 'sent' ? 'Cheer sent' : `Send Nice work to ${props.social.name}`} accessibilityState={{ disabled: ['loading', 'sending', 'sent'].includes(props.social.status), busy: props.social.status === 'sending' }} disabled={['loading', 'sending', 'sent'].includes(props.social.status)} onPress={() => void props.social?.onCheer()} style={({ pressed }) => [styles.cheer, { backgroundColor: colors.cheerBackground, borderColor: colors.cheerBorder, transform: [{ translateY: pressed ? 2 : 0 }], opacity: props.social?.status === 'loading' ? 0.5 : 1 }]}>
+          {props.social.status === 'sending' ? <ActivityIndicator color={colors.cheerText} /> : <Ionicons name={props.social.status === 'sent' ? 'checkmark' : 'heart-outline'} color={colors.cheerText} size={18} />}
+          <AppText style={[styles.cheerLabel, { color: colors.cheerText }]}>{props.social.status === 'sent' ? 'Cheer sent' : props.social.status === 'loading' ? 'Loading…' : props.social.status === 'sending' ? 'Sending…' : 'Nice work'}</AppText>
         </Pressable></Animated.View>
       </View> : null}
     </ScrollView>
     <Modal animationType="none" presentationStyle="overFullScreen" statusBarTranslucent transparent visible={sheet !== null} onRequestClose={() => setSheet(null)}>
-      <View style={styles.modalBackdrop}>
+      <View style={[styles.modalBackdrop, { backgroundColor: colorScheme === 'dark' ? 'rgba(22, 36, 43, 0.28)' : 'rgba(232, 248, 255, 0.30)' }]}>
         <BlurView intensity={24} tint={colorScheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colorScheme === 'dark' ? 'rgba(22, 36, 43, 0.28)' : 'rgba(232, 248, 255, 0.30)' }]} />
         <Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSheet(null)} style={StyleSheet.absoluteFill} />
         <Animated.View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.canvas, borderColor: colors.panelLine, paddingBottom: Math.max(insets.bottom, 16), opacity: sheetProgress, transform: [{ translateY: sheetProgress.interpolate({ inputRange: [0, 1], outputRange: [44, 0] }) }] }]}>
-          <View style={styles.sheetGrabber} />
+          <View style={[styles.sheetGrabber, { backgroundColor: colors.panelLine }]} />
           <View style={styles.circleHeader}><Copy colors={colors} accessibilityRole="header" style={[styles.circleTitle, styles.fill]}>{sheet === 'circles' ? 'Featured circle' : 'Your profile & health'}</Copy><Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSheet(null)} style={styles.switcher}><Ionicons name={Platform.OS === 'android' ? 'arrow-back' : 'close'} color={colors.ink} size={22} /></Pressable></View>
           <ScrollView contentContainerStyle={styles.sheetContent}>
             {sheet === 'circles' ? props.circles.map((circle) => <Action key={circle.id} secondary colors={colors} busy={selecting === circle.id} disabled={selecting !== null} onPress={() => {
@@ -265,6 +264,6 @@ const styles = StyleSheet.create({
   companion: { position: 'absolute', top: 28, right: 14 }, shadow: { position: 'absolute', height: 5, bottom: 5, borderRadius: 20 }, sparkles: { position: 'absolute', top: 0, left: 0, right: 0 },
   circleCard: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 20, gap: 12 }, eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1 }, circleHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 }, circleTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 }, switcher: { minHeight: 48, minWidth: 48, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, circleSummary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }, deadline: { gap: 2 }, standings: { gap: 6 }, standing: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, minHeight: 44, borderWidth: 1, borderRadius: 12 }, rank: { width: 24, textAlign: 'center', fontSize: 13, fontWeight: '800' }, standingName: { fontSize: 15, fontWeight: '700' }, standingSteps: { fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 },
   action: { minHeight: 48, borderRadius: 12, borderWidth: 2, padding: 10, alignItems: 'center', justifyContent: 'center' }, actionLabel: { fontWeight: '800', textAlign: 'center' }, waiting: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 96 }, empty: { gap: 12 },
-  social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF5D2', borderColor: '#A17A12', borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { color: '#5C440B', fontSize: 14, fontWeight: '800' },
-  notice: { padding: 16, borderWidth: 1, borderRadius: 16 }, textAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }, modalBackdrop: { flex: 1, justifyContent: 'flex-end' }, sheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2, maxHeight: '85%', padding: 20, gap: 12 }, sheetGrabber: { alignSelf: 'center', backgroundColor: '#B9E6F5', borderRadius: 999, height: 4, marginBottom: 2, width: 42 }, sheetContent: { gap: 16, paddingBottom: 8 },
+  social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { fontSize: 14, fontWeight: '800' },
+  notice: { padding: 16, borderWidth: 1, borderRadius: 16 }, textAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }, modalBackdrop: { flex: 1, justifyContent: 'flex-end' }, sheet: { maxHeight: '85%', borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2, padding: 20, gap: 12 }, sheetGrabber: { alignSelf: 'center', borderRadius: 999, height: 4, marginBottom: 2, width: 42 }, sheetContent: { gap: 16, paddingBottom: 8 },
 });

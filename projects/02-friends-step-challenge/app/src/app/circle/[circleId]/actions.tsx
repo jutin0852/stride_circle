@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
@@ -6,9 +6,11 @@ import { useAuth } from '@/auth/auth-provider';
 import { Skeleton } from '@/components/skeleton';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { deleteCircle, removeCircleMember } from '@/lib/circles';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 export default function CircleActionsRoute() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { circleId: rawCircleId } = useLocalSearchParams<{ circleId: string }>();
   const circleId = Array.isArray(rawCircleId) ? rawCircleId[0] : rawCircleId;
   const { user } = useAuth();
@@ -101,14 +103,16 @@ export default function CircleActionsRoute() {
 }
 
 function ActionRow({ caption, destructive = false, disabled = false, label, onPress }: { caption?: string; destructive?: boolean; disabled?: boolean; label: string; onPress: () => void }) {
+  const styles = useActionStyles();
   return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionRow, disabled && styles.disabled, pressed && !disabled && styles.pressed]}><View style={styles.actionText}><Text style={[styles.actionLabel, destructive && styles.destructive]}>{label}</Text>{caption ? <Text style={styles.actionCaption}>{caption}</Text> : null}</View><Text style={[styles.chevron, destructive && styles.destructive]}>›</Text></Pressable>;
 }
 
-function ActionsSkeleton() { return <View style={styles.skeletonPage}><Skeleton style={{ alignSelf: 'center', height: 5, width: 42 }} /><Skeleton style={{ height: 28, marginTop: 25, width: '60%' }} /><Skeleton style={{ height: 14, marginTop: 9, width: 112 }} /><View style={styles.skeletonActions}>{[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow}><View><Skeleton style={{ height: 15, width: 132 }} /><Skeleton style={{ height: 12, marginTop: 8, width: 184 }} /></View><Skeleton style={{ height: 18, width: 18 }} /></View>)}</View></View>; }
+function ActionsSkeleton() { const styles = useActionStyles(); return <View style={styles.skeletonPage}><Skeleton style={{ alignSelf: 'center', height: 5, width: 42 }} /><Skeleton style={{ height: 28, marginTop: 25, width: '60%' }} /><Skeleton style={{ height: 14, marginTop: 9, width: 112 }} /><View style={styles.skeletonActions}>{[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow}><View><Skeleton style={{ height: 15, width: 132 }} /><Skeleton style={{ height: 12, marginTop: 8, width: 184 }} /></View><Skeleton style={{ height: 18, width: 18 }} /></View>)}</View></View>; }
 
 function getMessage(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
 
-const styles = StyleSheet.create({
+function useActionStyles() { const colors = useAppColors(); return useMemo(() => createStyles(colors), [colors]); }
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background, flex: 1, gap: 15, padding: 24 }, loading: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center' }, skeletonPage: { backgroundColor: colors.background, flex: 1, padding: 24 }, skeletonActions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, marginTop: 24, overflow: 'hidden' }, skeletonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: 16 }, grabber: { alignSelf: 'center', backgroundColor: colors.border, borderRadius: 3, height: 5, width: 42 },
-  title: { color: colors.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.6, marginTop: 4 }, subtitle: { color: colors.muted, fontSize: 13, fontWeight: '600', marginTop: -10 }, actions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, overflow: 'hidden' }, actionRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 68, paddingHorizontal: 16 }, actionText: { flex: 1, gap: 3 }, actionLabel: { color: colors.ink, fontSize: 15, fontWeight: '800' }, actionCaption: { color: colors.muted, fontSize: 12 }, chevron: { color: colors.muted, fontSize: 25 }, destructive: { color: '#B42318' }, codeCard: { backgroundColor: colors.soft, borderRadius: 18, gap: 5, padding: 17 }, codeLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }, code: { color: colors.ink, fontSize: 23, fontVariant: ['tabular-nums'], fontWeight: '800', letterSpacing: 2.5 }, codeHint: { color: colors.muted, fontSize: 12, lineHeight: 17 }, muted: { color: colors.muted, fontSize: 14 }, pressed: { opacity: 0.72 }, disabled: { opacity: 0.55 },
-});
+  title: { color: colors.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.6, marginTop: 4 }, subtitle: { color: colors.muted, fontSize: 13, fontWeight: '600', marginTop: -10 }, actions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, overflow: 'hidden' }, actionRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 68, paddingHorizontal: 16 }, actionText: { flex: 1, gap: 3 }, actionLabel: { color: colors.ink, fontSize: 15, fontWeight: '800' }, actionCaption: { color: colors.muted, fontSize: 12 }, chevron: { color: colors.muted, fontSize: 25 }, destructive: { color: colors.dangerContent }, codeCard: { backgroundColor: colors.soft, borderRadius: 18, gap: 5, padding: 17 }, codeLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }, code: { color: colors.ink, fontSize: 23, fontVariant: ['tabular-nums'], fontWeight: '800', letterSpacing: 2.5 }, codeHint: { color: colors.muted, fontSize: 12, lineHeight: 17 }, muted: { color: colors.muted, fontSize: 14 }, pressed: { opacity: 0.72 }, disabled: { opacity: 0.55 },
+}); }

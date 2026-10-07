@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -9,7 +9,8 @@ import { formatSteps } from '@/data/circle';
 import { spacing } from '@/design-system/tokens';
 import { dateFromKey, monthCellsSundayFirst, monthRange, shiftDateKey, type StepDay } from '@/domain/walking-history';
 import type { HistoryLoadState } from './use-walking-history';
-import { historyColors } from './history-tokens';
+import { useHistoryTheme } from './history-tokens';
+import type { HistoryColorSet } from './history-tokens';
 
 type Props = {
   month: string; today: string; selected: string; records: StepDay[]; goal: number;
@@ -22,7 +23,9 @@ const COMPACT_CELL_HEIGHT = 45;
 const REGULAR_CELL_HEIGHT = 48;
 
 export function WalkingCalendar(props: Props) {
-  const { month, today, selected, records, goal, goalReady, protectedDays, status } = props;
+  const { colors: historyColors, isDark } = useHistoryTheme();
+  const styles = useMemo(() => createStyles(historyColors, isDark), [historyColors, isDark]);
+  const { month, selected, records, goal, goalReady, protectedDays, status } = props;
   const cells = monthCellsSundayFirst(month);
   const byDate = new Map(records.map((day) => [day.dateKey, day.steps]));
   const [gridWidth, setGridWidth] = useState(0);
@@ -108,10 +111,10 @@ function createJourneyPath(cells: (string | null)[], byDate: Map<string, number>
   return path.trim();
 }
 
-const styles = StyleSheet.create({
+function createStyles(historyColors: HistoryColorSet, isDark: boolean) { return StyleSheet.create({
   card: { backgroundColor: historyColors.paper, borderRadius: 24, borderColor: historyColors.panelLine, borderWidth: 2, shadowColor: historyColors.panelEdge, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2, overflow: 'visible', paddingHorizontal: 14, paddingTop: 16, paddingBottom: 14 },
   compactCard: { paddingHorizontal: 9, paddingTop: 13, paddingBottom: 12 },
-  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, paddingVertical: 16, gap: 8 },
+  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm, paddingVertical: spacing.sm, gap: spacing.sm },
   calendarHeaderCompact: { alignItems: 'center', flexWrap: 'nowrap' },
   calendarTitle: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' }, calendarTitleCompact: { flexBasis: 'auto', flexGrow: 1, flexShrink: 1, width: 'auto' },
   titleCopy: { flexShrink: 1, minWidth: 0 },
@@ -124,11 +127,11 @@ const styles = StyleSheet.create({
   unmeasuredCell: { flex: 1 },
   journey: { position: 'absolute', left: 0, top: 0 },
   date: { width: 36, height: 36, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: historyColors.paper }, dateCompact: { width: 33, height: 33, borderRadius: 12 },
-  dateGoal: { backgroundColor: historyColors.blue, borderWidth: 0, shadowColor: historyColors.blueDeep, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0 }, dateProtected: { backgroundColor: historyColors.yellowPale, borderColor: historyColors.yellowDeep }, dateBelow: { backgroundColor: historyColors.coralPale, borderColor: historyColors.coral },
-  today: { borderWidth: 2, borderColor: historyColors.blueDeep }, selected: { backgroundColor: historyColors.paper, borderColor: 'transparent', borderWidth: 2, shadowOpacity: 0 }, selectedToday: { borderColor: historyColors.blueDeep },
-  selectionRing: { position: 'absolute', width: 42, height: 42, borderRadius: 16, borderWidth: 3, borderColor: historyColors.ink, backgroundColor: historyColors.ink, shadowColor: historyColors.ink, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0 }, selectionRingCompact: { width: 39, height: 39, borderRadius: 15 }, selectionRingToday: { borderColor: historyColors.ink, backgroundColor: historyColors.ink, shadowColor: historyColors.ink, shadowOffset: { width: 0, height: 4 } },
-  dayNumber: { color: historyColors.ink, fontSize: 14, lineHeight: 17, fontVariant: ['tabular-nums'] }, dayNumberGoal: { color: historyColors.ink }, dayNumberState: { color: historyColors.yellowDeep }, dayNumberBelow: { color: historyColors.ink },
+  dateGoal: { backgroundColor: historyColors.goalDay, borderWidth: 0, shadowColor: historyColors.blueDeep, shadowOffset: { width: 0, height: 3 }, shadowOpacity: isDark ? 0 : 1, shadowRadius: 0 }, dateProtected: { backgroundColor: historyColors.yellowPale, borderColor: historyColors.yellow }, dateBelow: { backgroundColor: historyColors.coralPale, borderColor: historyColors.belowOutline },
+  today: { borderWidth: 2, borderColor: historyColors.blueDeep }, selected: { backgroundColor: historyColors.selectedBackground, borderColor: historyColors.selectedOutline, borderWidth: 2, shadowOpacity: 0 }, selectedToday: { borderColor: historyColors.selectedOutline },
+  selectionRing: { position: 'absolute', width: 42, height: 42, borderRadius: 16, borderWidth: isDark ? 0 : 3, borderColor: historyColors.ink, backgroundColor: isDark ? 'transparent' : historyColors.ink, shadowColor: historyColors.ink, shadowOffset: { width: 0, height: 3 }, shadowOpacity: isDark ? 0 : 1, shadowRadius: 0 }, selectionRingCompact: { width: 39, height: 39, borderRadius: 15 }, selectionRingToday: { borderColor: historyColors.selectedOutline, backgroundColor: 'transparent', shadowColor: historyColors.ink, shadowOffset: { width: 0, height: 4 } },
+  dayNumber: { color: historyColors.normalDate, fontSize: 14, lineHeight: 17, fontVariant: ['tabular-nums'] }, dayNumberGoal: { color: historyColors.goalDayText }, dayNumberState: { color: historyColors.yellowDeep }, dayNumberBelow: { color: historyColors.normalDate },
   goalMarker: { position: 'absolute', right: 2, bottom: 2, width: 13, height: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 7, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: historyColors.green }, goalMarkerText: { color: historyColors.paper, fontSize: 8, lineHeight: 10, fontWeight: '900' },
-  protectedMarker: { position: 'absolute', right: 2, top: 2, width: 13, height: 13, borderRadius: 7, backgroundColor: historyColors.paper }, belowMarker: { position: 'absolute', right: 2, bottom: 2, width: 13, height: 13, borderRadius: 7, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: historyColors.coral, alignItems: 'center', justifyContent: 'center' }, todayMarker: { position: 'absolute', top: 2, left: '50%', width: 5, height: 5, marginLeft: -2.5, borderRadius: 3, backgroundColor: historyColors.blueDeep, borderWidth: 1.5, borderColor: historyColors.paper },
-  detail: { position: 'relative', marginHorizontal: 1, marginTop: 16, paddingTop: 14, paddingHorizontal: 14, paddingBottom: 12, gap: 1, borderWidth: 1, borderColor: historyColors.panelLine, borderRadius: 18, backgroundColor: historyColors.panel, shadowColor: historyColors.panelEdge, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 0 }, detailConnector: { position: 'absolute', top: -15, width: 2, height: 15, backgroundColor: historyColors.panelLine }, detailDate: { color: historyColors.blueDeep, fontSize: 11, lineHeight: 14, letterSpacing: 1 }, stepsRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 7, marginTop: 4 }, selectedSteps: { fontSize: 27, lineHeight: 32 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 9 }, progressTrack: { flex: 1, minWidth: 0 }, progressPercent: { minWidth: 32, textAlign: 'right', color: historyColors.ink, fontSize: 12, lineHeight: 15 }, detailCaption: { fontSize: 12, lineHeight: 17, color: historyColors.muted, marginTop: 5 }, detailSkeleton: { width: '100%', height: 75, backgroundColor: historyColors.panelEdge }, inset: { padding: spacing.lg }, disabled: { opacity: 0.35 }, pressed: { opacity: 0.7 },
-});
+  protectedMarker: { position: 'absolute', right: 2, top: 2, width: 13, height: 13, borderRadius: 7, backgroundColor: historyColors.yellowPale }, belowMarker: { position: 'absolute', right: 2, bottom: 2, width: 13, height: 13, borderRadius: 7, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: historyColors.coral, alignItems: 'center', justifyContent: 'center' }, todayMarker: { position: 'absolute', top: 2, left: '50%', width: 5, height: 5, marginLeft: -2.5, borderRadius: 3, backgroundColor: historyColors.blueDeep, borderWidth: 1.5, borderColor: historyColors.paper },
+  detail: { position: 'relative', marginHorizontal: 1, marginTop: spacing.md, paddingTop: spacing.md, paddingHorizontal: 14, paddingBottom: spacing.md, gap: 1, borderWidth: 1, borderColor: historyColors.panelLine, borderRadius: 18, backgroundColor: historyColors.panel, shadowColor: historyColors.panelEdge, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 0 }, detailConnector: { position: 'absolute', top: -15, width: 2, height: 15, backgroundColor: historyColors.panelLine }, detailDate: { color: historyColors.blueDeep, fontSize: 11, lineHeight: 14, letterSpacing: 1 }, stepsRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs }, selectedSteps: { fontSize: 27, lineHeight: 32 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm }, progressTrack: { flex: 1, minWidth: 0 }, progressPercent: { minWidth: 32, textAlign: 'right', color: historyColors.ink, fontSize: 12, lineHeight: 15 }, detailCaption: { fontSize: 12, lineHeight: 17, color: historyColors.muted, marginTop: spacing.sm }, detailSkeleton: { width: '100%', height: 75, backgroundColor: historyColors.panelEdge }, inset: { padding: spacing.lg }, disabled: { opacity: 0.35 }, pressed: { opacity: 0.7 },
+}); }
