@@ -1,4 +1,4 @@
-name: Build Stride Circle iOS development client
+name: Build Walk Dev iOS development client
 
 on:
   push:
@@ -18,6 +18,9 @@ jobs:
     name: Build unsigned iOS development client
     runs-on: macos-26
     timeout-minutes: 45
+    env:
+      CI: true
+      APP_VARIANT: development
 
     steps:
       - name: Check out the repository
@@ -33,13 +36,45 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
+      - name: Inject public app configuration
+        env:
+          FIREBASE_API_KEY: ${{ vars.EXPO_PUBLIC_FIREBASE_API_KEY || secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ vars.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_PROJECT_ID || secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ vars.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_APP_ID || secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
+        run: |
+          {
+            echo "EXPO_PUBLIC_FIREBASE_API_KEY=$FIREBASE_API_KEY"
+            echo "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN"
+            echo "EXPO_PUBLIC_FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
+            echo "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET"
+            echo "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID"
+            echo "EXPO_PUBLIC_FIREBASE_APP_ID=$FIREBASE_APP_ID"
+            echo 'EXPO_PUBLIC_HEALTH_DATA_PROVIDER=pedometer'
+          } > .env
+
+      - name: Remove paid-only HealthKit configuration
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'app.json';
+          const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+          config.expo.plugins = config.expo.plugins.filter((plugin) => {
+            const name = Array.isArray(plugin) ? plugin[0] : plugin;
+            return name !== '@appeeky/expo-healthkit';
+          });
+          fs.writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`);
+          NODE
+
       - name: Generate the iOS project
         run: npx expo prebuild --clean --platform ios
 
       - name: Install CocoaPods dependencies
         run: npx pod-install ios
 
-      - name: Build an unsigned Debug app
+      - name: Build unsigned Walk Dev app
         shell: bash
         run: |
           set -euo pipefail
@@ -74,7 +109,7 @@ jobs:
           ')"
           echo "Using Xcode scheme: $scheme"
 
-          derived_data="$RUNNER_TEMP/stride-circle-derived-data"
+          derived_data="$RUNNER_TEMP/walk-dev-derived-data"
 
           xcodebuild \
             -workspace "$workspace" \
@@ -95,7 +130,7 @@ jobs:
 
           mkdir -p "$RUNNER_TEMP/Payload"
           cp -R "$app_path" "$RUNNER_TEMP/Payload/"
-          output="$GITHUB_WORKSPACE/projects/02-friends-step-challenge/app/StrideCircle-development-unsigned.ipa"
+          output="$GITHUB_WORKSPACE/projects/02-friends-step-challenge/app/WalkDev-development-unsigned.ipa"
           (
             cd "$RUNNER_TEMP"
             zip -qry "$output" Payload
@@ -104,6 +139,6 @@ jobs:
       - name: Upload the unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: stride-circle-development-unsigned
-          path: projects/02-friends-step-challenge/app/StrideCircle-development-unsigned.ipa
+          name: walk-dev-development-unsigned
+          path: projects/02-friends-step-challenge/app/WalkDev-development-unsigned.ipa
           if-no-files-found: error
