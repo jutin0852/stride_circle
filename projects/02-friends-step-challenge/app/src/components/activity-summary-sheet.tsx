@@ -1,8 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 type ActivitySummarySheetProps = {
   distanceMeters: number;
@@ -26,6 +27,8 @@ function formatPace(distanceMeters: number, durationMs: number) {
 }
 
 export function ActivitySummarySheet({ distanceMeters, durationMs, isSaving, onDiscard, onSave, saveError, visible }: ActivitySummarySheetProps) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const canSave = distanceMeters >= 10;
 
@@ -40,13 +43,13 @@ export function ActivitySummarySheet({ distanceMeters, durationMs, isSaving, onD
           </View>
           <Text style={styles.description}>Review your walk before adding it to your private history.</Text>
           <View style={styles.metrics}>
-            <Metric icon="map-outline" label="DISTANCE" value={`${(distanceMeters / 1_000).toFixed(2)} km`} />
-            <Metric icon="time-outline" label="DURATION" value={formatDuration(durationMs)} />
-            <Metric icon="speedometer-outline" label="AVG. PACE" value={`${formatPace(distanceMeters, durationMs)} /km`} />
+            <Metric colors={colors} styles={styles} icon="map-outline" label="DISTANCE" value={`${(distanceMeters / 1_000).toFixed(2)} km`} />
+            <Metric colors={colors} styles={styles} icon="time-outline" label="DURATION" value={formatDuration(durationMs)} />
+            <Metric colors={colors} styles={styles} icon="speedometer-outline" label="AVG. PACE" value={`${formatPace(distanceMeters, durationMs)} /km`} />
           </View>
           {!canSave ? <Text style={styles.warning}>This activity needs at least a few metres of GPS movement before it can be saved.</Text> : saveError ? <Text style={styles.error}>We could not save this yet. Check your connection and try again.</Text> : null}
           <Pressable accessibilityRole="button" disabled={!canSave || isSaving} onPress={onSave} style={({ pressed }) => [styles.saveButton, (!canSave || isSaving) && styles.disabled, pressed && canSave && !isSaving && styles.pressed]}>
-            {isSaving ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.saveText}>{saveError ? 'Try saving again' : 'Save to History'}</Text><Ionicons color="#FFFFFF" name="bookmark-outline" size={19} /></>}
+            {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <><Text style={styles.saveText}>{saveError ? 'Try saving again' : 'Save to History'}</Text><Ionicons color={colors.onAccent} name="bookmark-outline" size={19} /></>}
           </Pressable>
           <Pressable accessibilityRole="button" disabled={isSaving} onPress={onDiscard} style={({ pressed }) => [styles.discardButton, pressed && !isSaving && styles.discardPressed]}><Text style={styles.discardText}>Discard activity</Text></Pressable>
         </View>
@@ -55,14 +58,14 @@ export function ActivitySummarySheet({ distanceMeters, durationMs, isSaving, onD
   );
 }
 
-function Metric({ icon, label, value }: { icon: 'map-outline' | 'time-outline' | 'speedometer-outline'; label: string; value: string }) {
+function Metric({ icon, label, value, colors, styles }: { icon: 'map-outline' | 'time-outline' | 'speedometer-outline'; label: string; value: string; colors: ReturnType<typeof useAppColors>; styles: ReturnType<typeof createStyles> }) {
   return <View style={styles.metric}><Ionicons color={colors.accent} name={icon} size={17} /><Text selectable style={styles.metricValue}>{value}</Text><Text style={styles.metricLabel}>{label}</Text></View>;
 }
 
-const styles = StyleSheet.create({
-  backdrop: { backgroundColor: 'rgba(17, 24, 39, 0.32)', flex: 1, justifyContent: 'flex-end' },
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
+  backdrop: { backgroundColor: colors.overlay, flex: 1, justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.card, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 11 },
-  grabber: { alignSelf: 'center', backgroundColor: '#C8CDD7', borderRadius: 4, height: 4, width: 38 },
+  grabber: { alignSelf: 'center', backgroundColor: colors.border, borderRadius: 4, height: 4, width: 38 },
   headerRow: { alignItems: 'center', flexDirection: 'row', gap: 12, marginTop: 23 },
   activityIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 22, height: 44, justifyContent: 'center', width: 44 },
   headerCopy: { flex: 1 },
@@ -73,13 +76,13 @@ const styles = StyleSheet.create({
   metric: { alignItems: 'flex-start', backgroundColor: colors.soft, borderRadius: 16, flex: 1, gap: 5, minHeight: 98, padding: 12 },
   metricValue: { color: colors.ink, fontSize: 15, fontVariant: ['tabular-nums'], fontWeight: '900', letterSpacing: -0.3 },
   metricLabel: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
-  warning: { color: '#9A3412', fontSize: 12, lineHeight: 17, marginTop: 15, textAlign: 'center' },
-  error: { color: '#B42318', fontSize: 12, lineHeight: 17, marginTop: 15, textAlign: 'center' },
+  warning: { color: colors.warningContent, fontSize: 12, lineHeight: 17, marginTop: 15, textAlign: 'center' },
+  error: { color: colors.dangerContent, fontSize: 12, lineHeight: 17, marginTop: 15, textAlign: 'center' },
   saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 15, flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 22, minHeight: 56 },
-  saveText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  saveText: { color: colors.onAccent, fontSize: 16, fontWeight: '900' },
   discardButton: { alignItems: 'center', justifyContent: 'center', marginTop: 8, minHeight: 46 },
   discardText: { color: colors.muted, fontSize: 14, fontWeight: '800' },
   disabled: { opacity: 0.5 },
   pressed: { backgroundColor: colors.accentPressed, transform: [{ scale: 0.98 }] },
   discardPressed: { opacity: 0.65 },
-});
+}); }

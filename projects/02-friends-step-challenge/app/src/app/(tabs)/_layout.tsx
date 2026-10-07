@@ -3,16 +3,16 @@ import { ActivityIndicator, Platform, StyleSheet, useColorScheme, View } from 'r
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/auth-provider';
-import { fontFamilies, semanticColors } from '@/design-system/tokens';
-import { homeColors, homeDarkColors } from '@/features/home/tokens';
+import { fontFamilies } from '@/design-system/tokens';
+import { homeTheme } from '@/features/home/tokens';
 
 export default function TabsLayout() {
   const { isLoading, user } = useAuth();
   const insets = useSafeAreaInsets();
-  const colors = useColorScheme() === 'dark' ? homeDarkColors : homeColors;
+  const colors = homeTheme(useColorScheme() === 'dark');
 
   if (isLoading) {
-    return <View style={styles.loading}><ActivityIndicator color={semanticColors.brandDark} size="large" /></View>;
+    return <View style={[styles.loading, { backgroundColor: colors.canvas }]}><ActivityIndicator color={colors.edge} size="large" /></View>;
   }
 
   if (!user) return <Redirect href="/sign-in" />;
@@ -46,5 +46,5 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  loading: { alignItems: 'center', backgroundColor: semanticColors.canvas, flex: 1, justifyContent: 'center' },
+  loading: { alignItems: 'center', flex: 1, justifyContent: 'center' },
 });

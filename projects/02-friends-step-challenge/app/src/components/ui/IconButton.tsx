@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, type PressableProps } from 'react-native';
 
-import { radii, semanticColors, spacing, touchTargets } from '@/design-system/tokens';
+import { radii, spacing, touchTargets } from '@/design-system/tokens';
+import { useAppTheme } from '@/design-system/use-app-theme';
 
 type IconButtonProps = Omit<PressableProps, 'children'> & {
   children: React.ReactNode;
@@ -9,11 +10,12 @@ type IconButtonProps = Omit<PressableProps, 'children'> & {
 };
 
 export function IconButton({ children, filled = false, size = touchTargets.minimum, style, ...props }: IconButtonProps) {
+  const { colors } = useAppTheme();
   return (
     <Pressable
       {...props}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.base, { height: size, width: size }, filled && styles.filled, pressed && styles.pressed, typeof style === 'function' ? style({ pressed }) : style]}
+      style={({ pressed }) => [styles.base, { height: size, width: size, borderColor: colors.border, backgroundColor: filled ? colors.card : 'transparent' }, pressed && styles.pressed, typeof style === 'function' ? style({ pressed }) : style]}
     >
       {children}
     </Pressable>
@@ -21,7 +23,6 @@ export function IconButton({ children, filled = false, size = touchTargets.minim
 }
 
 const styles = StyleSheet.create({
-  base: { alignItems: 'center', borderColor: semanticColors.border, borderRadius: radii.pill, borderWidth: 1, justifyContent: 'center', padding: spacing.xs },
-  filled: { backgroundColor: semanticColors.card },
+  base: { alignItems: 'center', borderRadius: radii.pill, borderWidth: 1, justifyContent: 'center', padding: spacing.xs },
   pressed: { opacity: 0.72 },
 });

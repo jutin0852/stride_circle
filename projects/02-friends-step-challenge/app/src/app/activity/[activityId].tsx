@@ -8,7 +8,7 @@ import { useAuth } from '@/auth/auth-provider';
 import { ActivityMap } from '@/components/activity-map';
 import { Skeleton } from '@/components/skeleton';
 import { useActivityRecord } from '@/hooks/use-activity-record';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 function formatDuration(milliseconds: number) {
   const seconds = Math.floor(milliseconds / 1_000);
@@ -26,6 +26,8 @@ function formatDate(dateKey: string) {
 }
 
 export default function ActivityDetailRoute() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { activityId } = useLocalSearchParams<{ activityId: string }>();
   const { user } = useAuth();
   const { record, status } = useActivityRecord(user?.uid, activityId);
@@ -46,18 +48,18 @@ export default function ActivityDetailRoute() {
     <View style={[styles.summary, { paddingBottom: Math.max(insets.bottom, 24) }]}>
       <View style={styles.grabber} />
       <View style={styles.activityHeading}><View style={styles.activityIcon}><MaterialCommunityIcons color={colors.accent} name="walk" size={22} /></View><View><Text style={styles.eyebrow}>WALK · {formatDate(record.dateKey).toUpperCase()}</Text><Text accessibilityRole="header" style={styles.title}>Your walk</Text></View></View>
-      <View style={styles.metrics}><Metric label="DISTANCE" value={`${(record.distanceMeters / 1_000).toFixed(2)} km`} /><Metric label="DURATION" value={formatDuration(record.durationMs)} /><Metric label="AVG. PACE" value={`${formatPace(record.averagePaceSecondsPerKm)} /km`} /></View>
+      <View style={styles.metrics}><Metric styles={styles} label="DISTANCE" value={`${(record.distanceMeters / 1_000).toFixed(2)} km`} /><Metric styles={styles} label="DURATION" value={formatDuration(record.durationMs)} /><Metric styles={styles} label="AVG. PACE" value={`${formatPace(record.averagePaceSecondsPerKm)} /km`} /></View>
     </View>
   </View>;
 }
 
-function Metric({ label, value }: { label: string; value: string }) { return <View style={styles.metric}><Text selectable style={styles.metricValue}>{value}</Text><Text style={styles.metricLabel}>{label}</Text></View>; }
+function Metric({ label, value, styles }: { label: string; value: string; styles: ReturnType<typeof createStyles> }) { return <View style={styles.metric}><Text selectable style={styles.metricValue}>{value}</Text><Text style={styles.metricLabel}>{label}</Text></View>; }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.soft, flex: 1 },
   loading: { backgroundColor: colors.background, flex: 1 }, loadingCard: { backgroundColor: colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, marginTop: -30, minHeight: 230, padding: 22 },
-  emptyPage: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center', padding: 28 }, emptyTitle: { color: colors.ink, fontSize: 23, fontWeight: '900', marginTop: 16 }, emptyText: { color: colors.muted, fontSize: 14, lineHeight: 20, marginTop: 7, maxWidth: 270, textAlign: 'center' }, backToHistory: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 14, justifyContent: 'center', marginTop: 24, minHeight: 50, paddingHorizontal: 20 }, backToHistoryText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
+  emptyPage: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center', padding: 28 }, emptyTitle: { color: colors.ink, fontSize: 23, fontWeight: '900', marginTop: 16 }, emptyText: { color: colors.muted, fontSize: 14, lineHeight: 20, marginTop: 7, maxWidth: 270, textAlign: 'center' }, backToHistory: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 14, justifyContent: 'center', marginTop: 24, minHeight: 50, paddingHorizontal: 20 }, backToHistoryText: { color: colors.onAccent, fontSize: 15, fontWeight: '900' },
   mapFallback: { alignItems: 'center', backgroundColor: colors.soft, flex: 1, justifyContent: 'center', paddingBottom: 220, paddingHorizontal: 30 }, mapFallbackIcon: { alignItems: 'center', backgroundColor: colors.card, borderRadius: 28, height: 56, justifyContent: 'center', width: 56 }, mapFallbackTitle: { color: colors.ink, fontSize: 18, fontWeight: '900', marginTop: 13, textAlign: 'center' }, mapFallbackText: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 5, textAlign: 'center' },
   backButton: { alignItems: 'center', backgroundColor: colors.card, borderRadius: 22, height: 44, justifyContent: 'center', left: 18, position: 'absolute', width: 44 },
   summary: { backgroundColor: colors.card, borderTopLeftRadius: 30, borderTopRightRadius: 30, bottom: 0, left: 0, paddingHorizontal: 22, paddingTop: 10, position: 'absolute', right: 0 }, grabber: { alignSelf: 'center', backgroundColor: '#C8CDD7', borderRadius: 4, height: 4, width: 38 }, activityHeading: { alignItems: 'center', flexDirection: 'row', gap: 11, marginTop: 20 }, activityIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 21, height: 42, justifyContent: 'center', width: 42 }, eyebrow: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }, title: { color: colors.ink, fontSize: 24, fontWeight: '900', letterSpacing: -0.6, marginTop: 2 }, metrics: { flexDirection: 'row', gap: 8, marginTop: 20 }, metric: { backgroundColor: colors.soft, borderRadius: 16, flex: 1, gap: 5, padding: 12 }, metricValue: { color: colors.ink, fontSize: 14, fontVariant: ['tabular-nums'], fontWeight: '900', letterSpacing: -0.3 }, metricLabel: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.5 },
-});
+}); }

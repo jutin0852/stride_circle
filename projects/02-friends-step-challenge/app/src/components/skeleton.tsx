@@ -1,11 +1,10 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 export function Skeleton({ style }: { style?: StyleProp<ViewStyle> }) {
-  return <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.block, style]} />;
+  const colors = useAppColors();
+  return <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.block, { backgroundColor: colors.soft }, style]} />;
 }
 
-const styles = StyleSheet.create({
-  block: { backgroundColor: colors.soft, borderRadius: 8 },
-});
+const styles = StyleSheet.create({ block: { borderRadius: 8 } });

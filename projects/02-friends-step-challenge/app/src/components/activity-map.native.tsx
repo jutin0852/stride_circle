@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { type StyleProp, type ViewStyle } from 'react-native';
+import { useColorScheme, type StyleProp, type ViewStyle } from 'react-native';
 import MapView, { Polyline } from 'react-native-maps';
 
 export type ActivityMapPoint = { latitude: number; longitude: number };
@@ -17,6 +17,7 @@ type ActivityMapProps = {
 
 export function ActivityMap({ currentLocation, fitRoute = false, initialRegion, route, showsUserLocation = false, style }: ActivityMapProps) {
   const mapRef = useRef<MapView>(null);
+  const isDark = useColorScheme() === 'dark';
 
   useEffect(() => {
     if (!currentLocation) return;
@@ -29,6 +30,6 @@ export function ActivityMap({ currentLocation, fitRoute = false, initialRegion, 
   }, [fitRoute, route]);
 
   return <MapView initialRegion={initialRegion} ref={mapRef} showsMyLocationButton={showsUserLocation} showsUserLocation={showsUserLocation} style={style}>
-    {route.length > 1 ? <Polyline coordinates={route} strokeColor="#2563EB" strokeWidth={5} /> : null}
+    {route.length > 1 ? <Polyline coordinates={route} strokeColor={isDark ? '#4BB5D0' : '#2563EB'} strokeWidth={5} /> : null}
   </MapView>;
 }

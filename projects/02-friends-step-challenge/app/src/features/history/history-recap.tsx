@@ -1,5 +1,5 @@
 import Svg, { Circle, Path } from 'react-native-svg';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Skeleton } from '@/components/skeleton';
@@ -7,10 +7,13 @@ import { AppText, StateCard } from '@/components/ui';
 import { dateFromKey, type StepDay } from '@/domain/walking-history';
 import { radii, spacing } from '@/design-system/tokens';
 import type { HistoryLoadState } from './use-walking-history';
-import { historyColors } from './history-tokens';
+import { useHistoryTheme } from './history-tokens';
+import type { HistoryColorSet } from './history-tokens';
 import { isHorizontalTrailGesture, trailDayAtX, trailPositionAtX, weeklyTrail } from './weekly-trail';
 
 export function HistoryRecap({ records, today, goal, goalReady, status, onRetry }: { records: StepDay[]; today: string; goal: number; goalReady: boolean; status: HistoryLoadState; onRetry: () => void }) {
+  const { colors: historyColors } = useHistoryTheme();
+  const styles = useMemo(() => createStyles(historyColors), [historyColors]);
   const trail = weeklyTrail(records, today, goalReady ? goal : 0);
   const { points: rhythm, path } = trail;
   const [selection, setSelection] = useState<{ dateKey: string; x: number; y: number } | null>(null);
@@ -74,12 +77,12 @@ function formatRhythmSteps(steps: number) {
   return steps >= 1000 ? `${(steps / 1000).toFixed(1)}k` : String(steps);
 }
 
-const styles = StyleSheet.create({
+function createStyles(historyColors: HistoryColorSet) { return StyleSheet.create({
   sectionTitle: { marginBottom: spacing.md },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 24, fontWeight: '800' },
   rhythm: { paddingTop: spacing.sm },
   inspector: { position: 'absolute', top: -8, left: 0, right: 0, alignItems: 'center', zIndex: 1 },
-  inspectorText: { fontSize: 12, lineHeight: 18, fontWeight: '700', color: historyColors.blueDeep, textAlign: 'center', backgroundColor: '#E7F8FD', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
+  inspectorText: { fontSize: 12, lineHeight: 18, fontWeight: '700', color: historyColors.blueDeep, textAlign: 'center', backgroundColor: historyColors.ice, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
   touchColumns: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row' },
   touchColumn: { flex: 1, minHeight: 44 },
   pathLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -1 },
@@ -89,4 +92,4 @@ const styles = StyleSheet.create({
   pathValueMet: { color: historyColors.greenDeep }, pathValueToday: { color: historyColors.blueDeep },
   rhythmNote: { marginTop: 8, paddingHorizontal: 2, fontSize: 12, lineHeight: 18, color: historyColors.muted }, rhythmStrong: { color: historyColors.greenDeep, fontWeight: '800', fontSize: 12, lineHeight: 18 },
   skeleton: { width: '100%', height: 156, borderRadius: radii.md, backgroundColor: historyColors.panelEdge },
-});
+}); }
