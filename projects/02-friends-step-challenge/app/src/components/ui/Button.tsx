@@ -15,7 +15,7 @@ type ButtonProps = Omit<PressableProps, 'children'> & {
 };
 
 const variantStyles: Record<ButtonVariant, ViewStyle> = {
-  primary: { backgroundColor: semanticColors.brandAction },
+  primary: { backgroundColor: semanticColors.brandAction, borderBottomWidth: 4, borderColor: semanticColors.brandActionPressed, borderWidth: 2 },
   secondary: { backgroundColor: semanticColors.brandDark },
   tertiary: { backgroundColor: 'transparent', borderColor: semanticColors.border, borderWidth: 1 },
   danger: { backgroundColor: semanticColors.dangerSurface, borderColor: semanticColors.dangerContent, borderWidth: 1 },
@@ -52,5 +52,5 @@ export function Button({ children, disabled, loading = false, onPress, size = 'l
 const styles = StyleSheet.create({
   base: { alignItems: 'center', borderRadius: radii.md, flexDirection: 'row', gap: spacing.sm, justifyContent: 'center' },
   disabled: { opacity: opacity.disabled },
-  pressed: { opacity: opacity.pressed, transform: [{ scale: 0.985 }] },
+  pressed: { borderBottomWidth: 2, opacity: opacity.pressed, transform: [{ translateY: 2 }] },
 });

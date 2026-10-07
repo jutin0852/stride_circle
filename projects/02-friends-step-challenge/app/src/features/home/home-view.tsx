@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,7 +111,8 @@ function Companion({ goalEvent, happy, helpful, reduced, colors, size }: { goalE
 }
 
 export function HomeView(props: HomeViewProps) {
-  const colors = useColorScheme() === 'dark' ? homeDarkColors : homeColors;
+  const colorScheme = useColorScheme();
+  const colors = colorScheme === 'dark' ? homeDarkColors : homeColors;
   const { width, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const narrow = width < 350 || fontScale > 1.3;
@@ -121,6 +123,7 @@ export function HomeView(props: HomeViewProps) {
   const [healthAction, setHealthAction] = useState(false);
   const [cheerScale] = useState(() => new Animated.Value(1));
   const [circleOpacity] = useState(() => new Animated.Value(1));
+  const [sheetProgress] = useState(() => new Animated.Value(0));
   const previousCheer = useRef(props.social?.status);
   const previousCircle = useRef(props.circle?.id);
   useEffect(() => {
@@ -140,6 +143,18 @@ export function HomeView(props: HomeViewProps) {
     return () => { animation.stop(); circleOpacity.setValue(1); };
   }, [circleOpacity, props.circle?.id, reduced]);
   useEffect(() => { if (props.goalEvent) AccessibilityInfo.announceForAccessibility('Daily walking goal reached. Nice work!'); }, [props.goalEvent]);
+  useEffect(() => {
+    sheetProgress.stopAnimation();
+    sheetProgress.setValue(0);
+    if (sheet === null) return;
+    if (reduced) {
+      sheetProgress.setValue(1);
+      return;
+    }
+    const animation = Animated.timing(sheetProgress, { toValue: 1, duration: 180, easing: Easing.out(Easing.cubic), useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [reduced, sheet, sheetProgress]);
   const openSheet = (next: 'health' | 'circles') => { setSheetError(null); setSheet(next); };
   async function healthActionRun(action: () => Promise<void>) {
     if (healthAction) return;
@@ -210,10 +225,13 @@ export function HomeView(props: HomeViewProps) {
         </Pressable></Animated.View>
       </View> : null}
     </ScrollView>
-    <Modal transparent visible={sheet !== null} animationType={reduced ? 'none' : 'slide'} onRequestClose={() => setSheet(null)}>
+    <Modal animationType="none" presentationStyle="overFullScreen" statusBarTranslucent transparent visible={sheet !== null} onRequestClose={() => setSheet(null)}>
       <View style={styles.modalBackdrop}>
+        <BlurView intensity={24} tint={colorScheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colorScheme === 'dark' ? 'rgba(22, 36, 43, 0.28)' : 'rgba(232, 248, 255, 0.30)' }]} />
         <Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSheet(null)} style={StyleSheet.absoluteFill} />
-        <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.canvas, borderColor: colors.line, paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <Animated.View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.canvas, borderColor: colors.panelLine, paddingBottom: Math.max(insets.bottom, 16), opacity: sheetProgress, transform: [{ translateY: sheetProgress.interpolate({ inputRange: [0, 1], outputRange: [44, 0] }) }] }]}>
+          <View style={styles.sheetGrabber} />
           <View style={styles.circleHeader}><Copy colors={colors} accessibilityRole="header" style={[styles.circleTitle, styles.fill]}>{sheet === 'circles' ? 'Featured circle' : 'Your profile & health'}</Copy><Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSheet(null)} style={styles.switcher}><Ionicons name={Platform.OS === 'android' ? 'arrow-back' : 'close'} color={colors.ink} size={22} /></Pressable></View>
           <ScrollView contentContainerStyle={styles.sheetContent}>
             {sheet === 'circles' ? props.circles.map((circle) => <Action key={circle.id} secondary colors={colors} busy={selecting === circle.id} disabled={selecting !== null} onPress={() => {
@@ -232,7 +250,7 @@ export function HomeView(props: HomeViewProps) {
             </>}
             {sheetError ? <Copy colors={colors} accessibilityRole="alert">{sheetError}</Copy> : null}
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   </View>;
@@ -248,5 +266,5 @@ const styles = StyleSheet.create({
   circleCard: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 20, gap: 12 }, eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1 }, circleHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 }, circleTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 }, switcher: { minHeight: 48, minWidth: 48, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, circleSummary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }, deadline: { gap: 2 }, standings: { gap: 6 }, standing: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, minHeight: 44, borderWidth: 1, borderRadius: 12 }, rank: { width: 24, textAlign: 'center', fontSize: 13, fontWeight: '800' }, standingName: { fontSize: 15, fontWeight: '700' }, standingSteps: { fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 },
   action: { minHeight: 48, borderRadius: 12, borderWidth: 2, padding: 10, alignItems: 'center', justifyContent: 'center' }, actionLabel: { fontWeight: '800', textAlign: 'center' }, waiting: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 96 }, empty: { gap: 12 },
   social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF5D2', borderColor: '#A17A12', borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { color: '#5C440B', fontSize: 14, fontWeight: '800' },
-  notice: { padding: 16, borderWidth: 1, borderRadius: 16 }, textAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }, modalBackdrop: { flex: 1, backgroundColor: '#00000066', justifyContent: 'flex-end' }, sheet: { maxHeight: '85%', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 20, gap: 12 }, sheetContent: { gap: 16, paddingBottom: 8 },
+  notice: { padding: 16, borderWidth: 1, borderRadius: 16 }, textAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }, modalBackdrop: { flex: 1, justifyContent: 'flex-end' }, sheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2, maxHeight: '85%', padding: 20, gap: 12 }, sheetGrabber: { alignSelf: 'center', backgroundColor: '#B9E6F5', borderRadius: 999, height: 4, marginBottom: 2, width: 42 }, sheetContent: { gap: 16, paddingBottom: 8 },
 });

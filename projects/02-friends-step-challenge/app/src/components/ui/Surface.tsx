@@ -11,7 +11,7 @@ type SurfaceProps = ViewProps & {
 };
 
 const variantStyles: Record<SurfaceVariant, ViewStyle> = {
-  card: { backgroundColor: semanticColors.card, borderColor: semanticColors.border, borderWidth: 1 },
+  card: { backgroundColor: semanticColors.card, borderBottomWidth: 4, borderColor: semanticColors.borderStrong, borderWidth: 2 },
   raised: { backgroundColor: semanticColors.raised, ...elevation.card },
   soft: { backgroundColor: semanticColors.soft },
   brand: { backgroundColor: semanticColors.brandAction },

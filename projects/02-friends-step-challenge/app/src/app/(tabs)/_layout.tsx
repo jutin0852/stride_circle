@@ -40,7 +40,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="circle" options={{ title: 'Circles', tabBarLabel: 'Circles', tabBarIcon: ({ color, focused }) => <MaterialCommunityIcons color={color} name={focused ? 'account-group' : 'account-group-outline'} size={24} /> }} />
       <Tabs.Screen name="activity" options={{ href: null }} />
       <Tabs.Screen name="history" options={{ title: 'History', tabBarLabel: 'History', tabBarIcon: ({ color }) => <MaterialCommunityIcons color={color} name="history" size={24} /> }} />
-      <Tabs.Screen name="profile" options={{ href: null }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarLabel: 'Profile', tabBarIcon: ({ color, focused }) => <MaterialCommunityIcons color={color} name={focused ? 'account' : 'account-outline'} size={24} /> }} />
     </Tabs>
   );
 }
