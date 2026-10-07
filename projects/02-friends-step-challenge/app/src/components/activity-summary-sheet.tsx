@@ -33,7 +33,7 @@ export function ActivitySummarySheet({ distanceMeters, durationMs, isSaving, onD
   const canSave = distanceMeters >= 10;
 
   return (
-    <Modal animationType="slide" onRequestClose={onDiscard} statusBarTranslucent transparent visible={visible}>
+    <Modal animationType="slide" onRequestClose={() => { if (!isSaving) onDiscard(); }} statusBarTranslucent transparent visible={visible}>
       <View accessibilityViewIsModal style={styles.backdrop}>
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={styles.grabber} />

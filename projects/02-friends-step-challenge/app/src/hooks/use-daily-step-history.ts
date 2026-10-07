@@ -1,44 +1,28 @@
 import { useEffect, useState } from 'react';
+import { getLocalDateKey, watchStepHistory, type DailyStepHistoryRecord } from '@/lib/daily-steps';
 
-import {
-  loadDailyStepHistory,
-  type DailyStepHistoryRecord,
-} from '@/lib/daily-steps';
-
-type HistoryStatus = 'loading' | 'ready' | 'error';
-
-type DailyStepHistory = {
-  records: DailyStepHistoryRecord[];
-  status: HistoryStatus;
-};
+type DailyStepHistory = { userId?: string; records: DailyStepHistoryRecord[]; status: 'loading' | 'ready' | 'error' };
 
 export function useDailyStepHistory(userId: string | undefined, days = 7) {
-  const [history, setHistory] = useState<DailyStepHistory>({
-    records: [],
-    status: 'loading',
-  });
+  const [history, setHistory] = useState<DailyStepHistory>({ records: [], status: 'loading' });
 
   useEffect(() => {
     if (!userId) return;
-
-    const currentUserId = userId;
-    let cancelled = false;
-
-    async function loadHistory() {
-      try {
-        const records = await loadDailyStepHistory(currentUserId, days);
-        if (!cancelled) setHistory({ records, status: 'ready' });
-      } catch {
-        if (!cancelled) setHistory({ records: [], status: 'error' });
-      }
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - Math.max(0, Math.floor(days) - 1));
+    try {
+      unsubscribe = watchStepHistory(userId, { from: getLocalDateKey(from), to: getLocalDateKey(to) },
+        (records) => { if (active) setHistory({ userId, records, status: 'ready' }); },
+        () => { if (active) setHistory({ userId, records: [], status: 'error' }); },
+      );
+    } catch {
+      void Promise.resolve().then(() => { if (active) setHistory({ userId, records: [], status: 'error' }); });
     }
-
-    void loadHistory();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { active = false; unsubscribe?.(); };
   }, [days, userId]);
 
-  return history;
+  return history.userId === userId ? history : { records: [], status: 'loading' as const };
 }

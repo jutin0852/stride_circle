@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,8 @@ import { useAuth } from '@/auth/auth-provider';
 import { ActivitySummarySheet } from '@/components/activity-summary-sheet';
 import { ActivityMap } from '@/components/activity-map';
 import { CelebrationSheet } from '@/components/celebration-sheet';
-import { saveActivity } from '@/lib/activities';
+import { createActivityId, saveActivity } from '@/lib/activities';
+import { getLocalDateKey } from '@/lib/daily-steps';
 import { useActivityTracking, type FinishedActivity, type GpsSignalStatus } from '@/hooks/use-activity-tracking';
 import { useAppColors } from '@/design-system/use-app-theme';
 
@@ -30,32 +31,54 @@ export default function ActivityRoute() {
   const [finishedActivity, setFinishedActivity] = useState<FinishedActivity | null>(null);
   const [isSummaryVisible, setSummaryVisible] = useState(false);
   const [isCompletionVisible, setCompletionVisible] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [sheetHeight, setSheetHeight] = useState(190);
+  const savingRef = useRef(false);
+  const finishingRef = useRef(false);
+  const activityIdRef = useRef<string | null>(null);
+  const finishedDateRef = useRef('');
   const { user } = useAuth();
-  const tracking = useActivityTracking();
+  const tracking = useActivityTracking(user?.uid);
   const insets = useSafeAreaInsets();
   const averagePace = tracking.distanceMeters > 0 ? tracking.elapsedMs / 1_000 / (tracking.distanceMeters / 1_000) : null;
   const isMoving = tracking.status === 'tracking' || tracking.status === 'paused';
   const activityTitle = tracking.status === 'tracking' ? 'Recording your walk' : tracking.status === 'paused' ? 'Walk paused' : tracking.status === 'finished' ? 'Nice work.' : 'Ready to walk?';
 
   const primaryAction = () => {
-    if (tracking.status === 'idle' || tracking.status === 'denied' || tracking.status === 'error') { setCompletionVisible(false); setFinishedActivity(null); setSaveState('idle'); void tracking.start(); return; }
-    if (tracking.status === 'finished') { setCompletionVisible(false); setFinishedActivity(null); tracking.reset(); setSaveState('idle'); void tracking.start(); return; }
-    if (tracking.status === 'paused') { void tracking.resume(); return; }
+    if (tracking.isPreparing || savingRef.current || finishingRef.current) return;
+    if (tracking.status === 'idle' || tracking.status === 'denied' || tracking.status === 'error') { setCompletionVisible(false); setFinishedActivity(null); setSaveState('idle'); void tracking.start('walk'); return; }
+    if (tracking.status === 'finished') { setCompletionVisible(false); setFinishedActivity(null); tracking.reset(); setSaveState('idle'); void tracking.start('walk'); return; }
+    if (tracking.status === 'paused') { if (tracking.canResume) void tracking.resume(); else void finishActivity(); return; }
     tracking.pause();
   };
 
-  const finishActivity = () => {
-    const activity = tracking.finish();
-    if (!activity) return;
-    setFinishedActivity(activity);
-    setSummaryVisible(true);
+  const finishActivity = async () => {
+    if (finishingRef.current || savingRef.current) return;
+    finishingRef.current = true;
+    setIsFinishing(true);
+    try {
+      const activity = await tracking.finish();
+      if (!activity) return;
+      activityIdRef.current = activity.activityId ?? null;
+      finishedDateRef.current = activity.dateKey ?? getLocalDateKey();
+      setFinishedActivity(activity);
+      setSummaryVisible(true);
+    } finally {
+      finishingRef.current = false;
+      setIsFinishing(false);
+    }
   };
 
   const saveFinishedActivity = async () => {
-    if (!user || !finishedActivity || saveState === 'saving') return;
+    if (!user || !finishedActivity || savingRef.current) return;
+    if (finishedActivity.userId && finishedActivity.userId !== user.uid) return;
+    savingRef.current = true;
     setSaveState('saving');
     try {
+      activityIdRef.current ??= createActivityId(user.uid);
       await saveActivity({
+        activityId: activityIdRef.current,
+        dateKey: finishedDateRef.current,
         activityType: 'walk',
         distanceMeters: finishedActivity.distanceMeters,
         durationMs: finishedActivity.durationMs,
@@ -67,12 +90,15 @@ export default function ActivityRoute() {
       setCompletionVisible(true);
     } catch {
       setSaveState('error');
+    } finally {
+      savingRef.current = false;
     }
   };
 
-  const primaryLabel = tracking.status === 'tracking' ? 'Pause' : tracking.status === 'paused' ? 'Resume' : tracking.status === 'finished' ? 'New activity' : 'Start';
+  const primaryLabel = tracking.status === 'tracking' ? 'Pause' : tracking.status === 'paused' ? tracking.canResume ? 'Resume' : 'Review & save' : tracking.status === 'finished' ? 'New walk' : 'Start';
 
   const discardActivity = () => {
+    if (savingRef.current) return;
     setSummaryVisible(false);
     setFinishedActivity(null);
     tracking.reset();
@@ -87,13 +113,13 @@ export default function ActivityRoute() {
   };
 
   return <View style={styles.page}>
-    <ActivityMap currentLocation={tracking.currentLocation} fallback={<View style={styles.mapFallback}><Text style={styles.mapFallbackText}>Maps are available in the iPhone app.</Text></View>} initialRegion={defaultRegion} route={tracking.route} showsUserLocation style={StyleSheet.absoluteFill} />
+    <ActivityMap currentLocation={tracking.currentLocation} fallback={<View style={styles.mapFallback}><Text style={styles.mapFallbackText}>Route maps are available in the mobile app.</Text></View>} initialRegion={defaultRegion} route={tracking.route} showsUserLocation style={StyleSheet.absoluteFill} />
     <View pointerEvents="none" style={[styles.topOverlay, { top: insets.top + 12 }]}>
       <Text style={styles.eyebrow}>RECORD WALK</Text>
       <Text style={styles.title}>{activityTitle}</Text>
-      <Text style={styles.status}>{saveState === 'saving' ? 'Saving your walk…' : saveState === 'saved' ? 'Saved to your history.' : saveState === 'error' ? 'We could not save this walk.' : statusMessage(tracking.status, tracking.gpsSignal, tracking.accuracyMeters)}</Text>
+      <Text style={styles.status}>{saveState === 'saving' ? 'Saving your walk…' : saveState === 'saved' ? 'Saved to your history.' : saveState === 'error' ? 'We could not save this walk.' : tracking.isRestoring ? 'Restoring your walk…' : tracking.isPreparing ? 'Connecting to GPS…' : tracking.backgroundIssue === 'storage' ? 'We could not keep a local recovery copy. Recording is paused; finish your walk to keep what was saved.' : tracking.backgroundIssue === 'stop' ? 'Recording is paused, but the location service did not stop. Retry stopping below.' : tracking.backgroundIssue === 'unavailable' ? 'Background recording needs an updated native build of Stride Circle.' : tracking.backgroundIssue === 'permission' ? 'Allow background location in Settings to record with your phone locked.' : tracking.pauseReason === 'recovered' ? 'Your earlier walk was recovered. Resume or finish when ready.' : tracking.pauseReason === 'background' ? 'Your walk paused when the app went to the background. Resume when ready.' : tracking.pauseReason === 'gps-error' ? 'GPS was interrupted. Your recorded progress is kept.' : statusMessage(tracking.status, tracking.gpsSignal, tracking.accuracyMeters)}</Text>
     </View>
-    <View style={[styles.metricCard, { bottom: 176 + Math.max(insets.bottom, 8) }]}>
+    <View style={[styles.metricCard, { bottom: sheetHeight + 12 }]}>
       <Text style={styles.trackerType}>WALK</Text>
       <View style={styles.metrics}>
         <Metric styles={styles} value={formatDuration(tracking.elapsedMs)} label="TIME" />
@@ -102,16 +128,16 @@ export default function ActivityRoute() {
       </View>
       {tracking.status === 'tracking' ? <Text style={styles.livePace}>Live pace {formatPace(tracking.currentPaceSecondsPerKm)} /km</Text> : null}
     </View>
-    <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 22) }]}>
+    <View onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)} style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 22) }]}>
       <View style={styles.grabber} />
       <View style={styles.controls}>
         <View accessibilityLabel="Walking activity" style={styles.activityButton}>
           <View style={styles.activitySymbol}><MaterialCommunityIcons color={colors.accent} name="walk" size={27} /></View><Text style={styles.activityButtonLabel}>Walk</Text><Text style={styles.activityButtonHint}>Walking only</Text>
         </View>
-        <Pressable accessibilityRole="button" onPress={primaryAction} style={({ pressed }) => [styles.startControl, pressed && styles.pressed]}><View style={styles.startButton}><Ionicons color={colors.onAccent} name={tracking.status === 'tracking' ? 'pause' : 'play'} size={25} /></View><Text style={styles.startText}>{primaryLabel}</Text></Pressable>
-        {isMoving ? <Pressable accessibilityRole="button" onPress={finishActivity} style={({ pressed }) => [styles.finishButton, pressed && styles.pressed]}><View style={styles.finishIcon}><Ionicons color={colors.ink} name="stop" size={16} /></View><Text style={styles.finishText}>Finish</Text></Pressable> : <View style={styles.finishPlaceholder} />}
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: tracking.isPreparing }} disabled={tracking.isPreparing} onPress={primaryAction} style={({ pressed }) => [styles.startControl, tracking.isPreparing && styles.disabled, pressed && styles.pressed]}><View style={styles.startButton}><Ionicons color={colors.onAccent} name={tracking.status === 'tracking' ? 'pause' : 'play'} size={25} /></View><Text style={styles.startText}>{tracking.isPreparing ? 'Connecting…' : primaryLabel}</Text></Pressable>
+        {isMoving ? <Pressable accessibilityRole="button" disabled={isFinishing} onPress={() => void finishActivity()} style={({ pressed }) => [styles.finishButton, (pressed || isFinishing) && styles.pressed]}><View style={styles.finishIcon}><Ionicons color={colors.ink} name="stop" size={16} /></View><Text style={styles.finishText}>{isFinishing ? 'Finishing…' : 'Finish'}</Text></Pressable> : <View style={styles.finishPlaceholder} />}
       </View>
-      {tracking.status === 'denied' ? <View style={styles.recovery}><Text style={styles.permissionMessage}>Location access is off. Turn it on to record your walk, distance, and pace.</Text><Pressable accessibilityRole="button" onPress={() => void Linking.openURL('app-settings:')} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}><Text style={styles.settingsButtonText}>Open Settings</Text></Pressable></View> : tracking.gpsSignal === 'disabled' ? <Text style={styles.permissionMessage}>Location Services are turned off on this iPhone. Turn them on in Settings, then try again.</Text> : tracking.status === 'error' ? <Text style={styles.permissionMessage}>We could not start GPS. Check your location settings and try again.</Text> : tracking.gpsSignal === 'weak' && isMoving ? <View style={styles.weakSignal}><Ionicons color="#9A3412" name="location-outline" size={17} /><Text style={styles.weakSignalText}>Weak GPS signal. Your time continues, but route distance pauses until accuracy improves.</Text></View> : <Text style={styles.note}>Finish to review your walk and decide whether to save it.</Text>}
+      {tracking.backgroundIssue === 'stop' ? <View style={styles.recovery}><Text style={styles.permissionMessage}>Open the app and retry stopping the location service.</Text><Pressable accessibilityRole="button" onPress={tracking.retryStop} style={styles.settingsButton}><Text style={styles.settingsButtonText}>Retry stopping</Text></Pressable></View> : tracking.status === 'denied' || (tracking.status === 'paused' && tracking.gpsSignal === 'disabled') ? <View style={styles.recovery}><Text style={styles.permissionMessage}>Location access is off. Allow background location in Settings to keep recording with your phone locked.</Text><Pressable accessibilityRole="button" onPress={() => void Linking.openSettings()} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}><Text style={styles.settingsButtonText}>Open Settings</Text></Pressable></View> : tracking.gpsSignal === 'disabled' ? <Text style={styles.permissionMessage}>Location Services are turned off. Turn them on in Settings, then try again.</Text> : tracking.status === 'error' ? <Text style={styles.permissionMessage}>We could not start GPS. Check your location settings and try again.</Text> : tracking.gpsSignal === 'weak' && tracking.status === 'tracking' ? <View style={styles.weakSignal}><Ionicons color="#9A3412" name="location-outline" size={17} /><Text style={styles.weakSignalText}>Weak GPS signal. Your time continues, but route distance pauses until accuracy improves.</Text></View> : <Text style={styles.note}>{process.env.EXPO_OS === 'web' ? 'Browser recording pauses when you leave. Use the mobile app for locked-screen recording.' : 'Your active walk keeps recording with the phone locked. Pause or finish to stop recording.'}</Text>}
     </View>
     {finishedActivity ? <ActivitySummarySheet distanceMeters={finishedActivity.distanceMeters} durationMs={finishedActivity.durationMs} isSaving={saveState === 'saving'} onDiscard={discardActivity} onSave={() => void saveFinishedActivity()} saveError={saveState === 'error'} visible={isSummaryVisible} /> : null}
     <CelebrationSheet

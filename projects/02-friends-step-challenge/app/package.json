@@ -1,7 +1,7 @@
 {
   "name": "stride-circle",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "dependencies": {
     "@appeeky/expo-healthkit": "^0.4.1",
     "@expo-google-fonts/nunito-sans": "^0.4.2",
@@ -21,6 +21,7 @@
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
+    "expo-task-manager": "~57.0.21",
     "expo-web-browser": "~57.0.3",
     "firebase": "^12.19.0",
     "react": "19.2.3",
@@ -49,11 +50,12 @@
   "scripts": {
     "start": "expo start",
     "cloud:sync": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/cloud-sync.ps1",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "eslint src",
     "test": "vitest run",
+    "test:activity": "node --test tests/*.test.cjs",
     "test:rn": "node scripts/run-rn-tests.mjs",
     "test:rules": "jest --config jest.rules.config.js --runInBand",
     "emulators": "firebase emulators:start --project demo-stride-circle",

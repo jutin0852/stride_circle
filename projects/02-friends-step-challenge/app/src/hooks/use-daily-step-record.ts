@@ -36,10 +36,12 @@ export function useDailyStepRecord(input: {
   const dateKey = input.dateKey ?? getLocalDateKey();
   const key = `${input.userId ?? ''}:${dateKey}`;
   const [recordKey, setRecordKey] = useState('');
+  const recordKeyRef = useRef('');
   const [savedSteps, setSavedSteps] = useState<number | null>(null);
   const [syncStatus, setSyncStatus] = useState<DailyStepSyncStatus>('idle');
   const latestSyncKeyRef = useRef<string | null>(null);
   const pendingSnapshotRef = useRef<DailyStepSyncSnapshot | null>(null);
+  const queuedSnapshotsRef = useRef<DailyStepSyncSnapshot[]>([]);
   const syncInFlightRef = useRef<Promise<void> | null>(null);
   const trailingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxWaitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -74,6 +76,7 @@ export function useDailyStepRecord(input: {
 
       const serverSteps = serverResult.status === 'fulfilled' ? serverResult.value : null;
       const pendingSteps = pendingResult.status === 'fulfilled' ? pendingResult.value[0]?.steps ?? null : null;
+      recordKeyRef.current = key;
       setSavedSteps(pendingSteps ?? serverSteps);
       setRecordKey(key);
       setSyncStatus(serverResult.status === 'rejected' && pendingSteps === null ? 'error' : 'idle');
@@ -91,6 +94,13 @@ export function useDailyStepRecord(input: {
       steps: snapshot.steps,
       userId: snapshot.userId,
     });
+
+    if (mountedRef.current && snapshot.userId === input.userId && snapshot.dateKey === dateKey) {
+      const sameRecord = recordKeyRef.current === key;
+      recordKeyRef.current = key;
+      setRecordKey(key);
+      setSavedSteps((current) => sameRecord ? Math.max(current ?? 0, snapshot.steps) : snapshot.steps);
+    }
 
     if (!snapshot.circleId) return;
 
@@ -120,14 +130,14 @@ export function useDailyStepRecord(input: {
       steps: circleSteps,
       userId: snapshot.userId,
     });
-  }, []);
+  }, [dateKey, input.userId, key]);
 
   const flushSync = useCallback(() => {
     clearSyncTimers();
     if (syncInFlightRef.current) return;
 
-    const snapshot = pendingSnapshotRef.current;
-    pendingSnapshotRef.current = null;
+    const snapshot = queuedSnapshotsRef.current.shift() ?? pendingSnapshotRef.current;
+    if (snapshot && pendingSnapshotRef.current === snapshot) pendingSnapshotRef.current = null;
     if (!snapshot) return;
 
     if (mountedRef.current) setSyncStatus('saving');
@@ -151,8 +161,6 @@ export function useDailyStepRecord(input: {
         if (queued) await removePendingDailyStepSync(pendingSnapshot);
         latestSyncKeyRef.current = `${snapshot.userId}:${snapshot.dateKey}:${snapshot.circleId ?? 'private'}:${snapshot.circleDateKey ?? ''}:${snapshot.source ?? 'unknown'}:${snapshot.steps}`;
         if (mountedRef.current && snapshot.userId === input.userId && snapshot.dateKey === dateKey) {
-          setRecordKey(key);
-          setSavedSteps((current) => Math.max(current ?? 0, snapshot.steps));
           setSyncStatus('saved');
         }
       } catch {
@@ -174,9 +182,9 @@ export function useDailyStepRecord(input: {
     syncInFlightRef.current = operation;
     void operation.finally(() => {
       if (syncInFlightRef.current === operation) syncInFlightRef.current = null;
-      if (pendingSnapshotRef.current && mountedRef.current) flushSyncRef.current();
+      if ((queuedSnapshotsRef.current.length || pendingSnapshotRef.current) && mountedRef.current) flushSyncRef.current();
     });
-  }, [clearSyncTimers, dateKey, input.userId, key, syncSnapshot]);
+  }, [clearSyncTimers, dateKey, input.userId, syncSnapshot]);
 
   useEffect(() => {
     flushSyncRef.current = flushSync;
@@ -200,18 +208,23 @@ export function useDailyStepRecord(input: {
       updatedAt: Date.now(),
       userId,
     };
+    const previousSnapshot = pendingSnapshotRef.current;
+    if (previousSnapshot && (previousSnapshot.userId !== snapshot.userId || previousSnapshot.dateKey !== snapshot.dateKey)) {
+      queuedSnapshotsRef.current.push(previousSnapshot);
+    }
     pendingSnapshotRef.current = snapshot;
 
     if (trailingTimerRef.current) clearTimeout(trailingTimerRef.current);
     trailingTimerRef.current = setTimeout(flushSync, SYNC_DELAY_MS);
     if (!maxWaitTimerRef.current) maxWaitTimerRef.current = setTimeout(flushSync, SYNC_MAX_WAIT_MS);
+    if (queuedSnapshotsRef.current.length && !syncInFlightRef.current) flushSyncRef.current();
   }, [dateKey, flushSync, input.circleDateKey, input.circleId, input.circleTimeZone, input.readSteps, input.shouldSave, input.source, input.steps, input.userId, key]);
 
   useEffect(() => {
     const userId = input.userId;
     if (!userId) return;
 
-    const flushPending = () => {
+    const flushPending = (isResume = false) => {
       void getPendingDailyStepSync(userId, dateKey).then((entries) => {
         const entry = entries[0];
         const currentSnapshot = pendingSnapshotRef.current;
@@ -220,13 +233,13 @@ export function useDailyStepRecord(input: {
           flushSync();
           return;
         }
-        if (pendingSnapshotRef.current && !syncInFlightRef.current) flushSync();
+        if (isResume && pendingSnapshotRef.current && !syncInFlightRef.current) flushSync();
       });
     };
 
     flushPending();
     const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'active') flushPending();
+      if (nextState === 'active') flushPending(true);
     });
     return () => subscription.remove();
   }, [dateKey, flushSync, input.readSteps, input.userId]);
