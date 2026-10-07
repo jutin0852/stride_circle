@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -6,9 +6,11 @@ import { useAuth } from '@/auth/auth-provider';
 import { Skeleton } from '@/components/skeleton';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { updateCircle } from '@/lib/circles';
-import { colors } from '@/theme';
+import { useAppColors } from '@/design-system/use-app-theme';
 
 export default function EditCircleRoute() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { circleId: rawCircleId } = useLocalSearchParams<{ circleId: string }>();
   const circleId = Array.isArray(rawCircleId) ? rawCircleId[0] : rawCircleId;
   const { user } = useAuth();
@@ -62,16 +64,16 @@ export default function EditCircleRoute() {
       </View>
 
       <Pressable accessibilityRole="button" disabled={isSaving || !form.name.trim()} onPress={() => void save()} style={({ pressed }) => [styles.saveButton, (isSaving || !form.name.trim()) && styles.disabled, pressed && !isSaving && styles.pressed]}>
-        {isSaving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>Save changes</Text>}
+        {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.saveText}>Save changes</Text>}
       </Pressable>
     </ScrollView>
   );
 }
 
-function EditSkeleton() { return <View style={styles.skeleton}><Skeleton style={{ alignSelf: 'center', height: 5, width: 42 }} /><Skeleton style={{ height: 30, marginTop: 28, width: '55%' }} /><Skeleton style={{ height: 14, marginTop: 11, width: '88%' }} /><Skeleton style={{ height: 12, marginTop: 29, width: 88 }} /><Skeleton style={{ height: 52, marginTop: 9, width: '100%' }} /><Skeleton style={{ height: 12, marginTop: 23, width: 112 }} /><Skeleton style={{ height: 102, marginTop: 9, width: '100%' }} /></View>; }
+function EditSkeleton() { const colors = useAppColors(); const styles = useMemo(() => createStyles(colors), [colors]); return <View style={styles.skeleton}><Skeleton style={{ alignSelf: 'center', height: 5, width: 42 }} /><Skeleton style={{ height: 30, marginTop: 28, width: '55%' }} /><Skeleton style={{ height: 14, marginTop: 11, width: '88%' }} /><Skeleton style={{ height: 12, marginTop: 29, width: 88 }} /><Skeleton style={{ height: 52, marginTop: 9, width: '100%' }} /><Skeleton style={{ height: 12, marginTop: 23, width: 112 }} /><Skeleton style={{ height: 102, marginTop: 9, width: '100%' }} /></View>; }
 function getMessage(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background },
   content: { gap: 16, padding: 24, paddingBottom: 40 },
   skeleton: { backgroundColor: colors.background, flex: 1, padding: 24 },
@@ -86,11 +88,11 @@ const styles = StyleSheet.create({
   descriptionInput: { minHeight: 104, paddingTop: 13 },
   hint: { alignSelf: 'flex-end', color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'], fontWeight: '600' },
   saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 15, justifyContent: 'center', marginTop: 5, minHeight: 52, paddingHorizontal: 18 },
-  saveText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  saveText: { color: colors.onAccent, fontSize: 15, fontWeight: '800' },
   unavailable: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: 16, justifyContent: 'center', padding: 24 },
   unavailableTitle: { color: colors.ink, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   cancelButton: { backgroundColor: colors.soft, borderRadius: 13, paddingHorizontal: 16, paddingVertical: 11 },
   cancelText: { color: colors.accentPressed, fontWeight: '800' },
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
-});
+}); }

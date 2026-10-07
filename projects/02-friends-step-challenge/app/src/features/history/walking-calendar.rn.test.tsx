@@ -13,6 +13,23 @@ function setup(overrides: Partial<React.ComponentProps<typeof WalkingCalendar>> 
 }
 
 describe('walking calendar states', () => {
+  it('omits the legend while preserving selected-day details and accessible date states', async () => {
+    const { props } = setup();
+    const screen = await render(<WalkingCalendar {...props} />);
+    expect(screen.queryByLabelText('Calendar legend')).toBeNull();
+    for (const label of ['Walking journey', 'Goal reached', 'Protected', 'Below goal', 'Selected']) {
+      expect(screen.queryByText(label)).toBeNull();
+    }
+    expect(screen.getByText('4,000')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /October 3, 2026.*4,000 saved steps/ }).props.accessibilityState.selected).toBe(true);
+  });
+  it('renders all dates in an older empty six-row month', async () => {
+    const { props } = setup({ month: '2025-03-01', selected: '2025-03-01', records: [] });
+    const screen = await render(<WalkingCalendar {...props} />);
+    expect(screen.getAllByTestId('history-calendar-week')).toHaveLength(6);
+    expect(screen.getByRole('button', { name: /March 31, 2025/ })).toBeTruthy();
+    expect(screen.getByText('No steps were recorded for this day.')).toBeTruthy();
+  });
   it('bounds native week geometry and uses the same geometry for the journey', async () => {
     const { props } = setup({ records: [{ dateKey: '2026-10-01', steps: 8000 }, { dateKey: '2026-10-02', steps: 4000 }] });
     const screen = await render(<WalkingCalendar {...props} />);

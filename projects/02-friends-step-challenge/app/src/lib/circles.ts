@@ -64,6 +64,12 @@ export type CircleDetails = {
   members: CircleMember[];
 };
 
+export type CircleHubPreview = {
+  memberCount: number;
+  members: CircleMember[];
+  walkingTodayCount: number;
+};
+
 export type CircleDailySteps = Record<string, number>;
 
 function getMemberData(user: User, role: CircleRole = 'member') {
@@ -118,6 +124,57 @@ function getMemberCount(value: unknown) {
 
 function getDiscoverableArea(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function readCircleMember(data: Record<string, unknown>): CircleMember | null {
+  if (typeof data.displayName !== 'string' || typeof data.userId !== 'string') return null;
+  const fallbackAvatar = getDefaultAvatarChoice(data.userId);
+
+  return {
+    avatarSeed: typeof data.avatarSeed === 'string' ? data.avatarSeed : fallbackAvatar.seed,
+    avatarStyle: isAvatarStyle(data.avatarStyle) ? data.avatarStyle : fallbackAvatar.style,
+    displayName: data.displayName,
+    role: data.role === 'owner' || data.role === 'moderator' ? data.role : 'member',
+    userId: data.userId,
+  };
+}
+
+/**
+ * Loads a small, one-time preview for circles the current user already belongs
+ * to. Circle membership is capped at 20, so the two bounded queries stay small
+ * and do not create a listener per circle. Public discovery never calls this.
+ */
+export async function getCircleHubPreview(circleId: string): Promise<CircleHubPreview | null> {
+  const db = requireFirebase(database, 'Firestore');
+  const circleSnapshot = await getDoc(doc(db, 'circles', circleId));
+  if (!circleSnapshot.exists()) return null;
+
+  const circleData = circleSnapshot.data();
+  const dateKey = getDateKeyInTimeZone(new Date(), getCompetitionTimeZone(circleData.competitionTimeZone));
+  const membersSnapshot = await getDocs(query(collection(db, 'circles', circleId, 'members'), limit(MAX_CIRCLE_MEMBERS)));
+
+  const members = membersSnapshot.docs.flatMap((memberSnapshot) => {
+    const member = readCircleMember(memberSnapshot.data());
+    return member ? [member] : [];
+  });
+  const memberIds = new Set(members.map((member) => member.userId));
+  const stepsSnapshot = memberIds.size > 0
+    ? await getDocs(query(
+      collection(db, 'circles', circleId, 'dailySteps', dateKey, 'entries'),
+      where('userId', 'in', Array.from(memberIds)),
+      limit(MAX_CIRCLE_MEMBERS),
+    ))
+    : null;
+  const walkingTodayCount = stepsSnapshot?.docs.reduce((count, entrySnapshot) => {
+    const data = entrySnapshot.data();
+    return memberIds.has(entrySnapshot.id) && typeof data.steps === 'number' && data.steps > 0 ? count + 1 : count;
+  }, 0) ?? 0;
+
+  return {
+    memberCount: getMemberCount(circleData.memberCount),
+    members: members.slice(0, 3),
+    walkingTodayCount,
+  };
 }
 
 export async function createCircle(input: {
@@ -537,16 +594,8 @@ export function watchCircleDetails(
     collection(db, 'circles', circleId, 'members'),
     (membersSnapshot) => {
       members = membersSnapshot.docs.flatMap((member) => {
-        const data = member.data();
-        if (typeof data.displayName !== 'string' || typeof data.userId !== 'string') return [];
-        const fallbackAvatar = getDefaultAvatarChoice(data.userId);
-        return [{
-          avatarSeed: typeof data.avatarSeed === 'string' ? data.avatarSeed : fallbackAvatar.seed,
-          avatarStyle: isAvatarStyle(data.avatarStyle) ? data.avatarStyle : fallbackAvatar.style,
-          displayName: data.displayName,
-          role: data.role === 'owner' || data.role === 'moderator' ? data.role : 'member',
-          userId: data.userId,
-        }];
+        const circleMember = readCircleMember(member.data());
+        return circleMember ? [circleMember] : [];
       });
       publish();
     },

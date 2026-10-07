@@ -1,3 +1,5 @@
+import type { TextStyle } from 'react-native';
+
 export const palette = {
   ink: {
     950: '#0E2022',
@@ -49,50 +51,165 @@ export const palette = {
   black: '#000000',
 } as const;
 
+/** The approved Home palette is the single color source for the app. */
+export const appColors = {
+  canvas: '#FFFFFF',
+  ink: '#173342',
+  muted: '#4B606B',
+  blue: '#13B5E8',
+  edge: '#087CA5',
+  ice: '#E8F8FF',
+  green: '#317F1B',
+  yellow: '#FFD34E',
+  coral: '#F77768',
+  line: '#DCE6EB',
+  panelLine: '#B9E6F5',
+  panelEdge: '#E0F1F6',
+} as const;
+
 export const semanticColors = {
-  canvas: palette.cream[100],
-  card: palette.cream[50],
+  canvas: appColors.canvas,
+  card: appColors.canvas,
   raised: '#FFFFFF',
-  soft: palette.cream[200],
-  softLime: palette.lime[100],
-  inverse: palette.ink[950],
+  soft: appColors.ice,
+  softLime: appColors.ice,
+  inverse: appColors.ink,
 
-  contentPrimary: palette.ink[950],
-  contentSecondary: palette.ink[600],
-  contentTertiary: palette.ink[500],
+  contentPrimary: appColors.ink,
+  contentSecondary: appColors.muted,
+  contentTertiary: '#78909A',
   contentInverse: palette.white,
-  contentOnBrand: palette.ink[950],
-  contentLink: palette.ink[800],
+  contentOnBrand: appColors.ink,
+  contentLink: appColors.edge,
 
-  border: '#E3DAC9',
-  borderStrong: '#CFC3AE',
-  divider: '#EBE4D7',
+  border: appColors.line,
+  borderSubtle: '#EDF1F2',
+  borderStrong: appColors.panelLine,
+  divider: appColors.line,
 
-  brandAction: palette.lime[500],
-  brandActionPressed: palette.lime[600],
-  brandActionSoft: palette.lime[100],
-  brandDark: palette.ink[950],
-  brandDarkPressed: palette.ink[800],
+  brandAction: appColors.blue,
+  brandActionPressed: appColors.edge,
+  brandActionSoft: appColors.ice,
+  brandDark: appColors.ink,
+  brandDarkPressed: '#102F3C',
 
-  infoSurface: palette.sky[100],
-  infoContent: palette.sky[700],
-  successSurface: '#E5F6E7',
-  successContent: '#237247',
-  warningSurface: palette.peach[100],
-  warningContent: '#98601A',
-  dangerSurface: palette.coral[100],
-  dangerContent: palette.coral[700],
-  celebrationSurface: palette.coral[500],
+  infoSurface: appColors.ice,
+  infoContent: appColors.edge,
+  successSurface: '#E9F7E5',
+  successContent: appColors.green,
+  warningSurface: '#FFF7D8',
+  warningContent: '#74530B',
+  dangerSurface: '#FFF0EC',
+  dangerContent: '#A94234',
+  celebrationSurface: appColors.coral,
   celebrationContent: palette.white,
 
-  overlay: 'rgba(14, 32, 34, 0.42)',
-  scrim: 'rgba(14, 32, 34, 0.08)',
+  overlay: 'rgba(23, 51, 66, 0.42)',
+  scrim: 'rgba(23, 51, 66, 0.08)',
 
   // Compatibility aliases for existing screen-local styles. New UI should use
   // the semantic tokens above or the primitives in components/ui.
-  legacyAction: palette.ink[950],
-  legacyActionPressed: palette.ink[800],
+  legacyAction: appColors.blue,
+  legacyActionPressed: appColors.edge,
 } as const;
+
+/** Exact dark-theme roles from the approved OpenDesign color handoff. */
+export const darkModePalette = {
+  background: '#111F29',
+  backgroundElevated: '#182A35',
+  tabBar: '#162832',
+  surface: '#1B2D38',
+  surfaceSecondary: '#203642',
+  surfaceHighlighted: '#263D48',
+  surfaceSelected: '#23404D',
+  surfaceSubtle: '#1D3541',
+  surfaceOverlay: '#1B2C36',
+  textPrimary: '#F2F7F9',
+  textSecondary: '#C1CFD5',
+  textMuted: '#A0B2BA',
+  textInverse: '#11232D',
+  textDisabled: '#81939B',
+  textOnAccent: '#092936',
+  border: '#3A505A',
+  borderSubtle: '#2B404B',
+  borderStrong: '#58717B',
+  borderSelected: '#82D5EB',
+  primary: '#42C2E6',
+  primaryPressed: '#29A9D0',
+  primarySubtle: '#1A3A47',
+  secondary: '#63D0E6',
+  action: '#74D9EF',
+  success: '#83D566',
+  successSubtle: '#263F2C',
+  protected: '#F0C95D',
+  protectedSubtle: '#40371F',
+  protectedBorder: '#92793B',
+  protectedText: '#FFE8A0',
+  belowGoal: '#F27F74',
+  belowGoalSubtle: '#432D2C',
+  belowGoalBorder: '#A95D56',
+  streak: '#F2A15F',
+  error: '#FF837C',
+  inactive: '#71848C',
+  dateNormal: '#E3EDF1',
+  dateFuture: '#93A3AA',
+  goalBackground: '#1E4050',
+  goalText: '#DDF5FA',
+  protectedBackground: '#3E3723',
+  protectedDayText: '#FFE79C',
+  belowGoalOutline: '#B56C64',
+  selectedOutline: '#EFF6F8',
+  selectedText: '#F1F7F9',
+  journeyPath: '#4BB5D0',
+  progressTrack: '#2A414C',
+  progressFill: '#50C5E6',
+  completed: '#86D766',
+  tabActive: '#6FD9EF',
+  tabInactive: '#A6B7BE',
+  tabActiveBackground: '#203945',
+  cardDepth: '#0B161D',
+} as const;
+
+type SemanticColorSet = { [Key in keyof typeof semanticColors]: string };
+
+/** Dark equivalents for existing shared primitives; light mode remains unchanged. */
+export const darkSemanticColors: SemanticColorSet = {
+  canvas: darkModePalette.background,
+  card: darkModePalette.surface,
+  raised: darkModePalette.surfaceOverlay,
+  soft: darkModePalette.surfaceSecondary,
+  softLime: darkModePalette.surfaceHighlighted,
+  inverse: darkModePalette.textInverse,
+  contentPrimary: darkModePalette.textPrimary,
+  contentSecondary: darkModePalette.textSecondary,
+  contentTertiary: darkModePalette.textMuted,
+  contentInverse: darkModePalette.textPrimary,
+  contentOnBrand: darkModePalette.textOnAccent,
+  contentLink: darkModePalette.action,
+  border: darkModePalette.border,
+  borderSubtle: darkModePalette.borderSubtle,
+  borderStrong: darkModePalette.borderStrong,
+  divider: darkModePalette.borderSubtle,
+  brandAction: darkModePalette.primary,
+  brandActionPressed: darkModePalette.primaryPressed,
+  brandActionSoft: darkModePalette.primarySubtle,
+  brandDark: darkModePalette.surfaceHighlighted,
+  brandDarkPressed: darkModePalette.surfaceSelected,
+  infoSurface: darkModePalette.primarySubtle,
+  infoContent: darkModePalette.action,
+  successSurface: darkModePalette.successSubtle,
+  successContent: darkModePalette.success,
+  warningSurface: darkModePalette.protectedSubtle,
+  warningContent: darkModePalette.protectedText,
+  dangerSurface: darkModePalette.belowGoalSubtle,
+  dangerContent: darkModePalette.error,
+  celebrationSurface: darkModePalette.belowGoal,
+  celebrationContent: darkModePalette.textOnAccent,
+  overlay: 'rgba(11, 22, 29, 0.76)',
+  scrim: 'rgba(4, 12, 17, 0.64)',
+  legacyAction: darkModePalette.primary,
+  legacyActionPressed: darkModePalette.primaryPressed,
+};
 
 export const spacing = {
   none: 0,
@@ -119,18 +236,40 @@ export const radii = {
   pill: 999,
 } as const;
 
+/**
+ * Named faces instead of per-component font strings. The Expo loader registers
+ * these keys at the root before the app renders.
+ */
+export const fontFamilies = {
+  regular: 'NunitoSans_400Regular',
+  semiBold: 'NunitoSans_600SemiBold',
+  bold: 'NunitoSans_700Bold',
+  extraBold: 'NunitoSans_800ExtraBold',
+} as const;
+
+export function fontFamilyForWeight(weight: TextStyle['fontWeight'] | undefined) {
+  const value = weight === 'normal' || weight === undefined ? 400 : weight === 'bold' ? 700 : Number(weight);
+  if (value <= 400) return fontFamilies.regular;
+  if (value <= 600) return fontFamilies.semiBold;
+  if (value <= 700) return fontFamilies.bold;
+  return fontFamilies.extraBold;
+}
+
 export const typeScale = {
-  display: { fontSize: 56, lineHeight: 60, letterSpacing: -2.4, fontWeight: '900' },
-  displaySmall: { fontSize: 42, lineHeight: 46, letterSpacing: -1.8, fontWeight: '900' },
-  headline: { fontSize: 32, lineHeight: 37, letterSpacing: -1.2, fontWeight: '900' },
-  title: { fontSize: 24, lineHeight: 29, letterSpacing: -0.7, fontWeight: '800' },
-  titleSmall: { fontSize: 19, lineHeight: 24, letterSpacing: -0.3, fontWeight: '800' },
-  body: { fontSize: 16, lineHeight: 23, letterSpacing: 0, fontWeight: '500' },
-  bodySmall: { fontSize: 14, lineHeight: 20, letterSpacing: 0, fontWeight: '500' },
-  label: { fontSize: 12, lineHeight: 16, letterSpacing: 0.1, fontWeight: '800' },
-  eyebrow: { fontSize: 10, lineHeight: 14, letterSpacing: 1.1, fontWeight: '900' },
-  button: { fontSize: 15, lineHeight: 20, letterSpacing: -0.1, fontWeight: '900' },
-  numeric: { fontSize: 30, lineHeight: 34, letterSpacing: -1.2, fontWeight: '900' },
+  display: { fontFamily: fontFamilies.extraBold, fontSize: 56, lineHeight: 60, letterSpacing: -2.4 },
+  displaySmall: { fontFamily: fontFamilies.extraBold, fontSize: 42, lineHeight: 46, letterSpacing: -1.8 },
+  headline: { fontFamily: fontFamilies.extraBold, fontSize: 32, lineHeight: 37, letterSpacing: -1.2 },
+  title: { fontFamily: fontFamilies.extraBold, fontSize: 24, lineHeight: 29, letterSpacing: -0.7 },
+  titleSmall: { fontFamily: fontFamilies.extraBold, fontSize: 19, lineHeight: 24, letterSpacing: -0.3 },
+  body: { fontFamily: fontFamilies.regular, fontSize: 16, lineHeight: 23, letterSpacing: 0 },
+  bodyStrong: { fontFamily: fontFamilies.semiBold, fontSize: 16, lineHeight: 23, letterSpacing: 0 },
+  bodySmall: { fontFamily: fontFamilies.regular, fontSize: 14, lineHeight: 20, letterSpacing: 0 },
+  caption: { fontFamily: fontFamilies.regular, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
+  label: { fontFamily: fontFamilies.bold, fontSize: 12, lineHeight: 16, letterSpacing: 0.1 },
+  eyebrow: { fontFamily: fontFamilies.extraBold, fontSize: 10, lineHeight: 14, letterSpacing: 1.1 },
+  button: { fontFamily: fontFamilies.bold, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
+  numeric: { fontFamily: fontFamilies.extraBold, fontSize: 30, lineHeight: 34, letterSpacing: -1.2 },
+  stat: { fontFamily: fontFamilies.extraBold, fontSize: 30, lineHeight: 34, letterSpacing: -1.2 },
 } as const;
 
 export const controlHeights = {

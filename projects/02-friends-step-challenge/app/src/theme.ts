@@ -13,6 +13,10 @@ export const colors = {
   soft: semanticColors.soft,
   accent: semanticColors.legacyAction,
   accentPressed: semanticColors.legacyActionPressed,
+  accentText: semanticColors.contentOnBrand,
+  accentBorder: semanticColors.brandActionPressed,
   hero: semanticColors.infoSurface,
   success: semanticColors.successContent,
+  danger: semanticColors.dangerContent,
+  dangerSurface: semanticColors.dangerSurface,
 } as const;

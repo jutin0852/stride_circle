@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "@/theme";
+import { useAppColors } from "@/design-system/use-app-theme";
 import { formatSteps, type Friend } from "@/data/circle";
 import { Avatar } from "./avatar";
 
@@ -9,6 +10,8 @@ export function Leaderboard({
 }: {
   friends: Friend[];
 }) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.card}>
       {friends.map((friend, index) => (
@@ -38,7 +41,7 @@ export function Leaderboard({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderColor: colors.border,
@@ -54,7 +57,7 @@ const styles = StyleSheet.create({
     minHeight: 72,
     paddingHorizontal: 15,
   },
-  youRow: { backgroundColor: "#EFF6FF" },
+  youRow: { backgroundColor: colors.soft },
   rank: {
     color: colors.muted,
     fontSize: 15,
@@ -71,4 +74,4 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     fontWeight: "800",
   },
-});
+}); }
