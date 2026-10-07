@@ -30,7 +30,7 @@ export function HistoryRecap({ records, today, goal, goalReady, status, onRetry 
   const todaySteps = rhythm[6]?.steps ?? 0;
   const todayComplete = goalReady && todaySteps >= goal;
 
-  return <View style={styles.section}>
+  return <View>
     <View style={styles.sectionTitle}><AppText accessibilityRole="header" variant="titleSmall" style={styles.title}>This week, so far</AppText></View>
     {status === 'error' ? <StateCard tone="error" title="Recap unavailable" description="We couldn’t load your saved steps." actionLabel="Try again" onAction={onRetry} /> : status === 'loading' ? <Skeleton style={styles.skeleton} /> : <View style={styles.rhythm}>
       {selected ? <View style={styles.inspector} pointerEvents="none">
@@ -75,10 +75,9 @@ function formatRhythmSteps(steps: number) {
 }
 
 const styles = StyleSheet.create({
-  section: { marginTop: 26 },
-  sectionTitle: { marginBottom: 10 },
+  sectionTitle: { marginBottom: spacing.md },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 24, fontWeight: '800' },
-  rhythm: { paddingTop: 8 },
+  rhythm: { paddingTop: spacing.sm },
   inspector: { position: 'absolute', top: -8, left: 0, right: 0, alignItems: 'center', zIndex: 1 },
   inspectorText: { fontSize: 12, lineHeight: 18, fontWeight: '700', color: historyColors.blueDeep, textAlign: 'center', backgroundColor: '#E7F8FD', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
   touchColumns: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row' },

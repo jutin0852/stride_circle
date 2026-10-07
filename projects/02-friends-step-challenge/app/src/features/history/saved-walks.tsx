@@ -33,8 +33,8 @@ function formatElapsed(milliseconds: number) {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 10, marginTop: 24 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, paddingVertical: 16 },
+  section: { gap: spacing.md },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 24, fontWeight: '800' }, count: { color: historyColors.muted, fontSize: 12 },
   list: { gap: 0 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 2, gap: 12, borderBottomWidth: 1, borderBottomColor: historyColors.line, minHeight: 68 }, lastRow: { borderBottomWidth: 0 },

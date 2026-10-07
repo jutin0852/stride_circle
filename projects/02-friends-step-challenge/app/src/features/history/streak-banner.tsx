@@ -25,7 +25,7 @@ export function StreakBanner({ summary, onPress }: { summary: StreakSummary; onP
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 2, paddingBottom: 10 },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: 2 },
   copy: { flex: 1 }, copyStrong: { color: historyColors.ink, fontWeight: '800', fontSize: 15, lineHeight: 19 },
   streakDays: { flexDirection: 'row', alignItems: 'center', gap: 5 }, streakNumber: { color: historyColors.ink, fontSize: 27, lineHeight: 28 }, streakLabel: { fontSize: 12, lineHeight: 15 },
   emblem: { width: 86, height: 94, justifyContent: 'center', alignItems: 'center' },
