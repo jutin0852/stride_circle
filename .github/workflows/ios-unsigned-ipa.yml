@@ -1,0 +1,182 @@
+name: iOS unsigned IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ios-unsigned-ipa.yml'
+      - 'projects/02-friends-step-challenge/app/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-unsigned-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned iOS IPA
+    runs-on: macos-26
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: projects/02-friends-step-challenge/app
+    env:
+      CI: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: projects/02-friends-step-challenge/app/package-lock.json
+
+      - name: Set up Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Inject public app configuration
+        env:
+          FIREBASE_API_KEY: ${{ vars.EXPO_PUBLIC_FIREBASE_API_KEY || secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ vars.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_PROJECT_ID || secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ vars.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_APP_ID || secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+          GOOGLE_ANDROID_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || secrets.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID }}
+        run: |
+          {
+            echo "EXPO_PUBLIC_FIREBASE_API_KEY=$FIREBASE_API_KEY"
+            echo "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN"
+            echo "EXPO_PUBLIC_FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
+            echo "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET"
+            echo "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID"
+            echo "EXPO_PUBLIC_FIREBASE_APP_ID=$FIREBASE_APP_ID"
+            echo "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID"
+            echo "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=$GOOGLE_IOS_CLIENT_ID"
+            echo "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=$GOOGLE_ANDROID_CLIENT_ID"
+            echo 'EXPO_PUBLIC_HEALTH_DATA_PROVIDER=pedometer'
+          } > .env
+
+      - name: Remove paid-only HealthKit configuration
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'app.json';
+          const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+          config.expo.plugins = config.expo.plugins.filter((plugin) => {
+            const name = Array.isArray(plugin) ? plugin[0] : plugin;
+            return name !== '@appeeky/expo-healthkit';
+          });
+          fs.writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`);
+          NODE
+
+      - name: Generate the iOS project
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods dependencies
+        run: npx pod-install ios
+
+      - name: Build the unsigned device app
+        run: |
+          set -o pipefail
+
+          workspace="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"
+          if [[ -z "$workspace" ]]; then
+            echo 'No generated Xcode workspace was found.' >&2
+            exit 1
+          fi
+
+          project="$(find ios -maxdepth 1 -name '*.xcodeproj' -print -quit)"
+          if [[ -z "$project" ]]; then
+            echo 'No generated Xcode project was found.' >&2
+            exit 1
+          fi
+
+          preferred_scheme="$(basename "$project" .xcodeproj)"
+          scheme="$(PREFERRED_SCHEME="$preferred_scheme" xcodebuild -list -json -project "$project" | node -e '
+            let input = "";
+            process.stdin.on("data", chunk => input += chunk);
+            process.stdin.on("end", () => {
+              const project = JSON.parse(input);
+              const schemes = project.project?.schemes ?? [];
+              const preferred = process.env.PREFERRED_SCHEME;
+              const scheme = schemes.includes(preferred)
+                ? preferred
+                : schemes.find(value => !value.endsWith("-Pods") && !value.startsWith("EXApplication"))
+                  ?? schemes[0];
+              if (!scheme) process.exit(1);
+              process.stdout.write(scheme);
+            });
+          ')"
+          if [[ -z "$scheme" ]]; then
+            echo 'No application scheme was found in the generated workspace.' >&2
+            exit 1
+          fi
+
+          echo "Building scheme: $scheme"
+          xcodebuild \
+            -workspace "$workspace" \
+            -scheme "$scheme" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            build 2>&1 | tee xcodebuild.log
+
+      - name: Package the unsigned IPA
+        run: |
+          app_path="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)"
+          if [[ -z "$app_path" ]]; then
+            echo 'The iOS device app was not produced.' >&2
+            exit 1
+          fi
+
+          rm -rf Payload StrideCircle-unsigned.ipa
+          mkdir Payload
+          ditto "$app_path" "Payload/$(basename "$app_path")"
+          zip -qry StrideCircle-unsigned.ipa Payload
+          rm -rf Payload
+
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "run=${GITHUB_RUN_NUMBER}"
+            echo 'bundle_identifier=com.stridecircle.app'
+            echo 'signing=unsigned; import this IPA into SideStore for on-device signing'
+          } > build-metadata.txt
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stride-circle-unsigned-ipa-${{ github.run_number }}
+          path: |
+            projects/02-friends-step-challenge/app/StrideCircle-unsigned.ipa
+            projects/02-friends-step-challenge/app/build-metadata.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stride-circle-ios-build-log-${{ github.run_number }}
+          path: projects/02-friends-step-challenge/app/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
