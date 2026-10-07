@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { AppText } from '@/components/ui';
 import { palette, spacing } from '@/design-system/tokens';
@@ -19,12 +20,12 @@ export function StreakEmblem({ large = false, compact = false }: { large?: boole
 export function StreakBanner({ summary, onPress }: { summary: StreakSummary; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={`${summary.currentStreak} day walking streak. View your milestones`} onPress={onPress} style={({ pressed }) => [styles.banner, pressed && styles.pressed]}>
     <View style={styles.copy}><AppText variant="bodySmall" style={styles.copyStrong}>Look at you, showing up.</AppText></View>
-    <View style={styles.streakDays}><Ionicons name="flame" size={24} color={historyColors.coral} /><AppText variant="numeric" style={styles.streakNumber}>{summary.currentStreak}</AppText><AppText variant="label" tone="secondary" style={styles.streakLabel}>day streak</AppText></View>
+    <View style={styles.streakDays}><Svg width={24} height={28} viewBox="0 0 24 24" accessible={false}><Path d="M13 2c2 6-4 7-2 11 2-1 3-3 3-5 5 4 7 7 5 11-3 5-11 4-14 0C1 13 7 9 7 6c1 3 2 3 3 4 3-3 1-5 3-8Z" fill="none" stroke="#BD5415" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" /></Svg><AppText variant="numeric" style={styles.streakNumber}>{summary.currentStreak}</AppText><AppText variant="label" tone="secondary" style={styles.streakLabel}>day streak</AppText></View>
   </Pressable>;
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 2, paddingHorizontal: 2, paddingBottom: 18 },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 2, paddingBottom: 10 },
   copy: { flex: 1 }, copyStrong: { color: historyColors.ink, fontWeight: '800', fontSize: 15, lineHeight: 19 },
   streakDays: { flexDirection: 'row', alignItems: 'center', gap: 5 }, streakNumber: { color: historyColors.ink, fontSize: 27, lineHeight: 28 }, streakLabel: { fontSize: 12, lineHeight: 15 },
   emblem: { width: 86, height: 94, justifyContent: 'center', alignItems: 'center' },
