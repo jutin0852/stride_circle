@@ -18,8 +18,10 @@ import { database, requireFirebase } from '@/lib/firebase';
 import type { CircleActivityType } from '@/lib/circles';
 import type { RoutePoint } from '@/hooks/use-activity-tracking';
 
+type StoredActivityType = CircleActivityType | 'run';
+
 export type ActivityRecord = {
-  activityType: CircleActivityType;
+  activityType: StoredActivityType;
   averagePaceSecondsPerKm: number | null;
   dateKey: string;
   distanceMeters: number;

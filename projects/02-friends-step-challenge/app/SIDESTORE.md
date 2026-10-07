@@ -53,6 +53,10 @@ SideStore's current documentation says that importing an updated IPA without rem
 
 ## Compatibility notes
 
-The current app uses foreground location, Core Motion step counting, Apple Maps through `react-native-maps`, browser-based Google sign-in, Firebase's JavaScript SDK, and AsyncStorage. It does not currently request push notifications, background location, HealthKit, App Groups, associated domains, or other paid-team-only capabilities. The activity recorder therefore requires the app to remain active while a walk is being recorded; it is not a background GPS tracker.
+The current app uses foreground location, Apple Maps through `react-native-maps`, browser-based Google sign-in, Firebase's JavaScript SDK, AsyncStorage, and a native HealthKit provider in the normal project configuration. HealthKit is a restricted capability for which free Personal Team signing may not produce a working permission flow.
+
+The **iOS unsigned IPA** workflow is deliberately the free-account variant: it removes the HealthKit config plugin for that build and sets `EXPO_PUBLIC_HEALTH_DATA_PROVIDER=pedometer`. The installed app can therefore use the iPhone's foreground motion step sensor, but it does not validate HealthKit access or background HealthKit delivery. A paid Apple-authorized signing setup is still required for those HealthKit features.
+
+The activity recorder uses foreground location and requires the app to remain active while a walk is being recorded; it is not a background GPS tracker. The app does not currently request push notifications, App Groups, or associated domains.
 
 This route is for personal testing and small-scale sharing. It is not an App Store or TestFlight distribution path, and every tester must use their own SideStore setup and free Apple Account.

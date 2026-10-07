@@ -11,7 +11,6 @@ import { saveActivity } from '@/lib/activities';
 import { useActivityTracking, type FinishedActivity, type GpsSignalStatus } from '@/hooks/use-activity-tracking';
 import { colors } from '@/theme';
 
-type ActivityType = 'walk' | 'run';
 const defaultRegion = { latitude: 6.5244, longitude: 3.3792, latitudeDelta: 0.035, longitudeDelta: 0.035 };
 
 function formatDuration(milliseconds: number) {
@@ -25,7 +24,6 @@ function formatPace(secondsPerKm: number | null) {
 }
 
 export default function ActivityRoute() {
-  const [activityType, setActivityType] = useState<ActivityType>('run');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [finishedActivity, setFinishedActivity] = useState<FinishedActivity | null>(null);
   const [isSummaryVisible, setSummaryVisible] = useState(false);
@@ -33,10 +31,9 @@ export default function ActivityRoute() {
   const { user } = useAuth();
   const tracking = useActivityTracking();
   const insets = useSafeAreaInsets();
-  const isRun = activityType === 'run';
   const averagePace = tracking.distanceMeters > 0 ? tracking.elapsedMs / 1_000 / (tracking.distanceMeters / 1_000) : null;
   const isMoving = tracking.status === 'tracking' || tracking.status === 'paused';
-  const activityTitle = tracking.status === 'tracking' ? `Recording your ${isRun ? 'run' : 'walk'}` : tracking.status === 'paused' ? 'Activity paused' : tracking.status === 'finished' ? 'Nice work.' : isRun ? 'Ready to run?' : 'Ready to walk?';
+  const activityTitle = tracking.status === 'tracking' ? 'Recording your walk' : tracking.status === 'paused' ? 'Walk paused' : tracking.status === 'finished' ? 'Nice work.' : 'Ready to walk?';
 
   const primaryAction = () => {
     if (tracking.status === 'idle' || tracking.status === 'denied' || tracking.status === 'error') { setCompletionVisible(false); setFinishedActivity(null); setSaveState('idle'); void tracking.start(); return; }
@@ -57,7 +54,7 @@ export default function ActivityRoute() {
     setSaveState('saving');
     try {
       await saveActivity({
-        activityType,
+        activityType: 'walk',
         distanceMeters: finishedActivity.distanceMeters,
         durationMs: finishedActivity.durationMs,
         route: finishedActivity.route,
@@ -90,12 +87,12 @@ export default function ActivityRoute() {
   return <View style={styles.page}>
     <ActivityMap currentLocation={tracking.currentLocation} fallback={<View style={styles.mapFallback}><Text style={styles.mapFallbackText}>Maps are available in the iPhone app.</Text></View>} initialRegion={defaultRegion} route={tracking.route} showsUserLocation style={StyleSheet.absoluteFill} />
     <View pointerEvents="none" style={[styles.topOverlay, { top: insets.top + 12 }]}>
-      <Text style={styles.eyebrow}>RECORD ACTIVITY</Text>
+      <Text style={styles.eyebrow}>RECORD WALK</Text>
       <Text style={styles.title}>{activityTitle}</Text>
-      <Text style={styles.status}>{saveState === 'saving' ? 'Saving your activity…' : saveState === 'saved' ? 'Saved to your history.' : saveState === 'error' ? 'We could not save this activity.' : statusMessage(tracking.status, tracking.gpsSignal, tracking.accuracyMeters)}</Text>
+      <Text style={styles.status}>{saveState === 'saving' ? 'Saving your walk…' : saveState === 'saved' ? 'Saved to your history.' : saveState === 'error' ? 'We could not save this walk.' : statusMessage(tracking.status, tracking.gpsSignal, tracking.accuracyMeters)}</Text>
     </View>
     <View style={[styles.metricCard, { bottom: 176 + Math.max(insets.bottom, 8) }]}>
-      <Text style={styles.trackerType}>{isRun ? 'RUN' : 'WALK'}</Text>
+      <Text style={styles.trackerType}>WALK</Text>
       <View style={styles.metrics}>
         <Metric value={formatDuration(tracking.elapsedMs)} label="TIME" />
         <Metric value={formatPace(averagePace)} label="AVG. PACE /KM" />
@@ -106,17 +103,17 @@ export default function ActivityRoute() {
     <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 22) }]}>
       <View style={styles.grabber} />
       <View style={styles.controls}>
-        <Pressable disabled={isMoving} accessibilityRole="button" onPress={() => setActivityType((type) => type === 'run' ? 'walk' : 'run')} style={({ pressed }) => [styles.activityButton, isMoving && styles.disabled, pressed && styles.pressed]}>
-          <View style={styles.activitySymbol}><MaterialCommunityIcons color={colors.accent} name={isRun ? 'run' : 'walk'} size={27} /></View><Text style={styles.activityButtonLabel}>{isRun ? 'Run' : 'Walk'}</Text><Text style={styles.activityButtonHint}>{isMoving ? 'Activity active' : 'Tap to change'}</Text>
-        </Pressable>
+        <View accessibilityLabel="Walking activity" style={styles.activityButton}>
+          <View style={styles.activitySymbol}><MaterialCommunityIcons color={colors.accent} name="walk" size={27} /></View><Text style={styles.activityButtonLabel}>Walk</Text><Text style={styles.activityButtonHint}>Walking only</Text>
+        </View>
         <Pressable accessibilityRole="button" onPress={primaryAction} style={({ pressed }) => [styles.startControl, pressed && styles.pressed]}><View style={styles.startButton}><Ionicons color="#FFFFFF" name={tracking.status === 'tracking' ? 'pause' : 'play'} size={25} /></View><Text style={styles.startText}>{primaryLabel}</Text></Pressable>
         {isMoving ? <Pressable accessibilityRole="button" onPress={finishActivity} style={({ pressed }) => [styles.finishButton, pressed && styles.pressed]}><View style={styles.finishIcon}><Ionicons color={colors.ink} name="stop" size={16} /></View><Text style={styles.finishText}>Finish</Text></Pressable> : <View style={styles.finishPlaceholder} />}
       </View>
-      {tracking.status === 'denied' ? <View style={styles.recovery}><Text style={styles.permissionMessage}>Location access is off. Turn it on to record your route, distance, and pace.</Text><Pressable accessibilityRole="button" onPress={() => void Linking.openURL('app-settings:')} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}><Text style={styles.settingsButtonText}>Open Settings</Text></Pressable></View> : tracking.gpsSignal === 'disabled' ? <Text style={styles.permissionMessage}>Location Services are turned off on this iPhone. Turn them on in Settings, then try again.</Text> : tracking.status === 'error' ? <Text style={styles.permissionMessage}>We could not start GPS. Check your location settings and try again.</Text> : tracking.gpsSignal === 'weak' && isMoving ? <View style={styles.weakSignal}><Ionicons color="#9A3412" name="location-outline" size={17} /><Text style={styles.weakSignalText}>Weak GPS signal. Your time continues, but route distance pauses until accuracy improves.</Text></View> : <Text style={styles.note}>Finish to review your route and decide whether to save it.</Text>}
+      {tracking.status === 'denied' ? <View style={styles.recovery}><Text style={styles.permissionMessage}>Location access is off. Turn it on to record your walk, distance, and pace.</Text><Pressable accessibilityRole="button" onPress={() => void Linking.openURL('app-settings:')} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}><Text style={styles.settingsButtonText}>Open Settings</Text></Pressable></View> : tracking.gpsSignal === 'disabled' ? <Text style={styles.permissionMessage}>Location Services are turned off on this iPhone. Turn them on in Settings, then try again.</Text> : tracking.status === 'error' ? <Text style={styles.permissionMessage}>We could not start GPS. Check your location settings and try again.</Text> : tracking.gpsSignal === 'weak' && isMoving ? <View style={styles.weakSignal}><Ionicons color="#9A3412" name="location-outline" size={17} /><Text style={styles.weakSignalText}>Weak GPS signal. Your time continues, but route distance pauses until accuracy improves.</Text></View> : <Text style={styles.note}>Finish to review your walk and decide whether to save it.</Text>}
     </View>
-    {finishedActivity ? <ActivitySummarySheet activityType={activityType} distanceMeters={finishedActivity.distanceMeters} durationMs={finishedActivity.durationMs} isSaving={saveState === 'saving'} onDiscard={discardActivity} onSave={() => void saveFinishedActivity()} saveError={saveState === 'error'} visible={isSummaryVisible} /> : null}
+    {finishedActivity ? <ActivitySummarySheet distanceMeters={finishedActivity.distanceMeters} durationMs={finishedActivity.durationMs} isSaving={saveState === 'saving'} onDiscard={discardActivity} onSave={() => void saveFinishedActivity()} saveError={saveState === 'error'} visible={isSummaryVisible} /> : null}
     <CelebrationSheet
-      body={`${((finishedActivity?.distanceMeters ?? 0) / 1_000).toFixed(2)} km in ${formatDuration(finishedActivity?.durationMs ?? 0)}. Your activity is saved in History.`}
+      body={`${((finishedActivity?.distanceMeters ?? 0) / 1_000).toFixed(2)} km in ${formatDuration(finishedActivity?.durationMs ?? 0)}. Your walk is saved in History.`}
       onDismiss={dismissCompletion}
       primaryLabel="Done"
       title="Activity saved"
@@ -132,8 +129,8 @@ function statusMessage(status: ReturnType<typeof useActivityTracking>['status'],
   if (status === 'tracking' && gpsSignal === 'ready') return accuracyMeters === null ? 'Tracking live' : `GPS ready · ±${Math.round(accuracyMeters)} m`;
   if (status === 'tracking') return 'Tracking live';
   if (status === 'paused') return 'Paused';
-  if (status === 'finished') return 'Your activity is ready to save next.';
-  return 'Start when you are ready.';
+  if (status === 'finished') return 'Your walk is ready to save next.';
+  return 'Start your walk when you are ready.';
 }
 
 function Metric({ label, value }: { label: string; value: string }) { return <View style={styles.metric}><Text style={styles.metricValue}>{value}</Text><Text style={styles.metricLabel}>{label}</Text></View>; }

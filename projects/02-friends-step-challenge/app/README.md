@@ -2,7 +2,7 @@
 
 **Move together. Keep each other going.**
 
-Stride Circle is a social fitness app for friends who want more motivation than a personal step counter can provide. It combines daily step goals with GPS-recorded walks and runs, then turns movement into a shared experience through private circles, daily standings, and a visual race track.
+Stride Circle is a social walking app for people who want more motivation than a personal step counter can provide. It turns movement into a shared experience through small circles, daily and weekly standings, lightweight celebrations, and encouraging reactions.
 
 
 ## The problem
@@ -11,13 +11,15 @@ Fitness trackers are useful for recording movement, but they can be solitary. St
 
 ## What I built
 
-- Daily step tracking using the phone's built-in pedometer
+- Daily step tracking through the configured HealthKit or Health Connect provider, with a guarded iOS Pedometer fallback for development builds
 - Personal daily goals, progress, streaks, and milestone celebrations
-- GPS walk and run recording with live duration, distance, pace, pause/resume, and finish states
-- Route previews and saved personal activity history
-- Private walking and running circles that people can create or join with an invite code
+- Public and private walking circles with a 20-member cap
+- Fixed circle competition timezones so members share one daily boundary
+- Broad discovery-area labels that never expose exact member locations
+- A provider boundary for health-data step totals
+- Optional foreground GPS walk recording; current activity UX is walking-only and legacy run records remain readable
 - Daily circle standings and a visual race track that shows each member's live position
-- Previous-day results, including the day’s winner and final standings
+- Previous-day results and deterministic standings; server-finalized projection adoption remains incomplete
 - Circle management: rename, member management, leave, and owner-only deletion
 - Firebase email/password and Google authentication with persistent sessions
 - Custom profile characters with a grouped character picker
@@ -53,8 +55,8 @@ I deliberately scoped the app as a portfolio-quality product rather than a stati
 | Navigation | Expo Router | File-based routing for tabs, sheets, and detail screens |
 | Authentication | Firebase Authentication | Email/password and Google sign-in with persistent sessions |
 | Shared data | Cloud Firestore | Real-time circle membership, shared scores, profiles, and activity data |
-| Movement | Expo Sensors | Uses the phone’s built-in pedometer for daily steps |
-| GPS activity | Expo Location + React Native Maps | Records walks/runs, distance, pace, and route context |
+| Movement | Health-data provider boundary | HealthKit and Health Connect are the native launch providers; iOS Expo Pedometer remains a guarded development fallback |
+| GPS activity | Expo Location + React Native Maps | Records optional walks, distance, pace, and private route context |
 | UI | React Native StyleSheet + Expo Vector Icons | Native-feeling layout, accessible tap targets, and consistent visual language |
 
 ## Challenges I solved
@@ -69,7 +71,7 @@ The race has no artificial finish line. Everyone starts at zero each day; the pe
 
 ### Reliable device features need honest states
 
-GPS and pedometer features can fail or be unavailable. I added permission guidance, weak-signal messaging, pause/resume controls, recovery paths, and loading placeholders so the app communicates what is happening instead of leaving the user guessing.
+GPS and health-data features can fail or be unavailable. I added permission guidance, weak-signal messaging, pause/resume controls, recovery paths, and loading placeholders so the app communicates what is happening instead of leaving the user guessing.
 
 ### Keeping shared data secure
 
@@ -83,12 +85,15 @@ Maps use a platform-specific implementation: native builds use the real map expe
 
     src/
       app/          Expo Router screens and navigation
-      auth/         Authentication provider and session state
-      components/   Reusable UI: maps, race track, avatars, loading states
-      hooks/        Firestore subscriptions and device-feature hooks
-      lib/          Firebase, circles, activity, step, and avatar logic
-    firebase/
-      firestore.rules  Production Firestore access rules
+      components/   Reusable UI and feedback states
+      domain/       Pure scoring, dates, ranking, and validation rules
+      services/     Health-data, permissions, analytics, and monitoring boundaries
+      hooks/        Screen-facing state coordination
+      lib/          Transitional Firebase repositories and shared utilities
+    design-system/ Brand tokens, type scale, spacing, motion, and semantic roles
+    components/ui/ Reusable accessible UI primitives for the redesign
+    docs/            Canonical scope, architecture, data model, decisions, and test matrix
+    firebase/        Firestore rules and indexes
     assets/
       screenshots/  Product screenshots used in this README
 
@@ -97,18 +102,22 @@ Maps use a platform-specific implementation: native builds use the real map expe
 ### Prerequisites
 
 - Node.js (current LTS recommended)
-- Expo Go or an Expo development build
+- Java 21+ for Firebase Emulator Suite tests; the local wrapper uses `.tools/jdk-21*` when available
+- Expo Go for UI-only work; use an Expo development build for health-data/native work
 - A Firebase project with Authentication and Firestore configured
 
 ### Setup
 
 1. Clone this repository.
-2. Run `npm install`.
+2. Run `npm ci`.
 3. Create a local `.env` file from `.env.example` and provide your own Firebase web configuration and Google OAuth client IDs.
-4. Publish the rules in [firebase/firestore.rules](firebase/firestore.rules) to your Firestore database.
-5. Run `npx expo start`.
+4. Use `npm run emulators:test` to start the local Auth/Firestore emulators and run the Security Rules suite. The repository uses the ignored portable JDK in `.tools` when available.
+5. Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run test:rn`. Firestore Rules tests use `npm run emulators:test`.
+6. Use `firebase emulators:start` for interactive local Auth/Firestore work, or publish the rules in [firebase/firestore.rules](firebase/firestore.rules) to the intended Firebase project.
+7. Run `npx expo start`.
 
 For GPS and pedometer testing, use a physical device and grant the relevant permissions.
+Before an EAS development, preview, or production build, configure registered `ios.bundleIdentifier` and `android.package` values in the app config. Native health modules do not run in Expo Go.
 
 ## Standalone iPhone builds
 
@@ -148,18 +157,22 @@ automatic merging.
 - This repository does **not** contain service-account keys, database passwords, or server-side secrets.
 - Values prefixed with `EXPO_PUBLIC_` are bundled into the client app, so they must never contain private credentials.
 - Review and publish [Firestore rules](firebase/firestore.rules) whenever shared-data behavior changes.
+- Direct client circle mutations are transitional. Initial Cloud Functions 2nd gen callables and scheduled projections exist, but the mobile app has not yet moved all circle and moderation mutations behind them.
+- Read [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md) for the implementation snapshot and [docs/FEATURE_MAP.md](docs/FEATURE_MAP.md) for route and feature status. These documents distinguish implemented behavior from planned architecture.
+- The visual implementation contract lives in [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md), with reusable primitives in `src/components/ui`.
+- The walking-only History redesign, reference mapping, data limits, and test preview are documented in [docs/HISTORY_DESIGN_IMPLEMENTATION.md](docs/HISTORY_DESIGN_IMPLEMENTATION.md).
 
 ## What I learned
 
 Stride Circle gave me hands-on experience with the difference between building a screen and building a product: designing data ownership, securing shared features, handling device permissions, responding to real-time state changes, and making mobile interactions understandable without a tutorial.
 
-## Future directions
+## Remaining launch work
 
-- Push notifications and quiet-hour preferences
-- Friend reactions and lightweight encouragement
-- Expanded running-circle distance challenges
-- TestFlight and Android internal-distribution builds
-- Privacy policy, terms, analytics, and error monitoring before a public beta
+- Move remaining circle and moderation mutations behind Cloud Functions and connect server-generated projections to the app
+- Complete reporting, blocking, moderator, privacy, account-deletion, notification, analytics, and monitoring work
+- Validate HealthKit and Health Connect permissions, background behavior, restart recovery, timezones, and release builds on physical devices
+- Complete TestFlight and Android internal-distribution validation
+- Global leaderboard, GPS group activities, and advanced challenges in later editions
 
 ## License
 

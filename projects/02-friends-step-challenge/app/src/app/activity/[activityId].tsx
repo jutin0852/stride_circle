@@ -45,7 +45,7 @@ export default function ActivityDetailRoute() {
     <Pressable accessibilityLabel="Go back to History" accessibilityRole="button" onPress={() => router.back()} style={[styles.backButton, { top: insets.top + 12 }]}><Ionicons color={colors.ink} name="chevron-back" size={23} /></Pressable>
     <View style={[styles.summary, { paddingBottom: Math.max(insets.bottom, 24) }]}>
       <View style={styles.grabber} />
-      <View style={styles.activityHeading}><View style={styles.activityIcon}><MaterialCommunityIcons color={colors.accent} name={record.activityType === 'run' ? 'run' : 'walk'} size={22} /></View><View><Text style={styles.eyebrow}>{record.activityType === 'run' ? 'RUN' : 'WALK'} · {formatDate(record.dateKey).toUpperCase()}</Text><Text accessibilityRole="header" style={styles.title}>{record.activityType === 'run' ? 'Your run' : 'Your walk'}</Text></View></View>
+      <View style={styles.activityHeading}><View style={styles.activityIcon}><MaterialCommunityIcons color={colors.accent} name="walk" size={22} /></View><View><Text style={styles.eyebrow}>WALK · {formatDate(record.dateKey).toUpperCase()}</Text><Text accessibilityRole="header" style={styles.title}>Your walk</Text></View></View>
       <View style={styles.metrics}><Metric label="DISTANCE" value={`${(record.distanceMeters / 1_000).toFixed(2)} km`} /><Metric label="DURATION" value={formatDuration(record.durationMs)} /><Metric label="AVG. PACE" value={`${formatPace(record.averagePaceSecondsPerKm)} /km`} /></View>
     </View>
   </View>;

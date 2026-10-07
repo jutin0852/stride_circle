@@ -1,4 +1,6 @@
-# Friends Step Challenge App — Product Brief
+# Historical Product Brief — Superseded
+
+> This is an earlier product and architecture brief. It describes a private Supabase-era direction and must not override the current repository. Use `app/docs/PRODUCT_SCOPE.md` and `app/docs/DECISIONS.md` for current product decisions, and `app/docs/CURRENT_STATE.md` plus `app/docs/FEATURE_MAP.md` for current implementation truth.
 
 ## Working description
 

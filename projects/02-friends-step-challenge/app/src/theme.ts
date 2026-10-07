@@ -1,12 +1,18 @@
+import { semanticColors } from '@/design-system/tokens';
+
+export { elevation, iconSizes, layout, motion, opacity, palette, radii, semanticColors, spacing, touchTargets, typeScale } from '@/design-system/tokens';
+
+// Keep the existing screen API stable while the redesigned primitives are
+// adopted feature by feature. New components should use semanticColors.
 export const colors = {
-  background: '#FFFFFF',
-  card: '#FFFFFF',
-  ink: '#111827',
-  muted: '#6B7280',
-  border: '#E5E7EB',
-  soft: '#F3F6FB',
-  accent: '#2563EB',
-  accentPressed: '#1D4ED8',
-  hero: '#EFF6FF',
-  success: '#16A34A',
+  background: semanticColors.canvas,
+  card: semanticColors.card,
+  ink: semanticColors.contentPrimary,
+  muted: semanticColors.contentSecondary,
+  border: semanticColors.border,
+  soft: semanticColors.soft,
+  accent: semanticColors.legacyAction,
+  accentPressed: semanticColors.legacyActionPressed,
+  hero: semanticColors.infoSurface,
+  success: semanticColors.successContent,
 } as const;

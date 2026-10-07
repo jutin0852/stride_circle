@@ -35,7 +35,16 @@
           "locationWhenInUsePermission": "Stride Circle uses your location to show your route, distance, and pace during an activity."
         }
       ],
-      "expo-splash-screen"
+      [
+        "@appeeky/expo-healthkit",
+        {
+          "healthSharePermission": "Stride Circle reads your step count to show your progress and circle standings.",
+          "healthUpdatePermission": false,
+          "isBackgroundDeliveryEnabled": true,
+          "isHealthConnectBackgroundReadEnabled": true,
+          "healthConnectPermissions": ["READ_STEPS"]
+        }
+      ]
     ],
     "ios": {
       "bundleIdentifier": "com.stridecircle.app",
