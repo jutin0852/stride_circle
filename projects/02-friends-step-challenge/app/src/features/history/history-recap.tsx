@@ -47,8 +47,8 @@ export function HistoryRecap({ records, today, goal, goalReady, status, onRetry 
         onResponderMove={(event) => selectAtPageX(event.nativeEvent.pageX)}
         onResponderTerminationRequest={() => true}>
       <Svg testID="history-weekly-trail" accessibilityLabel={`Walking rhythm across the last seven days. ${rhythm.map((day) => `${day.dateKey}: ${day.saved ? `${day.steps} steps` : 'no saved data'}`).join('; ')}`} accessibilityRole="image" height={74} viewBox="0 0 308 82" preserveAspectRatio="none" width="100%">
-        <Path testID="history-weekly-trail-line" d={path} fill="none" stroke="#C9EFF9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={13} />
-        <Path testID="history-weekly-trail-dots" d={path} fill="none" stroke="#48B8DD" strokeDasharray="1 12" strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} />
+        <Path testID="history-weekly-trail-line" d={path} fill="none" stroke={historyColors.panelEdge} strokeLinecap="round" strokeLinejoin="round" strokeWidth={13} />
+        <Path testID="history-weekly-trail-dots" d={path} fill="none" stroke={historyColors.blue} strokeDasharray="1 12" strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} />
         {rhythm.map((point, index) => {
           const day = rhythm[index]!;
           const met = day.saved && goalReady && day.steps >= goal;
@@ -89,5 +89,5 @@ const styles = StyleSheet.create({
   pathValue: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '900', color: historyColors.ink, fontVariant: ['tabular-nums'] },
   pathValueMet: { color: historyColors.greenDeep }, pathValueToday: { color: historyColors.blueDeep },
   rhythmNote: { marginTop: 8, paddingHorizontal: 2, fontSize: 12, lineHeight: 18, color: historyColors.muted }, rhythmStrong: { color: historyColors.greenDeep, fontWeight: '800', fontSize: 12, lineHeight: 18 },
-  skeleton: { width: '100%', height: 156, borderRadius: radii.md, backgroundColor: '#DCEEF3' },
+  skeleton: { width: '100%', height: 156, borderRadius: radii.md, backgroundColor: historyColors.panelEdge },
 });

@@ -1,3 +1,5 @@
+import type { TextStyle } from 'react-native';
+
 export const palette = {
   ink: {
     950: '#0E2022',
@@ -49,49 +51,65 @@ export const palette = {
   black: '#000000',
 } as const;
 
+/** The approved Home palette is the single color source for the app. */
+export const appColors = {
+  canvas: '#FFFFFF',
+  ink: '#173342',
+  muted: '#4B606B',
+  blue: '#13B5E8',
+  edge: '#087CA5',
+  ice: '#E8F8FF',
+  green: '#317F1B',
+  yellow: '#FFD34E',
+  coral: '#F77768',
+  line: '#DCE6EB',
+  panelLine: '#B9E6F5',
+  panelEdge: '#E0F1F6',
+} as const;
+
 export const semanticColors = {
-  canvas: palette.cream[100],
-  card: palette.cream[50],
+  canvas: appColors.canvas,
+  card: appColors.canvas,
   raised: '#FFFFFF',
-  soft: palette.cream[200],
-  softLime: palette.lime[100],
-  inverse: palette.ink[950],
+  soft: appColors.ice,
+  softLime: appColors.ice,
+  inverse: appColors.ink,
 
-  contentPrimary: palette.ink[950],
-  contentSecondary: palette.ink[600],
-  contentTertiary: palette.ink[500],
+  contentPrimary: appColors.ink,
+  contentSecondary: appColors.muted,
+  contentTertiary: '#78909A',
   contentInverse: palette.white,
-  contentOnBrand: palette.ink[950],
-  contentLink: palette.ink[800],
+  contentOnBrand: appColors.ink,
+  contentLink: appColors.edge,
 
-  border: '#E3DAC9',
-  borderStrong: '#CFC3AE',
-  divider: '#EBE4D7',
+  border: appColors.line,
+  borderStrong: appColors.panelLine,
+  divider: appColors.line,
 
-  brandAction: palette.lime[500],
-  brandActionPressed: palette.lime[600],
-  brandActionSoft: palette.lime[100],
-  brandDark: palette.ink[950],
-  brandDarkPressed: palette.ink[800],
+  brandAction: appColors.blue,
+  brandActionPressed: appColors.edge,
+  brandActionSoft: appColors.ice,
+  brandDark: appColors.ink,
+  brandDarkPressed: '#102F3C',
 
-  infoSurface: palette.sky[100],
-  infoContent: palette.sky[700],
-  successSurface: '#E5F6E7',
-  successContent: '#237247',
-  warningSurface: palette.peach[100],
-  warningContent: '#98601A',
-  dangerSurface: palette.coral[100],
-  dangerContent: palette.coral[700],
-  celebrationSurface: palette.coral[500],
+  infoSurface: appColors.ice,
+  infoContent: appColors.edge,
+  successSurface: '#E9F7E5',
+  successContent: appColors.green,
+  warningSurface: '#FFF7D8',
+  warningContent: '#74530B',
+  dangerSurface: '#FFF0EC',
+  dangerContent: '#A94234',
+  celebrationSurface: appColors.coral,
   celebrationContent: palette.white,
 
-  overlay: 'rgba(14, 32, 34, 0.42)',
-  scrim: 'rgba(14, 32, 34, 0.08)',
+  overlay: 'rgba(23, 51, 66, 0.42)',
+  scrim: 'rgba(23, 51, 66, 0.08)',
 
   // Compatibility aliases for existing screen-local styles. New UI should use
   // the semantic tokens above or the primitives in components/ui.
-  legacyAction: palette.ink[950],
-  legacyActionPressed: palette.ink[800],
+  legacyAction: appColors.blue,
+  legacyActionPressed: appColors.edge,
 } as const;
 
 export const spacing = {
@@ -119,18 +137,40 @@ export const radii = {
   pill: 999,
 } as const;
 
+/**
+ * Named faces instead of per-component font strings. The Expo loader registers
+ * these keys at the root before the app renders.
+ */
+export const fontFamilies = {
+  regular: 'NunitoSans_400Regular',
+  semiBold: 'NunitoSans_600SemiBold',
+  bold: 'NunitoSans_700Bold',
+  extraBold: 'NunitoSans_800ExtraBold',
+} as const;
+
+export function fontFamilyForWeight(weight: TextStyle['fontWeight'] | undefined) {
+  const value = weight === 'normal' || weight === undefined ? 400 : weight === 'bold' ? 700 : Number(weight);
+  if (value <= 400) return fontFamilies.regular;
+  if (value <= 600) return fontFamilies.semiBold;
+  if (value <= 700) return fontFamilies.bold;
+  return fontFamilies.extraBold;
+}
+
 export const typeScale = {
-  display: { fontSize: 56, lineHeight: 60, letterSpacing: -2.4, fontWeight: '900' },
-  displaySmall: { fontSize: 42, lineHeight: 46, letterSpacing: -1.8, fontWeight: '900' },
-  headline: { fontSize: 32, lineHeight: 37, letterSpacing: -1.2, fontWeight: '900' },
-  title: { fontSize: 24, lineHeight: 29, letterSpacing: -0.7, fontWeight: '800' },
-  titleSmall: { fontSize: 19, lineHeight: 24, letterSpacing: -0.3, fontWeight: '800' },
-  body: { fontSize: 16, lineHeight: 23, letterSpacing: 0, fontWeight: '500' },
-  bodySmall: { fontSize: 14, lineHeight: 20, letterSpacing: 0, fontWeight: '500' },
-  label: { fontSize: 12, lineHeight: 16, letterSpacing: 0.1, fontWeight: '800' },
-  eyebrow: { fontSize: 10, lineHeight: 14, letterSpacing: 1.1, fontWeight: '900' },
-  button: { fontSize: 15, lineHeight: 20, letterSpacing: -0.1, fontWeight: '900' },
-  numeric: { fontSize: 30, lineHeight: 34, letterSpacing: -1.2, fontWeight: '900' },
+  display: { fontFamily: fontFamilies.extraBold, fontSize: 56, lineHeight: 60, letterSpacing: -2.4 },
+  displaySmall: { fontFamily: fontFamilies.extraBold, fontSize: 42, lineHeight: 46, letterSpacing: -1.8 },
+  headline: { fontFamily: fontFamilies.extraBold, fontSize: 32, lineHeight: 37, letterSpacing: -1.2 },
+  title: { fontFamily: fontFamilies.extraBold, fontSize: 24, lineHeight: 29, letterSpacing: -0.7 },
+  titleSmall: { fontFamily: fontFamilies.extraBold, fontSize: 19, lineHeight: 24, letterSpacing: -0.3 },
+  body: { fontFamily: fontFamilies.regular, fontSize: 16, lineHeight: 23, letterSpacing: 0 },
+  bodyStrong: { fontFamily: fontFamilies.semiBold, fontSize: 16, lineHeight: 23, letterSpacing: 0 },
+  bodySmall: { fontFamily: fontFamilies.regular, fontSize: 14, lineHeight: 20, letterSpacing: 0 },
+  caption: { fontFamily: fontFamilies.regular, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
+  label: { fontFamily: fontFamilies.bold, fontSize: 12, lineHeight: 16, letterSpacing: 0.1 },
+  eyebrow: { fontFamily: fontFamilies.extraBold, fontSize: 10, lineHeight: 14, letterSpacing: 1.1 },
+  button: { fontFamily: fontFamilies.bold, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
+  numeric: { fontFamily: fontFamilies.extraBold, fontSize: 30, lineHeight: 34, letterSpacing: -1.2 },
+  stat: { fontFamily: fontFamilies.extraBold, fontSize: 30, lineHeight: 34, letterSpacing: -1.2 },
 } as const;
 
 export const controlHeights = {

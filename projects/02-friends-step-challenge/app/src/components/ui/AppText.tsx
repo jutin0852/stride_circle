@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
-import { semanticColors, typeScale } from '@/design-system/tokens';
+import { fontFamilyForWeight, semanticColors, typeScale } from '@/design-system/tokens';
 
 export type AppTextVariant = keyof typeof typeScale;
 export type AppTextTone = 'primary' | 'secondary' | 'tertiary' | 'inverse' | 'onBrand' | 'link' | 'success' | 'warning' | 'danger';
@@ -23,7 +23,9 @@ const toneStyles: Record<AppTextTone, TextStyle> = {
 };
 
 export function AppText({ style, tone = 'primary', variant = 'body', ...props }: AppTextProps) {
-  return <Text {...props} style={[styles.base, typeScale[variant], toneStyles[tone], style]} />;
+  const overrides = StyleSheet.flatten(style) ?? {};
+  const fontFamily = overrides.fontFamily ?? (overrides.fontWeight ? fontFamilyForWeight(overrides.fontWeight) : typeScale[variant].fontFamily);
+  return <Text {...props} style={[styles.base, typeScale[variant], toneStyles[tone], style, { fontFamily, fontWeight: 'normal' }]} />;
 }
 
 const styles = StyleSheet.create({

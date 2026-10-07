@@ -5,7 +5,7 @@ import { controlHeights, layout, palette, radii, semanticColors, spacing, touchT
 describe('Stride Circle design tokens', () => {
   it('keeps brand surfaces and content colors distinct', () => {
     expect(palette.ink[950]).not.toBe(semanticColors.brandAction);
-    expect(semanticColors.canvas).not.toBe(semanticColors.card);
+    expect(semanticColors.soft).not.toBe(semanticColors.canvas);
     expect(semanticColors.border).not.toBe(semanticColors.contentPrimary);
   });
 
