@@ -69,6 +69,29 @@ describe('Firestore launch rules', () => {
 
     await assertFails(getDoc(doc(database, 'users', 'member-1')));
     await assertFails(getDocs(collection(database, 'circles')));
+    await assertFails(getDoc(doc(database, 'globalLeaderboards', 'walk_all_time')));
+  });
+
+  it('makes global leaderboard entries public to signed-in users but immutable to clients', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'globalLeaderboards', 'walk_all_time'), {
+        activityType: 'walk',
+        period: 'all-time',
+        periodKey: 'all-time',
+      });
+      await setDoc(doc(context.firestore(), 'globalLeaderboards', 'walk_all_time', 'entries', 'member-1'), {
+        displayName: 'Member One',
+        rank: 1,
+        userId: 'member-1',
+        verifiedSteps: 12000,
+      });
+    });
+
+    const database = testEnv.authenticatedContext('outsider-1').firestore();
+    const entry = doc(database, 'globalLeaderboards', 'walk_all_time', 'entries', 'member-1');
+
+    await assertSucceeds(getDoc(entry));
+    await assertFails(setDoc(entry, { rank: 1, userId: 'outsider-1', verifiedSteps: 999999 }));
   });
 
   it('keeps private circles out of collection discovery', async () => {

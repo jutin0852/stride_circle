@@ -8,6 +8,7 @@ initializeApp();
 
 const db = getFirestore();
 const MAX_CIRCLE_MEMBERS = 20;
+const GLOBAL_LEADERBOARD_BATCH_SIZE = 450;
 const enforceAppCheck = process.env.FUNCTIONS_EMULATOR !== 'true';
 
 setGlobalOptions({
@@ -303,4 +304,115 @@ export const generateWeeklyRecaps = onSchedule({
       winnerUserIds: ranked.filter((score) => score.isWinner).map((score) => score.userId),
     }, { merge: true });
   }));
+});
+
+type GlobalLeaderboardPeriod = 'week' | 'all-time';
+
+function isDateKey(value: unknown): value is string {
+  return typeof value === 'string'
+    && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`));
+}
+
+function getGlobalLeaderboardBoardId(period: GlobalLeaderboardPeriod, weekKey?: string) {
+  return period === 'all-time' ? 'walk_all_time' : `walk_week_${weekKey ?? getWeekStartKey(getDateKeyInTimeZone(new Date(), 'UTC'))}`;
+}
+
+function getGlobalProfile(userId: string, data: DocumentData | undefined) {
+  if (data?.globalLeaderboardVisible === false) return null;
+
+  return {
+    avatarSeed: getString(data ?? {}, 'avatarSeed') || userId,
+    avatarStyle: getString(data ?? {}, 'avatarStyle') || 'sprouts',
+    displayName: getString(data ?? {}, 'displayName') || 'Stride Circle member',
+  };
+}
+
+async function commitGlobalLeaderboardOperations(operations: ((batch: FirebaseFirestore.WriteBatch) => void)[]) {
+  for (let start = 0; start < operations.length; start += GLOBAL_LEADERBOARD_BATCH_SIZE) {
+    const batch = db.batch();
+    operations.slice(start, start + GLOBAL_LEADERBOARD_BATCH_SIZE).forEach((operation) => operation(batch));
+    await batch.commit();
+  }
+}
+
+async function writeGlobalLeaderboard(input: {
+  period: GlobalLeaderboardPeriod;
+  periodKey: string;
+  totals: Map<string, number>;
+  profiles: Map<string, DocumentData>;
+}) {
+  const boardId = getGlobalLeaderboardBoardId(input.period, input.periodKey);
+  const boardReference = db.doc(`globalLeaderboards/${boardId}`);
+  const eligibleScores = Array.from(input.totals, ([userId, verifiedSteps]) => {
+    const profile = getGlobalProfile(userId, input.profiles.get(userId));
+    if (!profile) return null;
+    return { profile, userId, verifiedSteps: Math.floor(verifiedSteps) };
+  }).filter((score): score is NonNullable<typeof score> => score !== null && score.verifiedSteps >= 0);
+  const ranked = rankScores(eligibleScores.map(({ userId, verifiedSteps }) => ({ userId, verifiedSteps })));
+  const profileByUserId = new Map(eligibleScores.map((score) => [score.userId, score.profile]));
+  const existingEntries = await boardReference.collection('entries').get();
+  const activeUserIds = new Set(ranked.map((score) => score.userId));
+
+  await boardReference.set({
+    activityType: 'walk',
+    generatedAt: FieldValue.serverTimestamp(),
+    participationCount: ranked.length,
+    period: input.period,
+    periodKey: input.periodKey,
+    schemaVersion: 1,
+  }, { merge: true });
+
+  const operations: ((batch: FirebaseFirestore.WriteBatch) => void)[] = [];
+  ranked.forEach((score) => {
+    const profile = profileByUserId.get(score.userId);
+    if (!profile) return;
+    operations.push((batch) => batch.set(boardReference.collection('entries').doc(score.userId), {
+      activityType: 'walk',
+      avatarSeed: profile.avatarSeed,
+      avatarStyle: profile.avatarStyle,
+      displayName: profile.displayName,
+      periodKey: input.periodKey,
+      rank: score.rank,
+      schemaVersion: 1,
+      updatedAt: FieldValue.serverTimestamp(),
+      userId: score.userId,
+      verifiedSteps: score.verifiedSteps,
+    }, { merge: true }));
+  });
+  existingEntries.docs.forEach((entry) => {
+    if (!activeUserIds.has(entry.id)) operations.push((batch) => batch.delete(entry.ref));
+  });
+
+  await commitGlobalLeaderboardOperations(operations);
+}
+
+export const generateGlobalLeaderboards = onSchedule({
+  retryCount: 3,
+  schedule: '35 * * * *',
+  timeZone: 'UTC',
+}, async () => {
+  const currentUtcDateKey = getDateKeyInTimeZone(new Date(), 'UTC');
+  const currentWeekKey = getWeekStartKey(currentUtcDateKey);
+  const weeklyTotals = new Map<string, number>();
+  const allTimeTotals = new Map<string, number>();
+  const dailySteps = await db.collectionGroup('dailySteps').get();
+
+  dailySteps.docs.forEach((document) => {
+    const data = document.data();
+    const dateKey = isDateKey(data.dateKey) ? data.dateKey : document.id;
+    const userReference = document.ref.parent.parent;
+    const userId = userReference?.parent.id === 'users' ? userReference.id : undefined;
+    const steps = data.steps;
+    if (!userId || !isDateKey(dateKey) || dateKey > currentUtcDateKey || typeof steps !== 'number' || !Number.isFinite(steps) || steps < 0) return;
+
+    const total = Math.floor(steps);
+    allTimeTotals.set(userId, (allTimeTotals.get(userId) ?? 0) + total);
+    if (getWeekStartKey(dateKey) === currentWeekKey) weeklyTotals.set(userId, (weeklyTotals.get(userId) ?? 0) + total);
+  });
+
+  const profilesSnapshot = await db.collection('users').get();
+  const profiles = new Map(profilesSnapshot.docs.map((profile) => [profile.id, profile.data()]));
+  await writeGlobalLeaderboard({ period: 'week', periodKey: currentWeekKey, totals: weeklyTotals, profiles });
+  await writeGlobalLeaderboard({ period: 'all-time', periodKey: 'all-time', totals: allTimeTotals, profiles });
 });

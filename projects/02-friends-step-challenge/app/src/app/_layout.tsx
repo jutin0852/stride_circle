@@ -32,6 +32,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="sign-in" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="global-leaderboard" />
             <Stack.Screen name="daily-goal" />
             <Stack.Screen name="edit-profile" />
             <Stack.Screen name="profile-character" options={{ presentation: 'formSheet', sheetGrabberVisible: true, sheetAllowedDetents: [0.9] }} />

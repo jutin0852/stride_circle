@@ -26,6 +26,30 @@ syncState, providerRecordVersion, schemaVersion
 
 `source` is a provider label such as HealthKit or Health Connect. It is not a promise that the data is fraud-proof.
 
+## Global leaderboard projections
+
+```text
+globalLeaderboards/{boardId}
+globalLeaderboards/{boardId}/entries/{userId}
+```
+
+At launch, `boardId` is either `walk_week_{mondayUtcDateKey}` or `walk_all_time`. The board document stores the period metadata and generation timestamp. Entry fields are:
+
+```text
+userId
+displayName              // limited public display snapshot
+avatarSeed
+avatarStyle
+activityType             // walk at launch
+periodKey
+verifiedSteps
+rank                     // server-generated integer placement
+updatedAt
+schemaVersion
+```
+
+Clients may read global projections but cannot create, update, or delete board documents or entries. The scheduled backend job derives them from provider-sourced daily step records. The projection is intentionally separate from private user history so the mobile client never scans every user's raw steps.
+
 ## Circles and membership
 
 ```text

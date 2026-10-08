@@ -20,7 +20,7 @@ This map describes the current repository, not the full launch wish list. `Imple
 | Safety | Firestore Rules plus partial client filtering | Partial | Rules contain cheer, block, and report primitives. Complete block/report flows, moderator tooling, and admin review are missing. |
 | Notifications | — | Missing | No notification package or service implementation. |
 | Analytics/crash monitoring | — | Missing | No analytics contract or runtime monitoring integration. |
-| Global leaderboard | — | Intentionally deferred | Later-edition scope; do not implement in the first edition. |
+| Global leaderboard | `/global-leaderboard`, Discover card | Partial | Public walking podium and ranked list with This Week/All Time views. The client reads server-generated projections; scheduled aggregation code exists, but deployment and production-shaped verification remain. |
 
 ## Verification entry points
 

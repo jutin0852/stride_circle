@@ -15,11 +15,11 @@ Decision: build the launch loop around provider-sourced steps. GPS activities ar
 
 Reason: background step collection and permission recovery are the core reliability problem. Adding routes and live activity tracking before that is stable increases surface area and privacy risk.
 
-## D-003 — No global leaderboard in edition one
+## D-003 — Global walking leaderboard is a public Circles discovery surface
 
-Decision: competition is inside circles only.
+Decision: add a public global walking leaderboard inside Discover with `This Week` and `All Time` views. The weekly board uses a shared Monday `00:00 UTC` boundary. Ranks are server-generated integer placements; running is not included in this slice.
 
-Reason: circles are the intended social unit. A global ranking can be added later after retention, fairness, safety, and abuse patterns are understood.
+Reason: global discovery is now an approved extension of the walking competition loop. Keeping it walking-only avoids mixing activity metrics before running has a separate verified scoring contract.
 
 ## D-004 — Circle timezone is authoritative for competition
 

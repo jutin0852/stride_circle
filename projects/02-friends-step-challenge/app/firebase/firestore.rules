@@ -116,6 +116,16 @@ service cloud.firestore {
         );
     }
 
+    match /globalLeaderboards/{boardId} {
+      allow get: if signedIn();
+      allow list, create, update, delete: if false;
+
+      match /entries/{userId} {
+        allow get, list: if signedIn();
+        allow create, update, delete: if false;
+      }
+    }
+
     match /circles/{circleId} {
       allow get: if signedIn();
       allow list: if signedIn() && resource.data.visibility == 'public';

@@ -41,6 +41,7 @@ async function setup(overrides: Partial<CirclesViewProps> = {}) {
     onCreate: jest.fn().mockResolvedValue(null),
     onJoinInvite: jest.fn().mockResolvedValue(null),
     onJoinPublic: jest.fn().mockResolvedValue(null),
+    onOpenGlobalLeaderboard: jest.fn(),
     ...overrides,
   };
 
@@ -79,6 +80,15 @@ describe('Circles hub', () => {
     await user.press(screen.getByRole('tab', { name: 'Your Circles' }));
     expect(screen.getByRole('button', { name: 'Open Morning Movers, 2 walking today' })).toBeTruthy();
     expect(screen.queryByText('River Path Ramblers')).toBeNull();
+  });
+
+  it('opens the global leaderboard from Discover', async () => {
+    const { props, screen } = await setup();
+
+    await userEvent.setup().press(screen.getByRole('tab', { name: 'Discover' }));
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Open global leaderboard' }));
+
+    expect(props.onOpenGlobalLeaderboard).toHaveBeenCalledTimes(1);
   });
 
   it('filters public circles by name and area and explains an empty search', async () => {
