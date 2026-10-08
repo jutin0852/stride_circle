@@ -54,8 +54,8 @@ export function createAvatarSeed() {
   return `stride-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function getAvatarUrl(choice: AvatarChoice) {
-  return `https://api.dicebear.com/10.x/${choice.style}/svg?seed=${encodeURIComponent(choice.seed)}&size=128`;
+export function getAvatarUrl(choice: AvatarChoice, format: 'svg' | 'png' = 'svg') {
+  return `https://api.dicebear.com/10.x/${choice.style}/${format}?seed=${encodeURIComponent(choice.seed)}&size=128`;
 }
 
 export function getAvatarChoiceFromUrl(url: string | null | undefined): AvatarChoice | null {

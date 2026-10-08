@@ -22,7 +22,10 @@ export function Leaderboard({
     () => friends.map((friend, index) => {
       const id = friend.id ?? `${friend.name}-${index}`;
       return {
-        avatar: friend.avatar ? getAvatarUrl(friend.avatar) : undefined,
+        // PanelUI renders avatars with React Native Image. Use DiceBear's PNG
+        // variant here; the profile editor and inline circle avatars continue
+        // to use the existing SVG renderer.
+        avatar: friend.avatar ? getAvatarUrl(friend.avatar, 'png') : undefined,
         change: changes?.[id],
         id,
         name: friend.name,

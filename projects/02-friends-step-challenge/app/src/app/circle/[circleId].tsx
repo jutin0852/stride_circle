@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/auth/auth-provider';
 import { Leaderboard } from '@/components/leaderboard';
-import { AppText, Badge, SectionHeader, SegmentedControl, StateCard } from '@/components/ui';
+import { AppText, SectionHeader, SegmentedControl, StateCard } from '@/components/ui';
 import { type Friend } from '@/data/circle';
 import { getDateKeyDaysBefore, getDateKeyInTimeZone, getWeekDateKeys } from '@/domain/dates';
 import { aggregateCircleSteps, getRankMovement } from '@/features/circles/leaderboard-model';
@@ -16,11 +16,11 @@ import { useAppColors } from '@/design-system/use-app-theme';
 
 const AVATAR_COLORS = ['#13B5E8', '#087CA5', '#317F1B', '#62C9EB', '#86B51B', '#F77768'];
 
-type LeaderboardPeriod = 'this' | 'last';
+type LeaderboardPeriod = 'today' | 'this-week';
 
 const PERIODS = [
-  { label: 'This week', value: 'this' },
-  { label: 'Last week', value: 'last' },
+  { label: 'Today', value: 'today' },
+  { label: 'This Week', value: 'this-week' },
 ] as const satisfies readonly { label: string; value: LeaderboardPeriod }[];
 
 export default function CircleDetailRoute() {
@@ -32,28 +32,39 @@ export default function CircleDetailRoute() {
   const { details, status } = useCircleDetails(circleId);
   const competitionTimeZone = details?.circle.competitionTimeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const currentDateKey = getDateKeyInTimeZone(new Date(), competitionTimeZone);
-  const thisWeekDates = useMemo(() => getWeekDateKeys(currentDateKey), [currentDateKey]);
-  const lastWeekDates = useMemo(() => getWeekDateKeys(getDateKeyDaysBefore(dateFromKey(currentDateKey), 'UTC', 7)), [currentDateKey]);
-  const previousWeekDates = useMemo(() => getWeekDateKeys(getDateKeyDaysBefore(dateFromKey(currentDateKey), 'UTC', 14)), [currentDateKey]);
+  const thisWeekDates = useMemo(
+    () => getWeekDateKeys(currentDateKey).filter((dateKey) => dateKey <= currentDateKey),
+    [currentDateKey],
+  );
+  const yesterdayDateKey = useMemo(() => getDateKeyDaysBefore(dateFromKey(currentDateKey), 'UTC', 1), [currentDateKey]);
+  const previousWeekToDateDates = useMemo(
+    () => thisWeekDates.map((dateKey) => getDateKeyDaysBefore(dateFromKey(dateKey), 'UTC', 7)),
+    [thisWeekDates],
+  );
   const trackedDateKeys = useMemo(
-    () => Array.from(new Set([...thisWeekDates, ...lastWeekDates, ...previousWeekDates])),
-    [lastWeekDates, previousWeekDates, thisWeekDates],
+    () => Array.from(new Set([...thisWeekDates, yesterdayDateKey, ...previousWeekToDateDates])),
+    [previousWeekToDateDates, thisWeekDates, yesterdayDateKey],
   );
   const { stepsByDate, status: leaderboardStatus } = useCirclePeriodSteps(details?.circle.id, trackedDateKeys, [currentDateKey]);
-  const [period, setPeriod] = useState<LeaderboardPeriod>('this');
+  const [period, setPeriod] = useState<LeaderboardPeriod>('today');
   const [selectedDateKeyOverride, setSelectedDateKeyOverride] = useState<string | null>(null);
-  const activeDates = period === 'this' ? thisWeekDates : lastWeekDates;
-  const baselineDates = period === 'this' ? lastWeekDates : previousWeekDates;
-  const selectedDateKey = selectedDateKeyOverride && activeDates.includes(selectedDateKeyOverride)
+  const activeDates = useMemo(
+    () => period === 'today' ? [currentDateKey] : thisWeekDates,
+    [currentDateKey, period, thisWeekDates],
+  );
+  const baselineDates = useMemo(
+    () => period === 'today' ? [yesterdayDateKey] : previousWeekToDateDates,
+    [period, previousWeekToDateDates, yesterdayDateKey],
+  );
+  const selectedDateKey = period === 'this-week' && selectedDateKeyOverride && activeDates.includes(selectedDateKeyOverride)
     ? selectedDateKeyOverride
-    : period === 'this' ? currentDateKey : activeDates[activeDates.length - 1]!;
+    : currentDateKey;
   const memberIds = useMemo(() => (details?.members ?? []).map((member) => member.userId), [details?.members]);
   const activeTotals = useMemo(() => aggregateCircleSteps(activeDates, stepsByDate, memberIds), [activeDates, memberIds, stepsByDate]);
   const baselineTotals = useMemo(() => aggregateCircleSteps(baselineDates, stepsByDate, memberIds), [baselineDates, memberIds, stepsByDate]);
   const movement = useMemo(() => getRankMovement(activeTotals, baselineTotals), [activeTotals, baselineTotals]);
   const friends = useMemo(() => buildFriends(details?.members ?? [], activeTotals, user?.uid), [activeTotals, details?.members, user?.uid]);
   const dailyFriends = useMemo(() => buildFriends(details?.members ?? [], stepsByDate[selectedDateKey] ?? {}, user?.uid), [details?.members, selectedDateKey, stepsByDate, user?.uid]);
-  const isCurrentDay = selectedDateKey === currentDateKey;
 
   if (status === 'loading') return <LoadingState />;
 
@@ -68,16 +79,7 @@ export default function CircleDetailRoute() {
         <Pressable accessibilityRole="button" accessibilityLabel="Circle actions" onPress={() => router.push({ pathname: '/circle/[circleId]/actions', params: { circleId: details.circle.id } })} style={styles.roundButton}><Text style={styles.more}>•••</Text></Pressable>
       </View>
 
-      <View style={styles.hero}>
-        <AppText tone="link" variant="eyebrow">WALKING CIRCLE</AppText>
-        <AppText variant="headline">{details.circle.name}</AppText>
-        <AppText tone="secondary" variant="bodySmall">{details.circle.description || `${details.members.length} ${details.members.length === 1 ? 'member' : 'members'} moving together.`}</AppText>
-      </View>
-
-      <View style={styles.periodMeta}>
-        <AppText numberOfLines={1} style={styles.periodRange} tone="secondary" variant="caption">{getPeriodMetadata(activeDates, competitionTimeZone, period, currentDateKey)}</AppText>
-        <Badge tone={period === 'this' ? 'brand' : 'neutral'}>{period === 'this' ? 'LIVE' : 'FINAL'}</Badge>
-      </View>
+      <AppText accessibilityRole="header" style={styles.circleTitle} variant="headline">{details.circle.name}</AppText>
 
       <SegmentedControl
         accessibilityLabel="Leaderboard period"
@@ -92,22 +94,24 @@ export default function CircleDetailRoute() {
 
       {leaderboardStatus === 'loading' ? <LoadingRows /> : leaderboardStatus === 'error' ? <StateCard description="We could not load this circle's standings. Check your connection and try again." title="Standings unavailable" tone="error" /> : friends.length === 0 ? <StateCard description="Invite a few walkers to start comparing verified steps together." title="No walkers yet" /> : <>
         <View style={styles.sectionHeader}>
-          <AppText variant="titleSmall">{period === 'this' ? 'This week’s standings' : 'Last week’s standings'}</AppText>
+          <AppText variant="titleSmall">{period === 'today' ? 'Today’s standings' : 'This week’s standings'}</AppText>
           <AppText tone="secondary" variant="caption">{friends.length} {friends.length === 1 ? 'walker' : 'walkers'}</AppText>
         </View>
-        <Leaderboard changes={movement} friends={friends} />
+        <Leaderboard changes={movement} friends={friends} podium={period === 'today' ? 'none' : 'bars'} />
 
-        <View style={styles.dailySection}>
-          <SectionHeader action={<Badge tone={isCurrentDay ? 'brand' : 'neutral'}>{isCurrentDay ? 'LIVE' : 'FINAL'}</Badge>} title="Daily breakdown" />
-          <ScrollView horizontal contentContainerStyle={styles.dayPicker} showsHorizontalScrollIndicator={false}>
-            {activeDates.map((dateKey) => {
-              const day = getDayLabel(dateKey, competitionTimeZone, currentDateKey);
-              const selected = dateKey === selectedDateKey;
-              return <Pressable accessibilityRole="tab" accessibilityState={{ selected }} key={dateKey} onPress={() => setSelectedDateKeyOverride(dateKey)} style={({ pressed }) => [styles.day, selected && styles.dayActive, pressed && styles.dayPressed]}><AppText tone={selected ? 'onBrand' : 'secondary'} variant="caption">{day.label}</AppText><AppText style={[styles.dayDate, selected && styles.dayTextActive]}>{day.dayOfMonth}</AppText></Pressable>;
-            })}
-          </ScrollView>
-          <Leaderboard friends={dailyFriends} podium="none" />
-        </View>
+        {period === 'this-week' ? (
+          <View style={styles.dailySection}>
+            <SectionHeader title="Daily breakdown" />
+            <ScrollView horizontal contentContainerStyle={styles.dayPicker} showsHorizontalScrollIndicator={false}>
+              {activeDates.map((dateKey) => {
+                const day = getDayLabel(dateKey, competitionTimeZone, currentDateKey);
+                const selected = dateKey === selectedDateKey;
+                return <Pressable accessibilityRole="tab" accessibilityState={{ selected }} key={dateKey} onPress={() => setSelectedDateKeyOverride(dateKey)} style={({ pressed }) => [styles.day, selected && styles.dayActive, pressed && styles.dayPressed]}><AppText tone={selected ? 'onBrand' : 'secondary'} variant="caption">{day.label}</AppText><AppText style={[styles.dayDate, selected && styles.dayTextActive]}>{day.dayOfMonth}</AppText></Pressable>;
+              })}
+            </ScrollView>
+            <Leaderboard friends={dailyFriends} podium="none" />
+          </View>
+        ) : null}
       </>}
     </ScrollView>
   );
@@ -132,15 +136,6 @@ function getInitials(name: string) {
 function dateFromKey(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number);
   return new Date(Date.UTC(year, month - 1, day, 12));
-}
-
-function getPeriodMetadata(dateKeys: readonly string[], timeZone: string, period: LeaderboardPeriod, currentDateKey: string) {
-  const formatter = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', timeZone });
-  const range = `${formatter.format(dateFromKey(dateKeys[0]!))} – ${formatter.format(dateFromKey(dateKeys[dateKeys.length - 1]!))}`;
-  if (period === 'last') return `${range} · final`;
-  const todayIndex = dateKeys.indexOf(currentDateKey);
-  const daysRemaining = todayIndex === -1 ? 0 : dateKeys.length - todayIndex - 1;
-  return `${range} · ${daysRemaining === 0 ? 'ends today' : `ends in ${daysRemaining} days`}`;
 }
 
 function getDayLabel(dateKey: string, timeZone: string, currentDateKey: string) {
@@ -179,9 +174,7 @@ function createStyles(colors: ReturnType<typeof useAppColors>) {
     roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
     back: { color: colors.ink, fontSize: 32, fontWeight: '300', lineHeight: 34 },
     more: { color: colors.ink, fontSize: 17, fontWeight: '800', letterSpacing: 1, marginTop: -7 },
-    hero: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, gap: spacing.xs, padding: spacing.xl },
-    periodMeta: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
-    periodRange: { flex: 1 },
+    circleTitle: { marginBottom: spacing.xs },
     sectionHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
     dailySection: { gap: spacing.md, marginTop: spacing.sm },
     dayPicker: { gap: spacing.sm },
