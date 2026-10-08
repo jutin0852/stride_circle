@@ -1,4 +1,4 @@
-name: iOS unsigned IPA
+name: iOS development client
 
 on:
   push:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build unsigned iOS IPA
+    name: Build unsigned iOS development client
     runs-on: macos-26
     timeout-minutes: 45
     defaults:
@@ -91,7 +91,7 @@ jobs:
       - name: Install CocoaPods dependencies
         run: npx pod-install ios
 
-      - name: Build the unsigned device app
+      - name: Build the unsigned development client
         run: |
           set -o pipefail
 
@@ -132,7 +132,7 @@ jobs:
           xcodebuild \
             -workspace "$workspace" \
             -scheme "$scheme" \
-            -configuration Release \
+            -configuration Debug \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
@@ -141,33 +141,35 @@ jobs:
             CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             build 2>&1 | tee xcodebuild.log
 
-      - name: Package the unsigned IPA
+      - name: Package the development IPA
         run: |
-          app_path="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)"
+          app_path="$(find build/Build/Products/Debug-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)"
           if [[ -z "$app_path" ]]; then
             echo 'The iOS device app was not produced.' >&2
             exit 1
           fi
 
-          rm -rf Payload StrideCircle-unsigned.ipa
+          rm -rf Payload StrideCircle-development.ipa
           mkdir Payload
           ditto "$app_path" "Payload/$(basename "$app_path")"
-          zip -qry StrideCircle-unsigned.ipa Payload
+          zip -qry StrideCircle-development.ipa Payload
           rm -rf Payload
 
           {
             echo "commit=${GITHUB_SHA}"
             echo "run=${GITHUB_RUN_NUMBER}"
             echo 'bundle_identifier=com.stridecircle.app'
+            echo 'build_type=Expo development client (Debug)'
             echo 'signing=unsigned; import this IPA into SideStore for on-device signing'
+            echo 'usage=launch the Dev Launcher, then connect to npx expo start --dev-client'
           } > build-metadata.txt
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stride-circle-unsigned-ipa-${{ github.run_number }}
+          name: stride-circle-development-ipa-${{ github.run_number }}
           path: |
-            projects/02-friends-step-challenge/app/StrideCircle-unsigned.ipa
+            projects/02-friends-step-challenge/app/StrideCircle-development.ipa
             projects/02-friends-step-challenge/app/build-metadata.txt
           if-no-files-found: error
           retention-days: 14
@@ -176,7 +178,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: stride-circle-ios-build-log-${{ github.run_number }}
+          name: stride-circle-ios-development-build-log-${{ github.run_number }}
           path: projects/02-friends-step-challenge/app/xcodebuild.log
           if-no-files-found: ignore
           retention-days: 7
