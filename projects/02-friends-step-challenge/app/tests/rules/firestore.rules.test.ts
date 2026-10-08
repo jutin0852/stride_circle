@@ -4,7 +4,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
 
 const projectId = 'demo-stride-circle';
 let testEnv: RulesTestEnvironment;
@@ -42,6 +42,9 @@ async function seedCircle() {
       visibility: 'public',
     });
     await setDoc(doc(database, 'circles', 'public-circle', 'members', 'member-1'), {
+      avatarSeed: 'member-1',
+      avatarStyle: 'sprouts',
+      displayName: 'Member One',
       role: 'member',
       userId: 'member-1',
     });
@@ -114,6 +117,43 @@ describe('Firestore launch rules', () => {
     const score = doc(database, 'circles', 'public-circle', 'days', '2026-10-01', 'scores', 'member-1');
 
     await assertFails(setDoc(score, { steps: 999999, userId: 'member-1' }));
+  });
+
+  it('scopes circle chat to members and the authenticated author', async () => {
+    const memberDatabase = testEnv.authenticatedContext('member-1').firestore();
+    const outsiderDatabase = testEnv.authenticatedContext('outsider-1').firestore();
+    const message = doc(memberDatabase, 'circles', 'public-circle', 'messages', 'message-1');
+
+    await assertSucceeds(setDoc(message, {
+      authorAvatarSeed: 'member-1',
+      authorAvatarStyle: 'sprouts',
+      authorId: 'member-1',
+      authorName: 'Member One',
+      body: 'Hello, circle!',
+      circleId: 'public-circle',
+      clientMessageId: 'message-1',
+      createdAt: serverTimestamp(),
+      schemaVersion: 1,
+    }));
+    await assertSucceeds(getDoc(message));
+    await assertFails(getDoc(doc(outsiderDatabase, 'circles', 'public-circle', 'messages', 'message-1')));
+  });
+
+  it('rejects a circle message that impersonates another member', async () => {
+    const database = testEnv.authenticatedContext('member-1').firestore();
+    const message = doc(database, 'circles', 'public-circle', 'messages', 'message-spoof');
+
+    await assertFails(setDoc(message, {
+      authorAvatarSeed: 'member-1',
+      authorAvatarStyle: 'sprouts',
+      authorId: 'another-user',
+      authorName: 'Member One',
+      body: 'This should be rejected.',
+      circleId: 'public-circle',
+      clientMessageId: 'message-spoof',
+      createdAt: serverTimestamp(),
+      schemaVersion: 1,
+    }));
   });
 });
 

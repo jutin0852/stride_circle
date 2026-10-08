@@ -55,7 +55,7 @@ export function HistoryView(props: HistoryViewProps) {
 
 function createStyles(historyColors: HistoryColorSet) { return StyleSheet.create({
   page: { backgroundColor: historyColors.screen }, scroll: { alignItems: 'center' },
-  content: { width: '100%', maxWidth: 600, gap: spacing.xl, paddingBottom: spacing.xxxl },
+  content: { width: '100%', maxWidth: 600, gap: spacing.xxl, paddingBottom: spacing.xxxl },
   header: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }, heading: { flex: 1, gap: spacing.xs },
   kicker: { color: historyColors.blueDeep, fontSize: 12, letterSpacing: 1.4, fontWeight: '900' }, title: { color: historyColors.ink, fontSize: 30, lineHeight: 34, letterSpacing: -0.7 },
   headerIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: historyColors.paper, borderColor: historyColors.line, borderWidth: 2, alignItems: 'center', justifyContent: 'center', shadowColor: historyColors.line, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2 },

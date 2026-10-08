@@ -36,14 +36,14 @@ function formatElapsed(milliseconds: number) {
 }
 
 function createStyles(historyColors: HistoryColorSet) { return StyleSheet.create({
-  section: { gap: spacing.md },
+  section: { gap: spacing.lg },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 24, fontWeight: '800' }, count: { color: historyColors.muted, fontSize: 12 },
   list: { gap: 0 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 2, gap: 12, borderBottomWidth: 1, borderBottomColor: historyColors.line, minHeight: 68 }, lastRow: { borderBottomWidth: 0 },
   icon: { borderColor: 'transparent', borderWidth: 1, width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }, iconCoral: { backgroundColor: historyColors.coralPale }, iconBlue: { backgroundColor: historyColors.ice },
   copy: { flex: 1, minWidth: 0, gap: 2 }, walkTitle: { color: historyColors.ink, fontSize: 14, lineHeight: 19 }, metadata: { color: historyColors.muted, fontSize: 12, lineHeight: 17 }, more: { padding: spacing.md }, pressed: { backgroundColor: historyColors.ice },
-  emptyState: { paddingVertical: spacing.xs, gap: spacing.xs, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  emptyState: { paddingVertical: spacing.sm, gap: spacing.sm, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   emptyIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: historyColors.ice, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { color: historyColors.muted, fontSize: 13, lineHeight: 18, fontWeight: '600', flex: 1 },
 }); }

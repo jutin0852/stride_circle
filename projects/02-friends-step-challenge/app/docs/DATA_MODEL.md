@@ -1,7 +1,7 @@
 # Stride Circle launch data model
 
 Status: target versioned model  
-Last reviewed: 2026-10-02
+Last reviewed: 2026-10-08
 
 ## Identity and private data
 
@@ -59,6 +59,7 @@ circles/{circleId}/days/{dateKey}
 circles/{circleId}/days/{dateKey}/scores/{userId}
 circles/{circleId}/weeklyRecaps/{weekKey}
 circles/{circleId}/cheers/{cheerId}
+circles/{circleId}/messages/{messageId}
 circles/{circleId}/reports/{reportId}
 ```
 
@@ -105,6 +106,22 @@ finalizedAt
 schemaVersion
 ```
 
+Circle message fields:
+
+```text
+authorId
+authorName               // display snapshot from the circle member record
+authorAvatarSeed         // display snapshot for the member avatar
+authorAvatarStyle        // display snapshot for the member avatar
+body                     // text-only message, maximum 500 characters
+circleId
+clientMessageId          // idempotent client-created document id
+createdAt                // server timestamp
+schemaVersion
+```
+
+Messages are scoped to one circle and do not contain health, GPS, or private profile data. The first implementation keeps messages immutable after creation and exposes the latest page plus older pages through a repository boundary.
+
 The score projection is derived from private user step records. It is not a place where clients can choose their own winner, rank, or verified total.
 
 Weekly recap fields:
@@ -132,6 +149,8 @@ Cheer fields should include sender, recipient, fixed cheer type, circle, competi
 - Private circles are never listable and are readable only through membership-aware paths.
 - Public discovery returns safe circle summaries, not member locations.
 - A member can read allowed aggregate standings but not another member's raw health data or route.
+- A current member can read messages for their circle and create only messages authored by their own member record.
+- Message documents cannot be updated or deleted by the client in the first edition.
 - Only owners can delete circles.
 - Owners and moderators can moderate; ordinary members cannot assign roles or resolve reports.
 - Clients cannot write authoritative winner, rank, or finalized fields.

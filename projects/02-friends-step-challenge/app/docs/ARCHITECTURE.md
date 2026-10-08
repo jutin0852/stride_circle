@@ -1,7 +1,7 @@
 # Stride Circle architecture
 
 Status: target architecture for the launch rebuild  
-Last reviewed: 2026-10-02
+Last reviewed: 2026-10-08
 
 ## Principles
 
@@ -62,7 +62,7 @@ src/
   config/
 ```
 
-The current repository is partway through this move. `src/domain/circles.ts` is the first extracted domain module and `src/lib/circles.ts` is a transitional repository. New features should follow the target boundaries instead of adding more screen-driven Firestore access.
+The current repository is partway through this move. `src/domain/circles.ts` is the first extracted domain module and `src/lib/circles.ts` is a transitional repository. New features should follow the target boundaries instead of adding more screen-driven Firestore access. Circle chat follows this direction with a domain model, feature view, hook, and Firebase repository; its direct client write remains transitional until the backend mutation path is ready.
 
 ## Runtime boundaries
 
@@ -80,7 +80,7 @@ Repositories own Firestore collection paths, query shapes, transactions, convert
 
 ### Backend
 
-Cloud Functions 2nd gen own circle creation/joining, invitations, moderation mutations, daily finalization, weekly recap generation, notifications, cleanup, and account deletion. Functions must use deterministic operation identifiers so retries do not duplicate work.
+Cloud Functions 2nd gen own circle creation/joining, invitations, message writes, moderation mutations, daily finalization, weekly recap generation, global leaderboard projection generation, notifications, cleanup, and account deletion. Functions must use deterministic operation identifiers so retries do not duplicate work.
 
 ## Backend services
 
@@ -104,6 +104,7 @@ The existing schema is legacy version 0. New records should be versioned or stor
 - Keep circle documents small and avoid unbounded arrays.
 - Keep member documents separate from circle metadata.
 - Use projections for standings and recaps rather than reading every raw activity on every screen.
+- Use separate global leaderboard projections for the public top list and current-user placement; never aggregate every user's raw history in the mobile client.
 - Avoid a single document that receives high-frequency writes from all members.
 - Use transactions for capacity and membership changes.
 - Use scheduled jobs for finalization and recap generation, not client timers.

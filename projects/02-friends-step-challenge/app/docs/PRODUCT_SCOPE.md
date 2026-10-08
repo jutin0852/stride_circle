@@ -1,7 +1,7 @@
 # Stride Circle launch scope
 
 Status: canonical first-edition brief  
-Last reviewed: 2026-10-02
+Last reviewed: 2026-10-08
 
 ## Product promise
 
@@ -27,14 +27,14 @@ The first edition optimizes for a reliable social loop:
 - A circle has at most 20 members.
 - Each circle has a fixed competition timezone.
 - Daily and weekly standings are scoped to circles.
+- Discover includes a public global walking leaderboard with This Week and All Time views.
+- Each circle has one shared, membership-scoped text chat for coordinating walks and encouraging one another.
 - Streaks, milestones, weekly recaps, celebrations, and fixed cheers provide lightweight motivation.
 - Public circles include reporting, blocking, owner controls, moderator controls, and abuse handling before broad release.
 
 ## Explicitly out of scope for first edition
 
-- Global leaderboard.
-- Direct messaging, chat, and open comments.
-- Public user profiles and public user rankings.
+- Direct messaging, open comments, topic channels, and media attachments.
 - GPS activities as a required launch feature.
 - Manual step entry.
 - Levels, paid rewards, complex badges, or an achievement economy.
@@ -69,7 +69,8 @@ Existing GPS activity code may remain available as legacy or experimental functi
 ## Social and safety rules
 
 - Cheers use a fixed set of low-risk reactions: Nice work, Keep going, Almost there, Let's walk, and Congrats.
-- No open comments or chat in the first edition.
+- Circle chat is one shared text-only room per circle; only current members can read or send messages.
+- Direct messages and open comments remain out of scope for the first edition.
 - Members see aggregate circle standings, not another member's health route or raw activity route.
 - Users can report a circle, member, cheer, or profile surface.
 - Users can block other users; blocked users cannot interact or appear together in relevant surfaces.

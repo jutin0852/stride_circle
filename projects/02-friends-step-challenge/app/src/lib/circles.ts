@@ -67,7 +67,6 @@ export type CircleDetails = {
 export type CircleHubPreview = {
   memberCount: number;
   members: CircleMember[];
-  walkingTodayCount: number;
 };
 
 export type CircleDailySteps = Record<string, number>;
@@ -150,30 +149,16 @@ export async function getCircleHubPreview(circleId: string): Promise<CircleHubPr
   if (!circleSnapshot.exists()) return null;
 
   const circleData = circleSnapshot.data();
-  const dateKey = getDateKeyInTimeZone(new Date(), getCompetitionTimeZone(circleData.competitionTimeZone));
   const membersSnapshot = await getDocs(query(collection(db, 'circles', circleId, 'members'), limit(MAX_CIRCLE_MEMBERS)));
 
   const members = membersSnapshot.docs.flatMap((memberSnapshot) => {
     const member = readCircleMember(memberSnapshot.data());
     return member ? [member] : [];
   });
-  const memberIds = new Set(members.map((member) => member.userId));
-  const stepsSnapshot = memberIds.size > 0
-    ? await getDocs(query(
-      collection(db, 'circles', circleId, 'dailySteps', dateKey, 'entries'),
-      where('userId', 'in', Array.from(memberIds)),
-      limit(MAX_CIRCLE_MEMBERS),
-    ))
-    : null;
-  const walkingTodayCount = stepsSnapshot?.docs.reduce((count, entrySnapshot) => {
-    const data = entrySnapshot.data();
-    return memberIds.has(entrySnapshot.id) && typeof data.steps === 'number' && data.steps > 0 ? count + 1 : count;
-  }, 0) ?? 0;
 
   return {
     memberCount: getMemberCount(circleData.memberCount),
     members: members.slice(0, 3),
-    walkingTodayCount,
   };
 }
 

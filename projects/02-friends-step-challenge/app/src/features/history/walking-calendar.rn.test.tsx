@@ -1,6 +1,6 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import { WalkingCalendar } from './walking-calendar';
+import { formatCalendarSteps, WalkingCalendar } from './walking-calendar';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 
@@ -13,6 +13,25 @@ function setup(overrides: Partial<React.ComponentProps<typeof WalkingCalendar>> 
 }
 
 describe('walking calendar states', () => {
+  it('formats daily totals compactly for the calendar grid', () => {
+    expect(formatCalendarSteps(0)).toBe('0');
+    expect(formatCalendarSteps(835)).toBe('835');
+    expect(formatCalendarSteps(4000)).toBe('4k');
+    expect(formatCalendarSteps(5500)).toBe('5.5k');
+    expect(formatCalendarSteps(1250000)).toBe('1.3m');
+  });
+  it('shows saved daily totals and the loaded month total', async () => {
+    const { props } = setup({ records: [
+      { dateKey: '2026-10-01', steps: 1500 },
+      { dateKey: '2026-10-03', steps: 4000 },
+      { dateKey: '2026-10-02', steps: 0 },
+    ] });
+    const screen = await render(<WalkingCalendar {...props} />);
+    expect(screen.getByText('1.5k')).toBeTruthy();
+    expect(screen.getByText('4k')).toBeTruthy();
+    expect(screen.getByText('5.5k steps')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /October 2, 2026.*0 saved steps/ })).toBeTruthy();
+  });
   it('omits the legend while preserving selected-day details and accessible date states', async () => {
     const { props } = setup();
     const screen = await render(<WalkingCalendar {...props} />);

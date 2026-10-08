@@ -237,6 +237,36 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      match /messages/{messageId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          && request.resource.data.keys().hasOnly([
+            'authorAvatarSeed',
+            'authorAvatarStyle',
+            'authorId',
+            'authorName',
+            'body',
+            'circleId',
+            'clientMessageId',
+            'createdAt',
+            'schemaVersion'
+          ])
+          && request.resource.data.circleId == circleId
+          && request.resource.data.clientMessageId == messageId
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.displayName
+          && request.resource.data.authorAvatarSeed == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.avatarSeed
+          && request.resource.data.authorAvatarStyle == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.avatarStyle
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 500
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.schemaVersion == 1;
+        allow update, delete: if false;
+      }
+
       match /days/{dateKey} {
         allow get, list: if signedIn()
           && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));

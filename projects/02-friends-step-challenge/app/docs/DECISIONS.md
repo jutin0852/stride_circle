@@ -1,7 +1,7 @@
 # Stride Circle decision log
 
 Status: active launch decisions  
-Last reviewed: 2026-10-05
+Last reviewed: 2026-10-08
 
 ## D-001 — Keep Firebase for the rebuild
 
@@ -39,11 +39,11 @@ Decision: public circles are discoverable and open to join, but public discovery
 
 Reason: the product is available to anyone and includes health-adjacent activity data. Safety cannot be postponed until after discovery is open.
 
-## D-007 — Cheers instead of chat
+## D-007 — Circle chat stays scoped to the circle
 
-Decision: ship fixed reactions and celebrations, not direct messaging, open comments, or chat.
+Decision: ship fixed reactions and celebrations alongside one shared, text-only chat room per circle. Do not add direct messaging, open comments, or topic channels in the first edition.
 
-Reason: this preserves social reinforcement while reducing moderation, privacy, notification, and abuse complexity.
+Reason: members asked for lightweight coordination inside the existing social unit. Keeping chat membership-scoped, text-only, and bounded preserves the circle experience while reducing moderation, privacy, notification, and abuse complexity.
 
 ## D-008 — Health data wording
 
@@ -59,7 +59,7 @@ Reason: existing user history is valuable and a destructive migration would remo
 
 ## D-010 — Cloud Functions own privileged mutations
 
-Decision: direct client mutations are transitional only. Before public launch, circle membership, finalization, recap generation, notifications, moderation, and account deletion move behind idempotent Cloud Functions 2nd gen.
+Decision: direct client mutations are transitional only. Before public launch, circle membership, message writes, finalization, recap generation, notifications, moderation, and account deletion move behind idempotent Cloud Functions 2nd gen.
 
 Reason: authoritative outcomes and cross-document invariants cannot depend on a trusted mobile client.
 

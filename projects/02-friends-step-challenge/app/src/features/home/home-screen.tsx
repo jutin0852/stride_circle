@@ -52,6 +52,7 @@ export function HomeScreen() {
   }, [cheer.blockedIds, details, now, scores.status, scores.steps, user?.uid]);
   return <HomeView key={user?.uid}
     greeting={profile.displayName === 'Stride Circle member' ? 'walker' : profile.displayName.split(' ')[0] || 'walker'}
+    profileAvatar={profile.avatar} profileName={profile.displayName}
     streak={streak.status === 'ready' && dailyGoal.status === 'ready' ? streak.summary.currentStreak : null}
     steps={personal.steps} goal={goal} health={personal.state} goalEvent={goalEvent}
     circle={viewCircle} circles={circle.circles}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -76,10 +77,15 @@ export default function CircleDetailRoute() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
       <View style={styles.nav}>
         <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.roundButton}><Text style={styles.back}>‹</Text></Pressable>
+        <AppText accessibilityRole="header" numberOfLines={1} style={styles.circleTitle} variant="titleSmall">{details.circle.name}</AppText>
         <Pressable accessibilityRole="button" accessibilityLabel="Circle actions" onPress={() => router.push({ pathname: '/circle/[circleId]/actions', params: { circleId: details.circle.id } })} style={styles.roundButton}><Text style={styles.more}>•••</Text></Pressable>
       </View>
 
-      <AppText accessibilityRole="header" style={styles.circleTitle} variant="headline">{details.circle.name}</AppText>
+      <Pressable accessibilityRole="button" accessibilityLabel="Open circle chat" onPress={() => router.push({ pathname: '/circle/[circleId]/chat', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.chatAction, pressed && styles.chatActionPressed]}>
+        <View style={styles.chatIcon}><Ionicons color={colors.accentPressed} name="chatbubbles-outline" size={21} /></View>
+        <View style={styles.chatCopy}><AppText variant="label">Circle chat</AppText><AppText tone="secondary" variant="caption">Talk with your walkers</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={19} />
+      </Pressable>
 
       <SegmentedControl
         accessibilityLabel="Leaderboard period"
@@ -97,7 +103,8 @@ export default function CircleDetailRoute() {
           <AppText variant="titleSmall">{period === 'today' ? 'Today’s standings' : 'This week’s standings'}</AppText>
           <AppText tone="secondary" variant="caption">{friends.length} {friends.length === 1 ? 'walker' : 'walkers'}</AppText>
         </View>
-        <Leaderboard changes={movement} friends={friends} podium={period === 'today' ? 'none' : 'bars'} />
+        <Leaderboard changes={movement} friends={friends} limit={3} podium="bars" podiumHeight={140} />
+        {period === 'today' ? <Leaderboard friends={friends} podium="none" /> : null}
 
         {period === 'this-week' ? (
           <View style={styles.dailySection}>
@@ -164,17 +171,22 @@ function SkeletonBlock({ colors, height, marginTop, width }: { colors: ReturnTyp
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({
     page: { backgroundColor: colors.background },
-    content: { gap: spacing.lg, padding: spacing.xxl, paddingBottom: 56 },
+    content: { gap: spacing.lg, paddingHorizontal: spacing.xxl, paddingTop: spacing.lg, paddingBottom: 56 },
     loading: { backgroundColor: colors.background, flex: 1 },
     detailSkeleton: { gap: spacing.md, padding: spacing.xxl },
     leaderboardSkeleton: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, overflow: 'hidden' },
     skeletonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 72, paddingHorizontal: spacing.lg },
     skeletonCopy: { flex: 1, gap: spacing.xs, marginLeft: spacing.md },
-    nav: { flexDirection: 'row', justifyContent: 'space-between' },
+    nav: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
     roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
     back: { color: colors.ink, fontSize: 32, fontWeight: '300', lineHeight: 34 },
     more: { color: colors.ink, fontSize: 17, fontWeight: '800', letterSpacing: 1, marginTop: -7 },
-    circleTitle: { marginBottom: spacing.xs },
+    walkerCount: { flex: 1, marginHorizontal: spacing.md, textAlign: 'center' },
+    circleTitle: { flex: 1, marginHorizontal: spacing.md, textAlign: 'center' },
+    chatAction: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, flexDirection: 'row', gap: spacing.md, minHeight: 64, paddingHorizontal: spacing.md },
+    chatActionPressed: { opacity: 0.78, transform: [{ translateY: 1 }] },
+    chatIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 20, height: 40, justifyContent: 'center', width: 40 },
+    chatCopy: { flex: 1, gap: 1 },
     sectionHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
     dailySection: { gap: spacing.md, marginTop: spacing.sm },
     dayPicker: { gap: spacing.sm },

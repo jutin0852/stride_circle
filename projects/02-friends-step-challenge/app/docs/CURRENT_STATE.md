@@ -11,7 +11,7 @@ The visible navigation is Home, Circles, and History. Profile and the optional w
 ## Current services
 
 - Firebase Authentication: email/password and Google sign-in.
-- Cloud Firestore: profiles, circle membership, circles, daily steps, standings data, saved walks, cheers, blocks, and reports.
+- Cloud Firestore: profiles, circle membership, circles, daily steps, standings data, saved walks, cheers, circle messages, blocks, and reports.
 - Cloud Functions 2nd gen: initial callable circle operations plus scheduled daily score finalization and weekly recap generation.
 - Health data: native HealthKit on iOS, Health Connect on Android, and a guarded iOS Expo Pedometer fallback for development builds.
 - Expo Location and React Native Maps: optional private GPS walking sessions.
@@ -26,18 +26,21 @@ There is no notification, analytics, crash-monitoring, Firebase Storage, or clie
 - Fixed circle competition timezones and live daily standings.
 - Personal cumulative daily steps, bounded synchronization, offline outbox retry, goals, streaks, milestones, and goal celebrations.
 - Fixed cheers with Firestore duplicate protection.
+- Membership-scoped circle chat with optimistic sends, retryable failures, member avatars, and paged message history.
+- Global walking leaderboard entry in Circles Discover with This Week and All Time views, backed by a server-generated Firestore projection contract.
 - Personal History calendar, recap, saved walks, and private saved route details.
 - Optional foreground GPS walk recording with pause/resume/finish and native map rendering.
 - Loading, empty, error, stale, permission, reduced-motion, and narrow-layout states for the redesigned Home and History surfaces.
 
 ## Transitional architecture
 
-The target feature/domain/data/service boundaries are documented in [ARCHITECTURE.md](ARCHITECTURE.md), but the migration is incomplete. Home and History have coordinator/presentation splits; many other routes still call transitional repositories in `src/lib` directly. Circle mutations are still partly direct client Firestore writes even though initial Cloud Functions exist. Legacy run records remain readable, but new activity UI is walking-only.
+The target feature/domain/data/service boundaries are documented in [ARCHITECTURE.md](ARCHITECTURE.md), but the migration is incomplete. Home and History have coordinator/presentation splits; many other routes still call transitional repositories in `src/lib` directly. Circle mutations and circle message writes are still partly direct client Firestore operations even though initial Cloud Functions exist. Legacy run records remain readable, but new activity UI is walking-only.
 
 ## Not complete
 
-- Approval joining, moderator assignment, complete moderation UI, public-circle safety tooling, account deletion, privacy/legal surfaces, notifications, analytics, crash monitoring, and full App Check wiring.
+- Approval joining, moderator assignment, complete moderation UI, message reporting/moderation, public-circle safety tooling, account deletion, privacy/legal surfaces, notifications, analytics, crash monitoring, and full App Check wiring.
 - Full server-authoritative circle mutation/projection integration.
+- Production deployment and scale validation of the global leaderboard aggregation job.
 - Weekly recap UI and broader challenge/reward systems.
 - Function integration tests, broader Rules coverage, deterministic authenticated E2E, and native UI automation.
 - Physical-device proof for HealthKit/Health Connect permissions, background delivery, revocation, restart recovery, timezones, and release builds.
