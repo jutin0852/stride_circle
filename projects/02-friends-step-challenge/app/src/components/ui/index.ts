@@ -1,5 +1,7 @@
 export { AppText } from '@/components/ui/AppText';
 export type { AppTextTone, AppTextVariant } from '@/components/ui/AppText';
+export { AppSheet } from '@/components/ui/AppSheet';
+export type { AppSheetFocusRef } from '@/components/ui/AppSheet';
 export { Badge } from '@/components/ui/Badge';
 export type { BadgeTone } from '@/components/ui/Badge';
 export { BrandLockup } from '@/components/ui/BrandLockup';

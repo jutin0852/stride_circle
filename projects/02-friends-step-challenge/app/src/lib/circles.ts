@@ -497,6 +497,45 @@ export function watchCircleDailySteps(
   );
 }
 
+export function watchCircleDailyStepsForDates(
+  circleId: string,
+  dateKeys: readonly string[],
+  onChange: (stepsByDate: Record<string, CircleDailySteps>, complete: boolean) => void,
+  onError: () => void,
+): Unsubscribe {
+  const uniqueDateKeys = Array.from(new Set(dateKeys));
+  const snapshots: Record<string, CircleDailySteps> = {};
+
+  const publish = () => onChange({ ...snapshots }, Object.keys(snapshots).length === uniqueDateKeys.length);
+  const unsubscribers = uniqueDateKeys.map((dateKey) => watchCircleDailySteps(
+    circleId,
+    dateKey,
+    (steps) => {
+      snapshots[dateKey] = steps;
+      publish();
+    },
+    onError,
+  ));
+
+  return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+}
+
+export async function getCircleDailyStepsForDates(circleId: string, dateKeys: readonly string[]) {
+  const db = requireFirebase(database, 'Firestore');
+  const uniqueDateKeys = Array.from(new Set(dateKeys));
+  const entries = await Promise.all(uniqueDateKeys.map(async (dateKey) => {
+    const snapshot = await getDocs(collection(db, 'circles', circleId, 'dailySteps', dateKey, 'entries'));
+    const steps = snapshot.docs.reduce<CircleDailySteps>((result, entry) => {
+      const data = entry.data();
+      if (typeof data.userId === 'string' && typeof data.steps === 'number') result[data.userId] = data.steps;
+      return result;
+    }, {});
+    return [dateKey, steps] as const;
+  }));
+
+  return Object.fromEntries(entries);
+}
+
 export function watchUserCircles(
   userId: string,
   onChange: (circles: CircleSummary[], selectedCircleId: string | null) => void,

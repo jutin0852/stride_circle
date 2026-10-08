@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useMemo } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useRef } from 'react';
 
-import { AppText, Button, IconButton, ProgressBar } from '@/components/ui';
+import { AppSheet, AppText, Button, IconButton, ProgressBar, type AppSheetFocusRef } from '@/components/ui';
 import { radii, spacing } from '@/design-system/tokens';
 import { nextWalkingMilestone, WALKING_MILESTONES } from '@/domain/walking-history';
 import type { StreakSummary } from '@/lib/streaks';
@@ -11,17 +10,22 @@ import { StreakEmblem } from './streak-banner';
 import { useHistoryTheme } from './history-tokens';
 import type { HistoryColorSet } from './history-tokens';
 
-export function MilestonesSheet({ visible, onClose, summary }: { visible: boolean; onClose: () => void; summary: StreakSummary }) {
-  const insets = useSafeAreaInsets();
+export function MilestonesSheet({ visible, onClose, returnFocusRef, summary }: { visible: boolean; onClose: () => void; returnFocusRef?: AppSheetFocusRef; summary: StreakSummary }) {
   const { colors: historyColors } = useHistoryTheme();
   const styles = useMemo(() => createStyles(historyColors), [historyColors]);
   const next = nextWalkingMilestone(summary.currentStreak);
-  return <Modal animationType="none" transparent visible={visible} onRequestClose={onClose}>
-    <View style={[styles.backdrop, { paddingTop: Math.max(24, insets.top) }]}>
-      <Pressable accessibilityLabel="Dismiss milestone overlay" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill} />
-      <View accessibilityViewIsModal style={styles.sheet}>
-        <View style={styles.toolbar}><AppText variant="titleSmall">Walking milestones</AppText><IconButton accessibilityLabel="Close milestones" onPress={onClose}><Ionicons name="close" size={22} color={historyColors.ink} /></IconButton></View>
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+  const closeButtonRef = useRef<View>(null);
+  return <AppSheet
+    accessibilityLabel="Walking milestones"
+    initialFocusRef={closeButtonRef}
+    keyboardAware
+    onClose={onClose}
+    returnFocusRef={returnFocusRef}
+    sheetStyle={styles.sheet}
+    visible={visible}
+  >
+        <View style={styles.toolbar}><AppText variant="titleSmall">Walking milestones</AppText><IconButton accessibilityLabel="Close milestones" onPress={onClose} ref={closeButtonRef}><Ionicons name="close" size={22} color={historyColors.ink} /></IconButton></View>
+        <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.hero}>
             <StreakEmblem large />
             <AppText accessibilityRole="header" variant="headline" style={styles.center}>Small steps.{ '\n' }Big milestones.</AppText>
@@ -40,9 +44,7 @@ export function MilestonesSheet({ visible, onClose, summary }: { visible: boolea
           <AppText variant="bodySmall" tone="secondary">Based on up to 400 saved days and your current daily goal. Changing your goal can change these milestones. These are personal celebrations, not prizes or circle scores.</AppText>
           <Button onPress={onClose} variant="secondary">Keep stepping</Button>
         </ScrollView>
-      </View>
-    </View>
-  </Modal>;
+  </AppSheet>;
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
@@ -52,8 +54,7 @@ function Stat({ value, label }: { value: number; label: string }) {
 }
 
 function createStyles(historyColors: HistoryColorSet) { return StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: historyColors.overlay, justifyContent: 'flex-end', alignItems: 'center' },
-  sheet: { backgroundColor: historyColors.screen, width: '100%', maxWidth: 560, maxHeight: '100%', borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, overflow: 'hidden' },
+  sheet: { width: '100%', maxWidth: 560, maxHeight: '91%', paddingHorizontal: 0, paddingTop: 0 },
   toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md, gap: spacing.sm },
   content: { gap: spacing.lg, paddingHorizontal: spacing.xl },
   hero: { alignItems: 'center', backgroundColor: historyColors.streakSurface, borderRadius: radii.xl, padding: spacing.xl, gap: spacing.md }, center: { textAlign: 'center' },

@@ -1,77 +1,47 @@
-import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo } from 'react';
 
-import { useAppColors } from "@/design-system/use-app-theme";
-import { formatSteps, type Friend } from "@/data/circle";
-import { Avatar } from "./avatar";
+import {
+  Leaderboard as PanelLeaderboard,
+  type LeaderboardEntry,
+  type LeaderboardPodium,
+} from 'panelui-native/components/leaderboard';
+
+import { formatSteps, type Friend } from '@/data/circle';
+import { getAvatarUrl } from '@/lib/avatar';
 
 export function Leaderboard({
+  changes,
   friends,
+  podium = 'bars',
 }: {
+  changes?: Record<string, number>;
   friends: Friend[];
+  podium?: LeaderboardPodium;
 }) {
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const data = useMemo<LeaderboardEntry[]>(
+    () => friends.map((friend, index) => {
+      const id = friend.id ?? `${friend.name}-${index}`;
+      return {
+        avatar: friend.avatar ? getAvatarUrl(friend.avatar) : undefined,
+        change: changes?.[id],
+        id,
+        name: friend.name,
+        value: Math.max(0, Math.floor(friend.steps)),
+      };
+    }),
+    [changes, friends],
+  );
+  const highlightId = data.find((entry, index) => friends[index]?.isYou)?.id;
+
   return (
-    <View style={styles.card}>
-      {friends.map((friend, index) => (
-          <View
-            key={friend.id ?? `${friend.name}-${index}`}
-            style={[styles.row, friend.isYou && styles.youRow]}
-          >
-            <Text selectable style={styles.rank}>{index + 1}</Text>
-            <Avatar friend={friend} />
-            <View style={styles.nameColumn}>
-              <Text
-                selectable
-                style={[styles.name, friend.isYou && styles.youText]}
-              >
-                {friend.name}
-              </Text>
-            </View>
-            <Text
-              selectable
-              style={[styles.steps, friend.isYou && styles.youText]}
-            >
-              {formatSteps(friend.steps)}
-            </Text>
-          </View>
-      ))}
-    </View>
+    <PanelLeaderboard
+      data={data}
+      emptyText="No walkers have logged steps yet"
+      formatValue={formatSteps}
+      highlightId={highlightId}
+      podium={podium}
+      podiumHeight={152}
+      unit="steps"
+    />
   );
 }
-
-function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
-  card: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 22,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  row: {
-    alignItems: "center",
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    minHeight: 72,
-    paddingHorizontal: 15,
-  },
-  youRow: { backgroundColor: colors.soft },
-  rank: {
-    color: colors.muted,
-    fontSize: 15,
-    fontWeight: "800",
-    textAlign: "center",
-    width: 28,
-  },
-  nameColumn: { flex: 1, marginLeft: 11 },
-  name: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  youText: { color: colors.accentPressed },
-  steps: {
-    color: colors.ink,
-    fontSize: 15,
-    fontVariant: ["tabular-nums"],
-    fontWeight: "800",
-  },
-}); }

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Animated, Easing, findNodeHandle, Modal, Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -31,7 +31,7 @@ function Copy({ children, colors, style, ...props }: React.ComponentProps<typeof
 function Action({ children, onPress, label, disabled, busy, colors, secondary = false }: {
   children: React.ReactNode; onPress: () => void; label?: string; disabled?: boolean; busy?: boolean; colors: HomeTheme; secondary?: boolean;
 }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled || !!busy, busy: !!busy }} disabled={disabled || busy} onPress={onPress}
+  return <Pressable accessibilityRole="button" accessibilityLabel={label ?? (typeof children === 'string' ? children : undefined)} accessibilityState={{ disabled: !!disabled || !!busy, busy: !!busy }} disabled={disabled || busy} onPress={onPress}
     style={({ pressed }) => [styles.action, { backgroundColor: secondary ? colors.canvas : colors.blue, borderColor: secondary ? colors.line : colors.edge, borderBottomWidth: pressed ? 2 : 5, transform: [{ translateY: pressed ? 2 : 0 }], opacity: disabled ? 0.55 : 1 }]}>
     {busy ? <ActivityIndicator color={colors.ink} /> : <Copy colors={colors} style={[styles.actionLabel, !secondary && { color: colors.onAction }]}>{children}</Copy>}
   </Pressable>;
@@ -118,12 +118,18 @@ export function HomeView(props: HomeViewProps) {
   const narrow = width < 350 || fontScale > 1.3;
   const reduced = useReducedHomeMotion();
   const [sheet, setSheet] = useState<'health' | 'circles' | null>(null);
+  const [sheetClosing, setSheetClosing] = useState(false);
   const [selecting, setSelecting] = useState<string | null>(null);
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [healthAction, setHealthAction] = useState(false);
   const [cheerScale] = useState(() => new Animated.Value(1));
   const [circleOpacity] = useState(() => new Animated.Value(1));
   const [sheetProgress] = useState(() => new Animated.Value(0));
+  const profileTriggerRef = useRef<View>(null);
+  const healthNoticeRef = useRef<View>(null);
+  const circleSwitcherRef = useRef<View>(null);
+  const sheetCloseRef = useRef<View>(null);
+  const sheetTriggerRef = useRef<React.RefObject<View | null> | null>(null);
   const previousCheer = useRef(props.social?.status);
   const previousCircle = useRef(props.circle?.id);
   useEffect(() => {
@@ -143,19 +149,60 @@ export function HomeView(props: HomeViewProps) {
     return () => { animation.stop(); circleOpacity.setValue(1); };
   }, [circleOpacity, props.circle?.id, reduced]);
   useEffect(() => { if (props.goalEvent) AccessibilityInfo.announceForAccessibility('Daily walking goal reached. Nice work!'); }, [props.goalEvent]);
+  function focusSheet() {
+    const target = sheetCloseRef.current;
+    const tag = findNodeHandle(target ?? null);
+    if (tag) AccessibilityInfo.setAccessibilityFocus(tag);
+    target?.focus?.();
+  }
+
+  function restoreSheetFocus() {
+    const target = sheetTriggerRef.current?.current;
+    const tag = findNodeHandle(target ?? null);
+    if (tag) AccessibilityInfo.setAccessibilityFocus(tag);
+    target?.focus?.();
+  }
+
+  function closeSheet(afterClose?: () => void) {
+    if (sheet === null || sheetClosing) return;
+    sheetProgress.stopAnimation();
+    if (reduced) {
+      sheetProgress.setValue(0);
+      setSheetClosing(false);
+      setSheet(null);
+      restoreSheetFocus();
+      afterClose?.();
+      return;
+    }
+    setSheetClosing(true);
+    Animated.timing(sheetProgress, { toValue: 0, duration: 160, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
+      if (!finished) return;
+      setSheetClosing(false);
+      setSheet(null);
+      restoreSheetFocus();
+      afterClose?.();
+    });
+  }
+
   useEffect(() => {
     sheetProgress.stopAnimation();
-    sheetProgress.setValue(0);
     if (sheet === null) return;
+    sheetProgress.setValue(0);
     if (reduced) {
       sheetProgress.setValue(1);
+      focusSheet();
       return;
     }
     const animation = Animated.timing(sheetProgress, { toValue: 1, duration: 180, easing: Easing.out(Easing.cubic), useNativeDriver: true });
-    animation.start();
+    animation.start(({ finished }) => { if (finished) focusSheet(); });
     return () => animation.stop();
   }, [reduced, sheet, sheetProgress]);
-  const openSheet = (next: 'health' | 'circles') => { setSheetError(null); setSheet(next); };
+  const openSheet = (next: 'health' | 'circles', triggerRef?: React.RefObject<View | null>) => {
+    setSheetError(null);
+    sheetTriggerRef.current = triggerRef ?? null;
+    setSheetClosing(false);
+    setSheet(next);
+  };
   async function healthActionRun(action: () => Promise<void>) {
     if (healthAction) return;
     setHealthAction(true); setSheetError(null);
@@ -167,7 +214,7 @@ export function HomeView(props: HomeViewProps) {
   return <View style={[styles.page, { backgroundColor: colors.canvas }]}>
     <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 12) + 8, paddingHorizontal: narrow ? 16 : 20 }]}>
       <View style={[styles.header, narrow && styles.wrap]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Open your private profile and health settings" onPress={() => openSheet('health')} style={({ pressed }) => [styles.profile, { borderColor: colors.edge, backgroundColor: colors.ice, opacity: pressed ? 0.7 : 1 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Open your private profile and health settings" onPress={() => openSheet('health', profileTriggerRef)} ref={profileTriggerRef} style={({ pressed }) => [styles.profile, { borderColor: colors.edge, backgroundColor: colors.ice, opacity: pressed ? 0.7 : 1 }]}>
           <Ionicons name="person-outline" color={colors.edge} size={22} />
         </Pressable>
         <View style={styles.fill}><Copy colors={colors} style={styles.greeting}>Hey, {props.greeting}!</Copy><Copy colors={colors} style={{ fontSize: 12, color: colors.muted }}>Let’s make today count.</Copy></View>
@@ -186,7 +233,7 @@ export function HomeView(props: HomeViewProps) {
       </View>
       {props.health === 'unavailable' || props.health === 'stale' ? <View style={[styles.notice, { backgroundColor: colors.panelEdge, borderColor: colors.line }]}>
         <Copy colors={colors} style={styles.remaining}>{props.health === 'stale' ? 'Today’s total may be incomplete' : 'Health access needs attention'}</Copy>
-        <Pressable accessibilityRole="button" onPress={() => openSheet('health')} style={styles.textAction}><Copy colors={colors} style={{ color: colors.edge, fontWeight: '800' }}>{props.health === 'stale' ? 'Health connection details' : 'Connect health access'}</Copy><Ionicons name="arrow-forward" size={18} color={colors.edge} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={props.health === 'stale' ? 'Open health connection details' : 'Connect health access'} onPress={() => openSheet('health', healthNoticeRef)} ref={healthNoticeRef} style={styles.textAction}><Copy colors={colors} style={{ color: colors.edge, fontWeight: '800' }}>{props.health === 'stale' ? 'Health connection details' : 'Connect health access'}</Copy><Ionicons name="arrow-forward" size={18} color={colors.edge} /></Pressable>
       </View> : null}
       <Animated.View style={{ opacity: circleOpacity }}>
         <View style={[styles.circleCard, cardStyle, { padding: narrow ? 12 : 16 }]}>
@@ -196,7 +243,7 @@ export function HomeView(props: HomeViewProps) {
           </View> : props.circle ? <>
             <View style={styles.circleHeader}>
               <View style={styles.fill}><Copy accessibilityRole="header" colors={colors} style={styles.circleTitle}>{props.circle.name}</Copy><Copy colors={colors} style={{ color: colors.muted, fontSize: 14 }}>{props.circle.memberCount} of 20 members</Copy></View>
-              {props.circles.length > 1 ? <Pressable accessibilityRole="button" accessibilityLabel="Switch featured circle" onPress={() => openSheet('circles')} style={[styles.switcher, { borderColor: colors.line }]}><Ionicons color={colors.ink} size={20} name="chevron-down" /></Pressable> : null}
+              {props.circles.length > 1 ? <Pressable accessibilityRole="button" accessibilityLabel="Switch featured circle" onPress={() => openSheet('circles', circleSwitcherRef)} ref={circleSwitcherRef} style={[styles.switcher, { borderColor: colors.line }]}><Ionicons color={colors.ink} size={20} name="chevron-down" /></Pressable> : null}
             </View>
             <View style={[styles.circleSummary, narrow && styles.column]}>
               <Copy colors={colors} style={[styles.remaining, { color: colors.edge }]}>{props.circle.rank === null ? 'Your rank is unavailable' : `You’re ${props.circle.rank === 1 ? 'first' : props.circle.rank === 2 ? 'second' : props.circle.rank === 3 ? 'third' : `${props.circle.rank}th`} today`}</Copy>
@@ -225,26 +272,26 @@ export function HomeView(props: HomeViewProps) {
         </Pressable></Animated.View>
       </View> : null}
     </ScrollView>
-    <Modal animationType="none" presentationStyle="overFullScreen" statusBarTranslucent transparent visible={sheet !== null} onRequestClose={() => setSheet(null)}>
+    <Modal animationType="none" presentationStyle="overFullScreen" statusBarTranslucent transparent visible={sheet !== null} onRequestClose={() => closeSheet()}>
       <View style={[styles.modalBackdrop, { backgroundColor: colorScheme === 'dark' ? 'rgba(22, 36, 43, 0.28)' : 'rgba(232, 248, 255, 0.30)' }]}>
         <BlurView intensity={24} tint={colorScheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSheet(null)} style={StyleSheet.absoluteFill} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => closeSheet()} style={StyleSheet.absoluteFill} />
         <Animated.View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.canvas, borderColor: colors.panelLine, paddingBottom: Math.max(insets.bottom, 16), opacity: sheetProgress, transform: [{ translateY: sheetProgress.interpolate({ inputRange: [0, 1], outputRange: [44, 0] }) }] }]}>
           <View style={[styles.sheetGrabber, { backgroundColor: colors.panelLine }]} />
-          <View style={styles.circleHeader}><Copy colors={colors} accessibilityRole="header" style={[styles.circleTitle, styles.fill]}>{sheet === 'circles' ? 'Featured circle' : 'Your profile & health'}</Copy><Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSheet(null)} style={styles.switcher}><Ionicons name={Platform.OS === 'android' ? 'arrow-back' : 'close'} color={colors.ink} size={22} /></Pressable></View>
+          <View style={styles.circleHeader}><Copy colors={colors} accessibilityRole="header" style={[styles.circleTitle, styles.fill]}>{sheet === 'circles' ? 'Featured circle' : 'Your profile & health'}</Copy><Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => closeSheet()} ref={sheetCloseRef} style={styles.switcher}><Ionicons name={Platform.OS === 'android' ? 'arrow-back' : 'close'} color={colors.ink} size={22} /></Pressable></View>
           <ScrollView contentContainerStyle={styles.sheetContent}>
             {sheet === 'circles' ? props.circles.map((circle) => <Action key={circle.id} secondary colors={colors} busy={selecting === circle.id} disabled={selecting !== null} onPress={() => {
               setSelecting(circle.id); setSheetError(null);
-              void props.onSelectCircle(circle.id).then(() => setSheet(null)).catch(() => setSheetError('That circle couldn’t be selected. Try again.')).finally(() => setSelecting(null));
+              void props.onSelectCircle(circle.id).then(() => closeSheet()).catch(() => setSheetError('That circle couldn’t be selected. Try again.')).finally(() => setSelecting(null));
             }}>{circle.name}{props.circle?.id === circle.id ? ' · Selected' : ''}</Action>) : <>
-              <Action secondary colors={colors} onPress={() => { setSheet(null); props.onProfile(); }}>View your profile</Action>
-              {props.onWalk ? <Action secondary colors={colors} onPress={() => { setSheet(null); props.onWalk?.(); }}>Open walking activity</Action> : null}
+              <Action secondary colors={colors} onPress={() => closeSheet(props.onProfile)}>View your profile</Action>
+              {props.onWalk ? <Action secondary colors={colors} onPress={() => closeSheet(props.onWalk)}>Open walking activity</Action> : null}
               <Copy colors={colors} accessibilityRole="header" style={styles.circleTitle}>Health connection</Copy>
               <Copy colors={colors} style={{ color: colors.muted }}>{props.health === 'confirmed' ? 'Connected' : props.health === 'stale' ? 'Today’s total may be incomplete' : props.health === 'loading' ? 'Checking access' : 'Access needs attention'} · {props.source}</Copy>
               <Copy colors={colors}>Your steps are synced from your health data. Refresh happens automatically when the provider and your phone make data available.</Copy>
               <Action colors={colors} busy={props.healthBusy || healthAction} onPress={() => void healthActionRun(props.onConnect)}>{props.health === 'confirmed' ? 'Refresh health data' : 'Connect or retry health access'}</Action>
               <Action secondary colors={colors} disabled={healthAction} onPress={() => void healthActionRun(props.onHealthSettings)}>Open phone health settings</Action>
-              <Action secondary colors={colors} onPress={() => { setSheet(null); props.onGoal(); }}>Change daily goal</Action>
+              <Action secondary colors={colors} onPress={() => closeSheet(props.onGoal)}>Change daily goal</Action>
               {props.connectionError ? <Copy colors={colors} accessibilityRole="alert">{props.connectionError}</Copy> : null}
             </>}
             {sheetError ? <Copy colors={colors} accessibilityRole="alert">{sheetError}</Copy> : null}

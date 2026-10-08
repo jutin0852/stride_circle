@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,22 +33,23 @@ export function HistoryView(props: HistoryViewProps) {
   const [milestonesVisible, setMilestonesVisible] = useState(false);
   const { colors: historyColors } = useHistoryTheme();
   const styles = useMemo(() => createStyles(historyColors), [historyColors]);
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = width < 360;
+  const milestonesTriggerRef = useRef<View>(null);
+  const compact = width < 360 || fontScale > 1.3;
   const streakReady = overview.status === 'ready' && goal.status === 'ready';
   const streakError = overview.status === 'error' || goal.status === 'error';
   return <>
     <ScrollView contentInsetAdjustmentBehavior="never" style={styles.page} refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} tintColor={historyColors.blueDeep} />} contentContainerStyle={styles.scroll}>
       <View style={[styles.content, { paddingHorizontal: compact ? spacing.lg : spacing.xl, paddingTop: Math.max(insets.top, 12) + 8 }]}>
         <View style={styles.header}><View style={styles.heading}><AppText variant="eyebrow" style={styles.kicker}>YOUR JOURNEY</AppText><AppText accessibilityRole="header" variant="headline" style={styles.title}>History</AppText></View><View accessible={false} style={styles.headerIcon}><Ionicons name="calendar-outline" size={20} color={historyColors.blueDeep} /></View></View>
-        {streakReady ? <StreakBanner summary={summary} onPress={() => setMilestonesVisible(true)} /> : streakError ? <StateCard tone="error" title="Your streak couldn’t load" description="We need your saved steps and daily goal before calculating milestones." actionLabel="Try again" onAction={props.onRefresh} /> : <Skeleton style={{ width: '100%', height: 82, borderRadius: 20, backgroundColor: historyColors.panelEdge }} />}
+        {streakReady ? <StreakBanner summary={summary} triggerRef={milestonesTriggerRef} onPress={() => setMilestonesVisible(true)} /> : streakError ? <StateCard tone="error" title="Your streak couldn’t load" description="We need your saved steps and daily goal before calculating milestones." actionLabel="Try again" onAction={props.onRefresh} /> : <Skeleton style={{ width: '100%', height: 82, borderRadius: 20, backgroundColor: historyColors.panelEdge }} />}
         <WalkingCalendar month={month} today={today} selected={selected} records={calendar.records} goal={goal.goal} goalReady={goal.status === 'ready'} protectedDays={streakReady ? summary.protectedDateKeys : []} status={calendar.status} compact={compact} onMonthChange={props.onMonthChange} onSelect={props.onSelect} onRetry={calendar.refresh} />
         <HistoryRecap records={overview.records} today={today} goal={goal.goal} goalReady={goal.status === 'ready'} status={overview.status} onRetry={overview.refresh} />
         <SavedWalks records={walks.records} status={walks.status} onOpen={props.onOpenWalk} onRetry={walks.refresh} />
       </View>
     </ScrollView>
-    {streakReady && milestonesVisible ? <MilestonesSheet visible onClose={() => setMilestonesVisible(false)} summary={summary} /> : null}
+    {streakReady ? <MilestonesSheet visible={milestonesVisible} onClose={() => setMilestonesVisible(false)} returnFocusRef={milestonesTriggerRef} summary={summary} /> : null}
   </>;
 }
 

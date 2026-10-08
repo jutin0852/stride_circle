@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+@import 'uniwind';
+@import 'panelui-native/theme.css';
+
+@source '../node_modules/panelui-native/src';
+
+/* Keep PanelUI's primitives on the approved Stride Circle palette. */
+@layer theme {
+  :root {
+    @variant light {
+      --color-background: #FFFFFF;
+      --color-foreground: #173342;
+      --color-card: #FFFFFF;
+      --color-card-foreground: #173342;
+      --color-primary: #13B5E8;
+      --color-primary-foreground: #173342;
+      --color-secondary: #E8F8FF;
+      --color-secondary-foreground: #173342;
+      --color-muted: #F7FBFC;
+      --color-muted-foreground: #4B606B;
+      --color-accent: #E8F8FF;
+      --color-accent-foreground: #087CA5;
+      --color-destructive: #F77768;
+      --color-destructive-foreground: #A94234;
+      --color-success: #317F1B;
+      --color-success-foreground: #317F1B;
+      --color-warning: #FFD34E;
+      --color-warning-foreground: #74530B;
+      --color-border: #DCE6EB;
+      --color-input: #B9E6F5;
+      --color-ring: #087CA5;
+      --color-surface: #F7FBFC;
+      --color-surface-secondary: #E8F8FF;
+      --color-surface-tertiary: #E0F1F6;
+    }
+
+    @variant dark {
+      --color-background: #111F29;
+      --color-foreground: #F2F7F9;
+      --color-card: #1B2D38;
+      --color-card-foreground: #F2F7F9;
+      --color-primary: #42C2E6;
+      --color-primary-foreground: #092936;
+      --color-secondary: #203642;
+      --color-secondary-foreground: #F2F7F9;
+      --color-muted: #1D3541;
+      --color-muted-foreground: #C1CFD5;
+      --color-accent: #203642;
+      --color-accent-foreground: #74D9EF;
+      --color-destructive: #F27F74;
+      --color-destructive-foreground: #FFB3AB;
+      --color-success: #83D566;
+      --color-success-foreground: #83D566;
+      --color-warning: #F0C95D;
+      --color-warning-foreground: #FFE8A0;
+      --color-border: #3A505A;
+      --color-input: #58717B;
+      --color-ring: #82D5EB;
+      --color-surface: #182A35;
+      --color-surface-secondary: #203642;
+      --color-surface-tertiary: #263D48;
+    }
+  }
+}

@@ -10,13 +10,14 @@ type SegmentedControlProps<T extends string> = {
   accessibilityLabel: string;
   items: readonly SegmentItem<T>[];
   onChange: (value: T) => void;
+  variant?: 'brand' | 'surface';
   value: T;
 };
 
-export function SegmentedControl<T extends string>({ accessibilityLabel, items, onChange, value }: SegmentedControlProps<T>) {
+export function SegmentedControl<T extends string>({ accessibilityLabel, items, onChange, value, variant = 'brand' }: SegmentedControlProps<T>) {
   const { colors } = useAppTheme();
   return (
-    <View accessibilityLabel={accessibilityLabel} style={[styles.container, { backgroundColor: colors.soft }]}>
+    <View accessibilityLabel={accessibilityLabel} accessibilityRole="tablist" style={[styles.container, { backgroundColor: colors.soft }]}>
       {items.map((item) => {
         const selected = item.value === value;
 
@@ -26,9 +27,13 @@ export function SegmentedControl<T extends string>({ accessibilityLabel, items, 
             accessibilityState={{ selected }}
             key={item.value}
             onPress={() => onChange(item.value)}
-            style={({ pressed }) => [styles.segment, selected && { backgroundColor: colors.brandDark }, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.segment,
+              selected && { backgroundColor: variant === 'surface' ? colors.card : colors.brandDark },
+              pressed && styles.pressed,
+            ]}
           >
-            <AppText tone={selected ? 'inverse' : 'secondary'} variant="label">{item.label}</AppText>
+            <AppText tone={selected ? (variant === 'brand' ? 'inverse' : 'primary') : 'secondary'} variant="label">{item.label}</AppText>
           </Pressable>
         );
       })}

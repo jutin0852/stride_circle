@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Skeleton } from '@/components/skeleton';
@@ -25,11 +25,14 @@ const REGULAR_CELL_HEIGHT = 48;
 export function WalkingCalendar(props: Props) {
   const { colors: historyColors, isDark } = useHistoryTheme();
   const styles = useMemo(() => createStyles(historyColors, isDark), [historyColors, isDark]);
+  const { fontScale } = useWindowDimensions();
   const { month, selected, records, goal, goalReady, protectedDays, status } = props;
   const cells = monthCellsSundayFirst(month);
   const byDate = new Map(records.map((day) => [day.dateKey, day.steps]));
   const [gridWidth, setGridWidth] = useState(0);
-  const cellHeight = props.compact ? COMPACT_CELL_HEIGHT : REGULAR_CELL_HEIGHT;
+  const baseCellHeight = props.compact ? COMPACT_CELL_HEIGHT : REGULAR_CELL_HEIGHT;
+  const largeText = props.compact && fontScale > 1.3;
+  const cellHeight = Math.max(baseCellHeight, largeText ? Math.ceil(baseCellHeight + (fontScale - 1) * 16) : baseCellHeight);
   const rowCount = cells.length / 7;
   const gridHeight = rowCount * cellHeight + (rowCount - 1) * GRID_GAP;
   const cellWidth = gridWidth > 0 ? (gridWidth - GRID_GAP * 6) / 7 : undefined;
@@ -68,10 +71,9 @@ export function WalkingCalendar(props: Props) {
             // Missing records are not failed goals; a saved zero is real data.
             const below = status === 'ready' && goalReady && !future && !met && !protectedDay && typeof steps === 'number';
             const dataDescription = status === 'loading' ? 'Saved steps are loading' : future ? 'Future day' : steps === undefined ? 'No saved steps' : `${formatSteps(steps)} saved steps`;
-            return <Pressable key={day} disabled={future} hitSlop={props.compact ? 4 : 2} accessibilityRole="button" accessibilityState={{ selected: active, disabled: future }} accessibilityLabel={`${new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(dateFromKey(day))}. ${dataDescription}${met ? '. Goal reached' : ''}${protectedDay ? '. Streak protected' : ''}${today ? '. Today' : ''}`} onPress={() => props.onSelect(day)} style={({ pressed }) => [cellStyle, pressed && styles.pressed]}>
-              {active ? <View pointerEvents="none" style={[styles.selectionRing, props.compact && styles.selectionRingCompact, today && styles.selectionRingToday]} /> : null}
-              <View style={[styles.date, props.compact && styles.dateCompact, met && styles.dateGoal, protectedDay && styles.dateProtected, below && styles.dateBelow, today && styles.today, active && styles.selected, active && today && styles.selectedToday]}>
-                <AppText variant="label" style={[styles.dayNumber, met && styles.dayNumberGoal, protectedDay && styles.dayNumberState, below && styles.dayNumberBelow, future && styles.disabled]}>{dateFromKey(day).getDate()}</AppText>
+            return <Pressable key={day} disabled={future} hitSlop={props.compact ? 6 : 4} accessibilityRole="button" accessibilityState={{ selected: active, disabled: future }} accessibilityLabel={`${new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(dateFromKey(day))}. ${dataDescription}${met ? '. Goal reached' : ''}${protectedDay ? '. Streak protected' : ''}${today ? '. Today' : ''}`} onPress={() => props.onSelect(day)} style={({ pressed }) => [cellStyle, pressed && styles.pressed]}>
+              <View style={[styles.date, props.compact && styles.dateCompact, met && styles.dateGoal, protectedDay && styles.dateProtected, below && styles.dateBelow, today && styles.today, active && styles.selected]}>
+                <AppText variant="label" style={[styles.dayNumber, largeText && { lineHeight: Math.ceil(17 * fontScale) }, met && styles.dayNumberGoal, protectedDay && styles.dayNumberState, below && styles.dayNumberBelow, future && styles.disabled]}>{dateFromKey(day).getDate()}</AppText>
               </View>
               {met ? <View pointerEvents="none" style={styles.goalMarker}><AppText style={styles.goalMarkerText}>✓</AppText></View> : protectedDay ? <Ionicons name="shield-checkmark" color={historyColors.yellow} size={13} style={styles.protectedMarker} /> : below && !today ? <View pointerEvents="none" style={styles.belowMarker}>{steps === 0 ? <AppText style={styles.goalMarkerText}>0</AppText> : null}</View> : null}
               {today && !active ? <View pointerEvents="none" style={styles.todayMarker} /> : null}
@@ -118,8 +120,8 @@ function createStyles(historyColors: HistoryColorSet, isDark: boolean) { return 
   calendarHeaderCompact: { alignItems: 'center', flexWrap: 'nowrap' },
   calendarTitle: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' }, calendarTitleCompact: { flexBasis: 'auto', flexGrow: 1, flexShrink: 1, width: 'auto' },
   titleCopy: { flexShrink: 1, minWidth: 0 },
-  title: { color: historyColors.ink, fontSize: 19, lineHeight: 23, letterSpacing: -0.35 }, titleCompact: { fontSize: 17, lineHeight: 20 }, monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2 }, monthNavCompact: { width: 'auto', justifyContent: 'center', marginLeft: 'auto' },
-  navButton: { backgroundColor: 'transparent', borderColor: 'transparent', width: 42, height: 42, padding: 2 }, navButtonCompact: { width: 34, height: 36 }, month: { minWidth: 108, textAlign: 'center', color: historyColors.ink, fontSize: 14, lineHeight: 18 }, monthCompact: { minWidth: 86, fontSize: 12, lineHeight: 16 },
+  title: { color: historyColors.ink, fontSize: 19, lineHeight: 23, letterSpacing: -0.35 }, titleCompact: { fontSize: 17, lineHeight: 20 }, monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexShrink: 1, gap: 2 }, monthNavCompact: { width: 'auto', justifyContent: 'center', marginLeft: 'auto', flexShrink: 1 },
+  navButton: { backgroundColor: 'transparent', borderColor: 'transparent', width: 44, height: 44, padding: 2 }, navButtonCompact: { width: 44, height: 44 }, month: { flexShrink: 1, minWidth: 0, textAlign: 'center', color: historyColors.ink, fontSize: 14, lineHeight: 18 }, monthCompact: { minWidth: 0, fontSize: 12, lineHeight: 16 },
   grid: { paddingBottom: 0 }, weekdays: { flexDirection: 'row', marginBottom: 5 }, weekday: { width: '14.285714%', textAlign: 'center', fontSize: 11, lineHeight: 16, letterSpacing: 0.4, paddingVertical: 4 },
   cells: { position: 'relative', overflow: 'visible', flexGrow: 0, flexShrink: 0 },
   weekRow: { flexDirection: 'row', columnGap: GRID_GAP, flexGrow: 0, flexShrink: 0 },
@@ -128,8 +130,7 @@ function createStyles(historyColors: HistoryColorSet, isDark: boolean) { return 
   journey: { position: 'absolute', left: 0, top: 0 },
   date: { width: 36, height: 36, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: historyColors.paper }, dateCompact: { width: 33, height: 33, borderRadius: 12 },
   dateGoal: { backgroundColor: historyColors.goalDay, borderWidth: 0, shadowColor: historyColors.blueDeep, shadowOffset: { width: 0, height: 3 }, shadowOpacity: isDark ? 0 : 1, shadowRadius: 0 }, dateProtected: { backgroundColor: historyColors.yellowPale, borderColor: historyColors.yellow }, dateBelow: { backgroundColor: historyColors.coralPale, borderColor: historyColors.belowOutline },
-  today: { borderWidth: 2, borderColor: historyColors.blueDeep }, selected: { backgroundColor: historyColors.selectedBackground, borderColor: historyColors.selectedOutline, borderWidth: 2, shadowOpacity: 0 }, selectedToday: { borderColor: historyColors.selectedOutline },
-  selectionRing: { position: 'absolute', width: 42, height: 42, borderRadius: 16, borderWidth: isDark ? 0 : 3, borderColor: historyColors.ink, backgroundColor: isDark ? 'transparent' : historyColors.ink, shadowColor: historyColors.ink, shadowOffset: { width: 0, height: 3 }, shadowOpacity: isDark ? 0 : 1, shadowRadius: 0 }, selectionRingCompact: { width: 39, height: 39, borderRadius: 15 }, selectionRingToday: { borderColor: historyColors.selectedOutline, backgroundColor: 'transparent', shadowColor: historyColors.ink, shadowOffset: { width: 0, height: 4 } },
+  today: { borderWidth: 2, borderColor: historyColors.blueDeep }, selected: { backgroundColor: historyColors.selectedBackground, borderColor: historyColors.ink, borderWidth: 2, shadowOpacity: 0 },
   dayNumber: { color: historyColors.normalDate, fontSize: 14, lineHeight: 17, fontVariant: ['tabular-nums'] }, dayNumberGoal: { color: historyColors.goalDayText }, dayNumberState: { color: historyColors.yellowDeep }, dayNumberBelow: { color: historyColors.normalDate },
   goalMarker: { position: 'absolute', right: 2, bottom: 2, width: 13, height: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 7, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: historyColors.green }, goalMarkerText: { color: historyColors.paper, fontSize: 8, lineHeight: 10, fontWeight: '900' },
   protectedMarker: { position: 'absolute', right: 2, top: 2, width: 13, height: 13, borderRadius: 7, backgroundColor: historyColors.yellowPale }, belowMarker: { position: 'absolute', right: 2, bottom: 2, width: 13, height: 13, borderRadius: 7, borderWidth: 1, borderColor: historyColors.paper, backgroundColor: historyColors.coral, alignItems: 'center', justifyContent: 'center' }, todayMarker: { position: 'absolute', top: 2, left: '50%', width: 5, height: 5, marginLeft: -2.5, borderRadius: 3, backgroundColor: historyColors.blueDeep, borderWidth: 1.5, borderColor: historyColors.paper },

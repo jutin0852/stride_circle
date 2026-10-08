@@ -1,32 +1,51 @@
-import { appColors, darkModePalette } from '@/design-system/tokens';
+import { darkSemanticColors, semanticColors } from '@/design-system/tokens';
 
-/** The Home palette is the canonical app palette. */
-export const homeColors = appColors;
-
-export const homeDarkColors: Record<keyof typeof homeColors, string> = {
-  canvas: darkModePalette.background,
-  ink: darkModePalette.textPrimary,
-  muted: darkModePalette.textSecondary,
-  blue: darkModePalette.primary,
-  edge: darkModePalette.action,
-  ice: darkModePalette.primarySubtle,
-  green: darkModePalette.success,
-  yellow: darkModePalette.protected,
-  coral: darkModePalette.belowGoal,
-  line: darkModePalette.border,
-  panelLine: darkModePalette.borderStrong,
-  panelEdge: darkModePalette.backgroundElevated,
+type HomeColorSource = {
+  canvas: string;
+  contentPrimary: string;
+  contentSecondary: string;
+  controlPrimary: string;
+  controlPrimaryPressed: string;
+  soft: string;
+  successContent: string;
+  circleMarkerYellow: string;
+  celebrationSurface: string;
+  border: string;
+  borderStrong: string;
+  surfaceEdge: string;
+  contentOnBrand: string;
+  protectedSurface: string;
+  protectedBorder: string;
+  protectedContent: string;
 };
 
-export function homeTheme(isDark: boolean) {
-  const surfaceColors = isDark ? homeDarkColors : homeColors;
+function homeColorsFromSemantic(colors: HomeColorSource) {
   return {
-    ...surfaceColors,
-    onAction: isDark ? darkModePalette.textOnAccent : '#102F3C',
-    cheerBackground: isDark ? darkModePalette.protectedSubtle : '#FFF5D2',
-    cheerBorder: isDark ? darkModePalette.protectedBorder : '#A17A12',
-    cheerText: isDark ? darkModePalette.protectedText : '#5C440B',
+    canvas: colors.canvas,
+    ink: colors.contentPrimary,
+    muted: colors.contentSecondary,
+    blue: colors.controlPrimary,
+    edge: colors.controlPrimaryPressed,
+    ice: colors.soft,
+    green: colors.successContent,
+    yellow: colors.circleMarkerYellow,
+    coral: colors.celebrationSurface,
+    line: colors.border,
+    panelLine: colors.borderStrong,
+    panelEdge: colors.surfaceEdge,
+    onAction: colors.contentOnBrand,
+    cheerBackground: colors.protectedSurface,
+    cheerBorder: colors.protectedBorder,
+    cheerText: colors.protectedContent,
   } as const;
+}
+
+/** Home keeps its local role names so the approved composition stays readable. */
+export const homeColors = homeColorsFromSemantic(semanticColors);
+export const homeDarkColors = homeColorsFromSemantic(darkSemanticColors);
+
+export function homeTheme(isDark: boolean) {
+  return isDark ? homeDarkColors : homeColors;
 }
 
 export const homeMotion = { greeting: 600, progress: 550, goal: 1400, cheer: 420, circle: 180 } as const;
