@@ -16,6 +16,7 @@ function harness(file, exportName, mocks, platform = 'ios') {
   const pending = [];
   const same = (a, b) => a && b && a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
   const react = {
+    memo: (component) => component,
     useState(initial) {
       const i = cursor++;
       if (!slots[i]) slots[i] = { value: typeof initial === 'function' ? initial() : initial };

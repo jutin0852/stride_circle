@@ -8,6 +8,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  where,
   runTransaction,
   serverTimestamp,
   type Unsubscribe,
@@ -34,6 +35,9 @@ export type ActivityRecord = {
   durationMs: number;
   id: string;
   route: RoutePoint[];
+  title?: string;
+  steps?: number | null;
+  local?: boolean;
 };
 
 function toActivityRecord(id: string, data: DocumentData): ActivityRecord | null {
@@ -51,6 +55,8 @@ function toActivityRecord(id: string, data: DocumentData): ActivityRecord | null
     durationMs: data.durationMs,
     id,
     route,
+    ...(typeof data.title === 'string' ? { title: data.title } : {}),
+    ...(typeof data.steps === 'number' ? { steps: data.steps } : {}),
   };
 }
 
@@ -62,6 +68,8 @@ export async function saveActivity(input: {
   durationMs: number;
   route: RoutePoint[];
   userId: string;
+  title?: string;
+  steps?: number | null;
 }) {
   const db = requireFirebase(database, 'Firestore');
   const dateKey = input.dateKey;
@@ -86,6 +94,8 @@ export async function saveActivity(input: {
       durationMs: input.durationMs,
       route: simplifyRoute(input.route),
       timeZone: getLocalTimeZone(),
+      ...(input.title ? { title: input.title } : {}),
+      ...(input.steps !== undefined ? { steps: input.steps } : {}),
     });
 
     matchingCircleIds.forEach((circleId) => {
@@ -110,10 +120,12 @@ export function watchActivityHistory(
   userId: string,
   onChange: (records: ActivityRecord[]) => void,
   onError: () => void,
+  dateKey?: string,
 ): Unsubscribe {
   const db = requireFirebase(database, 'Firestore');
   return onSnapshot(
-    query(collection(db, 'users', userId, 'activities'), orderBy('createdAt', 'desc'), limit(30)),
+    dateKey ? query(collection(db, 'users', userId, 'activities'), where('dateKey', '==', dateKey))
+      : query(collection(db, 'users', userId, 'activities'), orderBy('createdAt', 'desc'), limit(30)),
     (snapshot) => onChange(snapshot.docs.flatMap((document) => {
       const record = toActivityRecord(document.id, document.data());
       return record ? [record] : [];

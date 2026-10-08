@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
@@ -7,6 +8,7 @@ import { finishRecording, newRecording, pauseRecording, readRecording, recordLoc
 
 export const ACTIVITY_LOCATION_TASK = 'stride-circle-active-walk-v1';
 export const ACTIVITY_STORAGE_KEY = 'stride:active-recording:v1';
+export const WALK_LOCATION_OPTIONS = { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 5000 };
 export type BackgroundIssue = 'permission' | 'unavailable' | 'start' | 'storage' | 'stop' | null;
 type Snapshot = { session: RecordingSession | null; isPreparing: boolean; issue: BackgroundIssue };
 
@@ -16,6 +18,9 @@ let recovered = false;
 let generation = 0;
 let activeUser: string | null | undefined;
 let queue: Promise<unknown> = Promise.resolve();
+let foregroundWatcher: Location.LocationSubscription | null = null;
+let persistedRaw = { id: '', count: 0 };
+const rawKey = (session: RecordingSession, index: number) => `stride:active-gps:v1:${session.userId}:${session.id}:${index}`;
 const listeners = new Set<() => void>();
 
 function publish(next: Partial<Snapshot>) {
@@ -26,7 +31,24 @@ function publish(next: Partial<Snapshot>) {
 async function load() {
   if (loaded) return;
   let session: RecordingSession | null;
-  try { session = readRecording(await AsyncStorage.getItem(ACTIVITY_STORAGE_KEY)); }
+  try {
+    session = readRecording(await AsyncStorage.getItem(ACTIVITY_STORAGE_KEY));
+    if (session?.rawSamplesStored) {
+      const raw = [];
+      for (let i = 0; i < session.rawSamplesStored; i += 500) {
+        const text = await AsyncStorage.getItem(rawKey(session, i / 500));
+        if (!text) throw new Error('Raw GPS recovery data is missing');
+        const samples: unknown = JSON.parse(text);
+        if (!Array.isArray(samples)) throw new Error('Invalid raw GPS recovery data');
+        raw.push(...samples);
+      }
+      if (raw.length < session.rawSamplesStored) throw new Error('Raw GPS recovery data is incomplete');
+      const restored = readRecording(JSON.stringify({ ...session, rawCoordinates: raw.slice(0, session.rawSamplesStored) }));
+      if (!restored) throw new Error('Invalid raw GPS recovery data');
+      session = restored;
+    }
+    persistedRaw = { id: session?.id ?? '', count: session?.rawSamplesStored === undefined ? 0 : session.rawCoordinates?.length ?? 0 };
+  }
   catch (error) { publish({ issue: 'storage' }); throw error; }
   loaded = true;
   recovered = session !== null;
@@ -43,14 +65,28 @@ function exclusive<T>(operation: () => Promise<T>): Promise<T> {
 }
 
 async function commit(session: RecordingSession | null) {
+  const previous = snapshot.session;
   publish({ session });
   try {
-    if (session) await AsyncStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(session));
-    else await AsyncStorage.removeItem(ACTIVITY_STORAGE_KEY);
+    if (session) {
+      const raw = session.rawCoordinates ?? [];
+      const from = persistedRaw.id === session.id ? persistedRaw.count : 0;
+      if (raw.length !== from) for (let i = Math.floor(from / 500) * 500; i < raw.length; i += 500) {
+        await AsyncStorage.setItem(rawKey(session, i / 500), JSON.stringify(raw.slice(i, i + 500)));
+      }
+      await AsyncStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify({ ...session, rawCoordinates: undefined, rawSamplesStored: raw.length }));
+      persistedRaw = { id: session.id, count: raw.length };
+    } else {
+      await AsyncStorage.removeItem(ACTIVITY_STORAGE_KEY);
+      if (previous) for (let i = 0; i < (previous.rawCoordinates?.length ?? previous.rawSamplesStored ?? 0); i += 500) await AsyncStorage.removeItem(rawKey(previous, i / 500));
+      persistedRaw = { id: '', count: 0 };
+    }
   } catch (error) { publish({ issue: 'storage' }); throw error; }
 }
 
 async function stopNative() {
+  foregroundWatcher?.remove();
+  foregroundWatcher = null;
   if (process.env.EXPO_OS === 'web') return;
   if (await Location.hasStartedLocationUpdatesAsync(ACTIVITY_LOCATION_TASK)) {
     await Location.stopLocationUpdatesAsync(ACTIVITY_LOCATION_TASK);
@@ -80,13 +116,15 @@ export function restoreBackgroundRecording(userId: string) {
       finally { stopped = await stopSafely(); }
       if (!stopped) throw new Error('Could not stop previous account recording');
       await commit(null);
-    } else if (session && recovered) {
+    } else if (session && recovered && session.status !== 'finished') {
       const running = session.status === 'tracking' && await Location.hasStartedLocationUpdatesAsync(ACTIVITY_LOCATION_TASK);
       if (!running) {
         // If the OS ended recording, only retain observed time, never the entire closed-app gap.
         const end = session.startedAt === null ? Date.now() : Math.max(session.startedAt, session.lastTimestamp);
         await commit({ ...pauseRecording(session, end, 'recovered'), completedAt: session.completedAt });
       }
+    } else if (session?.status === 'finished') {
+      if (!await stopSafely()) throw new Error('Could not stop completed recording');
     } else if (!session) {
       // Clean up an orphan registration left by a storage failure or interrupted setup.
       if (!await stopSafely()) throw new Error('Could not stop stale recording');
@@ -99,6 +137,8 @@ export function restoreBackgroundRecording(userId: string) {
 export async function beginBackgroundRecording(input: {
   userId: string; activityType: 'walk' | 'run'; resuming: boolean;
   confirmBackgroundAccess: () => Promise<boolean>;
+  allowForegroundFallback?: boolean;
+  plannedRouteId?: string;
 }) {
   if (activeUser === undefined) activeUser = input.userId;
   if (activeUser !== input.userId) return;
@@ -113,7 +153,8 @@ export async function beginBackgroundRecording(input: {
         : session?.status !== 'tracking' && session?.status !== 'paused';
     });
     if (!valid() || !eligible) return;
-    if (!await TaskManager.isAvailableAsync() || !await Location.isBackgroundLocationAvailableAsync()) {
+    const backgroundAvailable = await TaskManager.isAvailableAsync() && await Location.isBackgroundLocationAvailableAsync();
+    if (!backgroundAvailable && !input.allowForegroundFallback) {
       if (valid()) publish({ issue: 'unavailable' });
       return;
     }
@@ -123,27 +164,42 @@ export async function beginBackgroundRecording(input: {
     const foregroundAccess = foreground.granted ? foreground : await Location.requestForegroundPermissionsAsync();
     if (!valid()) return;
     if (!foregroundAccess.granted) { publish({ issue: 'permission' }); return; }
-    const background = await Location.getBackgroundPermissionsAsync();
+    const background = backgroundAvailable ? await Location.getBackgroundPermissionsAsync() : { granted: false };
+    let useBackground = background.granted;
     if (!valid()) return;
-    if (!background.granted) {
-      if (!await input.confirmBackgroundAccess() || !valid()) return;
-      const permission = await Location.requestBackgroundPermissionsAsync();
+    if (backgroundAvailable && !background.granted) {
+      const confirmed = await input.confirmBackgroundAccess();
       if (!valid()) return;
-      if (!permission.granted) { publish({ issue: 'permission' }); return; }
+      if (confirmed) useBackground = (await Location.requestBackgroundPermissionsAsync()).granted;
+      if (!valid()) return;
+    }
+    if (!useBackground && !input.allowForegroundFallback) {
+      publish({ issue: 'permission' }); return;
     }
     await exclusive(async () => {
       if (!valid()) return;
       if (!await stopSafely()) return;
       if (!valid()) return;
       const existing = snapshot.session;
-      const session = input.resuming && existing ? resumeRecording(existing, Date.now())
+      const recording = input.resuming && existing ? resumeRecording(existing, Date.now())
         : newRecording(Crypto.randomUUID(), input.userId, input.activityType, Date.now());
+      const session = { ...recording, ...(input.plannedRouteId ? { plannedRouteId: input.plannedRouteId } : {}), locationMode: useBackground ? 'background' as const : 'foreground' as const };
       // Durable state exists before the native service can deliver a headless callback.
       await commit(session);
       if (!valid()) return;
       try {
+        if (!useBackground) {
+          foregroundWatcher = await Location.watchPositionAsync(WALK_LOCATION_OPTIONS, location => {
+            void exclusive(async () => {
+              const current = snapshot.session;
+              if (current?.id === session.id && current.segment === session.segment && current.status === 'tracking') await commit(recordLocations(current, [location]));
+            }).catch(() => { void pauseBackgroundRecording(input.userId).catch(() => {}); });
+          }, () => { void pauseBackgroundRecording(input.userId).catch(() => {}); });
+          if (!valid()) await stopSafely();
+          return;
+        }
         await Location.startLocationUpdatesAsync(ACTIVITY_LOCATION_TASK, {
-          accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 5_000,
+          ...WALK_LOCATION_OPTIONS,
           activityType: Location.ActivityType.Fitness, pausesUpdatesAutomatically: false,
           showsBackgroundLocationIndicator: true,
           foregroundService: { notificationTitle: 'Stride Circle is recording',
@@ -187,6 +243,7 @@ export function finishBackgroundRecording(userId?: string) {
   return exclusive(async () => {
     const session = snapshot.session;
     if (userId && session?.userId !== userId) return null;
+    if (session?.status === 'finished') { await stopSafely(); return session; }
     if (!session || !['tracking', 'paused'].includes(session.status)) return null;
     const finished = finishRecording(session, Date.now());
     try { await commit(finished); }
@@ -230,6 +287,7 @@ export function refreshBackgroundRecording() {
   return exclusive(async () => {
     const session = snapshot.session;
     if (snapshot.isPreparing || session?.status !== 'tracking') return;
+    if (session.locationMode === 'foreground' && foregroundWatcher) return;
     const [running, access] = await Promise.all([
       Location.hasStartedLocationUpdatesAsync(ACTIVITY_LOCATION_TASK), Location.getBackgroundPermissionsAsync(),
     ]);
@@ -242,6 +300,17 @@ export function refreshBackgroundRecording() {
     }
   });
 }
+
+export function updateRecordingSteps(userId: string, id: string, steps: number | null, segment: number, status: RecordingSession['status']) {
+  return exclusive(async () => {
+    const session = snapshot.session;
+    if (session?.userId === userId && session.id === id && session.segment === segment && session.status === status) await commit({ ...session, steps });
+  });
+}
+
+if (process.env.EXPO_OS !== 'web') AppState.addEventListener('change', state => {
+  if (state === 'background' && snapshot.session?.locationMode === 'foreground') void pauseBackgroundRecording().catch(() => {});
+});
 
 // Imported from the bundle entry, not a component: this also runs in a headless launch.
 if (process.env.EXPO_OS !== 'web' && !TaskManager.isTaskDefined(ACTIVITY_LOCATION_TASK)) {

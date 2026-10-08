@@ -46,7 +46,7 @@ export function HistoryView(props: HistoryViewProps) {
         {streakReady ? <StreakBanner summary={summary} triggerRef={milestonesTriggerRef} onPress={() => setMilestonesVisible(true)} /> : streakError ? <StateCard tone="error" title="Your streak couldn’t load" description="We need your saved steps and daily goal before calculating milestones." actionLabel="Try again" onAction={props.onRefresh} /> : <Skeleton style={{ width: '100%', height: 82, borderRadius: 20, backgroundColor: historyColors.panelEdge }} />}
         <WalkingCalendar month={month} today={today} selected={selected} records={calendar.records} goal={goal.goal} goalReady={goal.status === 'ready'} protectedDays={streakReady ? summary.protectedDateKeys : []} status={calendar.status} compact={compact} onMonthChange={props.onMonthChange} onSelect={props.onSelect} onRetry={calendar.refresh} />
         <HistoryRecap records={overview.records} today={today} goal={goal.goal} goalReady={goal.status === 'ready'} status={overview.status} onRetry={overview.refresh} />
-        <SavedWalks records={walks.records} status={walks.status} onOpen={props.onOpenWalk} onRetry={walks.refresh} />
+        <SavedWalks dateKey={selected} records={walks.records} status={walks.status} onOpen={props.onOpenWalk} onRetry={walks.refresh} />
       </View>
     </ScrollView>
     {streakReady ? <MilestonesSheet visible={milestonesVisible} onClose={() => setMilestonesVisible(false)} returnFocusRef={milestonesTriggerRef} summary={summary} /> : null}
