@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState } from 'react-native';
 
 import { GPS_STALE_MS, recordingElapsed } from '@/lib/activity-recording';
 import { beginBackgroundRecording, finishBackgroundRecording, getBackgroundRecording, pauseBackgroundRecording,
-  refreshBackgroundRecording, resetBackgroundRecording, restoreBackgroundRecording, retryBackgroundStop, subscribeBackgroundRecording } from '@/lib/background-activity';
+  refreshBackgroundRecording, resetBackgroundRecording, restoreBackgroundRecording, retryBackgroundStop, subscribeBackgroundRecording, updateRecordingSteps } from '@/lib/background-activity';
+import { createHealthDataProvider } from '@/services/health-data';
+import { readSessionSteps } from '@/services/walks/session-steps';
 import type { ActivityStatus, FinishedActivity, GpsSignalStatus } from './use-activity-tracking';
 
 export type { ActivityStatus, FinishedActivity, GpsSignalStatus, PauseReason, RoutePoint } from './use-activity-tracking';
@@ -11,7 +13,7 @@ export type { ActivityStatus, FinishedActivity, GpsSignalStatus, PauseReason, Ro
 function confirmBackgroundAccess() {
   return new Promise<boolean>((resolve) => Alert.alert('Keep recording with your phone locked',
     'Allow background location so your route, distance, and walking time continue while your phone is locked. Recording stops when you pause or finish. This does not share your location with other people.',
-    [{ text: 'Not now', style: 'cancel', onPress: () => resolve(false) }, { text: 'Continue', onPress: () => resolve(true) }],
+    [{ text: 'Foreground only', style: 'cancel', onPress: () => resolve(false) }, { text: 'Continue', onPress: () => resolve(true) }],
     { cancelable: false }));
 }
 
@@ -20,6 +22,23 @@ export function useActivityTracking(userId?: string) {
   const [restoredUser, setRestoredUser] = useState<string | null>(null);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [now, setNow] = useState(Date.now);
+  const provider = useMemo(() => createHealthDataProvider(), []);
+  const readingSteps = useRef(false);
+  const refreshSteps = useCallback(async () => {
+    const session = getBackgroundRecording().session;
+    if (!userId || session?.userId !== userId || session.status === 'finished' || readingSteps.current) return;
+    readingSteps.current = true;
+    try {
+      const steps = await readSessionSteps(session, provider);
+      await updateRecordingSteps(userId, session.id, steps, session.segment, session.status);
+    } catch { /* A sensor failure must not stop GPS recording. */ }
+    finally { readingSteps.current = false; }
+  }, [userId, provider]);
+  useEffect(() => {
+    void refreshSteps();
+    const interval = setInterval(() => { void refreshSteps(); }, 15000);
+    return () => clearInterval(interval);
+  }, [refreshSteps, value.session?.status]);
 
   useEffect(() => {
     let active = true;
@@ -41,20 +60,24 @@ export function useActivityTracking(userId?: string) {
     return () => clearInterval(timer);
   }, [userId, value.session?.status, value.session?.userId]);
 
-  const start = useCallback((activityType: 'walk' | 'run' = 'walk') => userId
-    ? beginBackgroundRecording({ userId, activityType, resuming: false, confirmBackgroundAccess }) : Promise.resolve(), [userId]);
+  const start = useCallback((activityType: 'walk' | 'run' = 'walk', plannedRouteId?: string) => userId
+    ? beginBackgroundRecording({ userId, activityType, resuming: false, confirmBackgroundAccess, allowForegroundFallback: true, plannedRouteId }) : Promise.resolve(), [userId]);
   const resume = useCallback(() => userId
-    ? beginBackgroundRecording({ userId, activityType: getBackgroundRecording().session?.activityType ?? 'walk', resuming: true, confirmBackgroundAccess }) : Promise.resolve(), [userId]);
+    ? beginBackgroundRecording({ userId, activityType: getBackgroundRecording().session?.activityType ?? 'walk', resuming: true, confirmBackgroundAccess, allowForegroundFallback: true }) : Promise.resolve(), [userId]);
   const finish = useCallback(async (): Promise<FinishedActivity | null> => {
     if (!userId) return null;
-    const session = await finishBackgroundRecording(userId).catch(() => null);
-    if (!session) return null;
+    const finished = await finishBackgroundRecording(userId).catch(() => null);
+    if (!finished) return null;
+    const steps = await readSessionSteps(finished, provider).catch(() => finished.steps ?? null);
+    await updateRecordingSteps(userId, finished.id, steps, finished.segment, finished.status).catch(() => {});
+    const session = { ...finished, steps };
     return { route: session.route, distanceMeters: session.distanceMeters, durationMs: session.elapsedMs,
-      activityId: session.id, activityType: session.activityType, userId: session.userId, dateKey: session.completedDateKey! };
-  }, [userId]);
+      activityId: session.id, activityType: session.activityType, userId: session.userId, dateKey: session.completedDateKey!, session };
+  }, [userId, provider]);
   const pause = useCallback(() => { if (userId) void pauseBackgroundRecording(userId).catch(() => {}); }, [userId]);
   const reset = useCallback(() => { if (userId) void resetBackgroundRecording(userId).catch(() => {}); }, [userId]);
   const retryStop = useCallback(() => { void retryBackgroundStop().catch(() => {}); }, []);
+  const requestStepAccess = useCallback(async () => { await provider.requestPermission(); await refreshSteps(); }, [provider, refreshSteps]);
 
   const session = value.session?.userId === userId ? value.session : null;
   const issue = value.issue;
@@ -65,6 +88,7 @@ export function useActivityTracking(userId?: string) {
   const gpsSignal: GpsSignalStatus = issue === 'permission' ? 'disabled' : stale ? 'weak' : session?.gpsSignal ?? 'idle';
 
   return { status, isPreparing: value.isPreparing || isRestoring, isRestoring, canResume: session?.completedAt === null, pauseReason: session?.pauseReason ?? null,
+    steps: session?.steps ?? null, locationMode: session?.locationMode ?? null, plannedRouteId: session?.plannedRouteId, requestStepAccess,
     elapsedMs: session ? recordingElapsed(session, now) : 0, distanceMeters: session?.distanceMeters ?? 0,
     currentPaceSecondsPerKm: stale ? null : session?.currentPaceSecondsPerKm ?? null,
     route: session?.route ?? [], currentLocation: session?.currentLocation ?? null, accuracyMeters: session?.accuracyMeters ?? null,

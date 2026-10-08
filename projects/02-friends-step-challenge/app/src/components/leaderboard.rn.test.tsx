@@ -10,7 +10,8 @@ jest.mock('react-native-reanimated', () => {
   return {
     __esModule: true,
     Easing: { cubic: (value: unknown) => value, out: (value: unknown) => value },
-    default: { View },
+    default: { View, createAnimatedComponent: (component: unknown) => component },
+    createAnimatedComponent: (component: unknown) => component,
     View,
     useAnimatedStyle: (factory: () => unknown) => factory(),
     useReducedMotion: () => true,

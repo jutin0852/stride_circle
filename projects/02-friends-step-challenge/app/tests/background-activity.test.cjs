@@ -1,7 +1,7 @@
 const test = require('node:test');
 const { loadTS, harness, assert } = require('./hook-harness.cjs');
 
-const core = loadTS('src/lib/activity-recording.ts');
+const core = loadTS('src/lib/activity-recording.ts', { '@/domain/walk': loadTS('src/domain/walk.ts', { '@/lib/route': loadTS('src/lib/route.ts') }) });
 const sample = (latitude, timestamp, accuracy = 5) => ({ timestamp, coords: { latitude, longitude: 3.3792, accuracy } });
 
 function recorder(options = {}) {
@@ -18,11 +18,14 @@ function recorder(options = {}) {
   let available = true;
   let services = true;
   let nativeStart;
+  let foregroundCallback;
+  let appStateCallback;
   const storage = options.storage ?? new Map();
   const order = [];
   class Clock extends Date { static now() { return now; } }
   const location = {
     Accuracy: { High: 4 }, ActivityType: { Fitness: 3 },
+    watchPositionAsync: async (_config, cb) => { foregroundCallback = cb; return { remove() { foregroundCallback = null; } }; },
     isBackgroundLocationAvailableAsync: async () => available,
     hasServicesEnabledAsync: async () => services,
     getForegroundPermissionsAsync: async () => ({ granted: foregroundAccess }),
@@ -39,6 +42,7 @@ function recorder(options = {}) {
     stopLocationUpdatesAsync: async () => { if (stopFailure) throw new Error('stop failed'); stops++; running = false; },
   };
   const api = loadTS('src/lib/background-activity.ts', {
+    'react-native': { AppState: { addEventListener: (_name, callback) => { appStateCallback = callback; return { remove() {} }; } } },
     '@/lib/activity-recording': core,
     '@react-native-async-storage/async-storage': {
       getItem: async (key) => { if (readFailure) throw new Error('read failed'); return storage.get(key) ?? null; },
@@ -56,6 +60,7 @@ function recorder(options = {}) {
   const input = { userId: 'walker', activityType: 'walk', resuming: false,
     confirmBackgroundAccess: async () => { order.push('explanation'); return true; } };
   return { api, core, input, storage, order, location,
+    foregroundSample(location) { foregroundCallback?.(location); }, background() { appStateCallback?.('background'); },
     advance(ms) { now += ms; }, setTime(value) { now = value; },
     get now() { return now; }, get starts() { return starts; }, get stops() { return stops; }, get running() { return running; },
     set nativeStart(fn) { nativeStart = fn; }, set storageFailure(value) { storageFailure = value; },
@@ -128,6 +133,25 @@ test('repeated Start calls create one native service and preserve an active reco
   assert.equal(r.starts, 1);
   assert.equal(r.api.getBackgroundRecording().session.status, 'tracking');
   assert.equal(r.api.getBackgroundRecording().session.route.length, 1);
+});
+
+test('raw GPS chunks restore after headless relaunch and migrate legacy snapshots', async () => {
+  const r = recorder();
+  await r.api.beginBackgroundRecording(r.input);
+  await r.emit(Array.from({ length: 1001 }, (_, i) => sample(6.5244 + i / 100000, 105000 + i * 5000)));
+  const saved = JSON.parse(r.storage.get(r.api.ACTIVITY_STORAGE_KEY));
+  assert.equal(saved.rawCoordinates, undefined);
+  assert.equal(saved.rawSamplesStored, 1001);
+  const relaunched = recorder({ storage: r.storage, running: true });
+  await relaunched.api.restoreBackgroundRecording('walker');
+  assert.equal(relaunched.api.getBackgroundRecording().session.rawCoordinates.length, 1001);
+  const legacyStorage = new Map([[r.api.ACTIVITY_STORAGE_KEY, JSON.stringify({ ...saved, rawSamplesStored: undefined, rawCoordinates: r.api.getBackgroundRecording().session.rawCoordinates })]]);
+  const legacy = recorder({ storage: legacyStorage, running: true });
+  await legacy.api.restoreBackgroundRecording('walker');
+  await legacy.api.pauseBackgroundRecording('walker');
+  const migrated = recorder({ storage: legacyStorage });
+  await migrated.api.restoreBackgroundRecording('walker');
+  assert.equal(migrated.api.getBackgroundRecording().session.rawCoordinates.length, 1001);
 });
 
 test('background permission explanation precedes the system request; denial does not start', async () => {
@@ -282,6 +306,8 @@ test('native hook continues tracking on background and after its screen unmounts
   const r = recorder();
   const h = harness('src/hooks/use-activity-tracking.native.ts', 'useActivityTracking', {
     '@/lib/activity-recording': core, '@/lib/background-activity': r.api,
+    '@/services/health-data': { createHealthDataProvider: () => ({}) },
+    '@/services/walks/session-steps': { readSessionSteps: async () => null },
   }, 'android');
   h.render('walker'); await h.advance(0); r.setTime(h.getTime());
   await h.render('walker').start();
@@ -299,6 +325,27 @@ test('native hook continues tracking on background and after its screen unmounts
 test('web import does not register a native task', () => {
   const r = recorder({ platform: 'web' });
   assert.equal(r.api.getBackgroundRecording().session, null);
+});
+
+test('explicit foreground fallback records when background permission is denied and pauses on lock', async () => {
+  const r = recorder(); r.backgroundAccess = false;
+  await r.api.beginBackgroundRecording({ ...r.input, allowForegroundFallback: true });
+  assert.equal(r.api.getBackgroundRecording().session.locationMode, 'foreground');
+  assert.equal(r.starts, 0);
+  r.foregroundSample(sample(6.5244, r.now + 5000));
+  await new Promise(setImmediate);
+  assert.equal(r.api.getBackgroundRecording().session.route.length, 1);
+  r.advance(10000); r.background(); await new Promise(setImmediate);
+  assert.equal(r.api.getBackgroundRecording().session.status, 'paused');
+});
+
+test('stale sensor reads cannot overwrite finalized session steps', async () => {
+  const r = recorder(); await r.api.beginBackgroundRecording(r.input);
+  const before = r.api.getBackgroundRecording().session;
+  const finished = await r.api.finishBackgroundRecording('walker');
+  await r.api.updateRecordingSteps('walker', finished.id, 100, finished.segment, finished.status);
+  await r.api.updateRecordingSteps('walker', before.id, 5, before.segment, before.status);
+  assert.equal(r.api.getBackgroundRecording().session.steps, 100);
 });
 
 test('sign-out cancels pending permission setup before a native service starts', async () => {

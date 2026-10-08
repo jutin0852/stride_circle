@@ -60,7 +60,7 @@ export function HomeScreen() {
     healthBusy={health.status === 'checking' || health.status === 'requesting'}
     connectionError={record.syncStatus === 'error' ? 'Your latest steps couldn’t be saved. They will be retried when you’re online again.' : health.status === 'error' ? 'Health data couldn’t be read. Check access and try again.' : null}
     onProfile={() => router.push('/profile')} onHistory={() => router.push('/history')} onGoal={() => router.push('/daily-goal')}
-    onWalk={() => router.push('/activity')}
+    onWalk={() => router.push('/walk/record')} onPlanWalk={() => router.push('/walk/plan')}
     onCircles={() => router.push('/circle')} onCircle={() => { if (details) router.push({ pathname: '/circle/[circleId]', params: { circleId: details.circle.id } }); }}
     onSelectCircle={circle.selectCircle} onConnect={health.requestStepAccess} onHealthSettings={health.openHealthSettings} onRetryCircle={circle.refresh}
     social={other && scores.status === 'ready' && !cheer.blockedIds.includes('*') && !cheer.blockedIds.includes(other.userId) ? { name: other.displayName, steps: scores.steps[other.userId], status: cheer.status, onCheer: cheer.send } : null}

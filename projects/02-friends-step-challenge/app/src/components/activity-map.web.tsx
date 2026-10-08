@@ -10,6 +10,8 @@ type ActivityMapProps = {
   fitRoute?: boolean;
   initialRegion?: ActivityMapRegion;
   route: ActivityMapPoint[];
+  plannedRoute?: ActivityMapPoint[];
+  onSelectCoordinate?: (point: ActivityMapPoint) => void;
   showsUserLocation?: boolean;
   style: StyleProp<ViewStyle>;
 };

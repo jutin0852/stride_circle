@@ -7,7 +7,7 @@ export type { RoutePoint } from '@/lib/route';
 export type ActivityStatus = 'idle' | 'requesting' | 'tracking' | 'paused' | 'finished' | 'denied' | 'error';
 export type GpsSignalStatus = 'idle' | 'acquiring' | 'ready' | 'weak' | 'disabled';
 export type PauseReason = 'manual' | 'background' | 'gps-error' | 'recovered' | null;
-export type FinishedActivity = { distanceMeters: number; durationMs: number; route: RoutePoint[]; activityId?: string; activityType?: 'walk' | 'run'; dateKey?: string; userId?: string };
+export type FinishedActivity = { distanceMeters: number; durationMs: number; route: RoutePoint[]; activityId?: string; activityType?: 'walk' | 'run'; dateKey?: string; userId?: string; session?: import('@/lib/activity-recording').RecordingSession };
 
 const MAX_ACCURACY_METERS = 35;
 const MAX_REASONABLE_SPEED_METERS_PER_SECOND = 8;
@@ -157,7 +157,7 @@ export function useActivityTracking(userId?: string) {
     }
   }, [changeStatus, handleLocation, pauseRecording, stopWatching]);
 
-  const start: (activityType?: 'walk' | 'run') => Promise<void> = useCallback(() => prepareRecording(false), [prepareRecording]);
+  const start: (activityType?: 'walk' | 'run', plannedRouteId?: string) => Promise<void> = useCallback(() => prepareRecording(false), [prepareRecording]);
   const resume = useCallback(() => prepareRecording(true), [prepareRecording]);
   const pause = useCallback(() => pauseRecording('manual'), [pauseRecording]);
 
@@ -210,5 +210,6 @@ export function useActivityTracking(userId?: string) {
   }, []);
 
   return { status, isPreparing, isRestoring: false, canResume: true, backgroundIssue: null as import('@/lib/background-activity').BackgroundIssue,
+    steps: null as number | null, locationMode: 'foreground' as 'foreground' | 'background' | null, plannedRouteId: undefined as string | undefined, requestStepAccess: async () => {},
     recordedActivityType: null as 'walk' | 'run' | null, retryStop: () => {}, pauseReason, elapsedMs, distanceMeters, currentPaceSecondsPerKm, route, currentLocation, accuracyMeters, gpsSignal, start, pause, resume, finish, reset };
 }

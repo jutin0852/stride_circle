@@ -5,5 +5,5 @@ import { HistoryScreen } from '@/features/history/history-screen';
 
 export default function HistoryRoute() {
   const { user } = useAuth();
-  return <HistoryScreen userId={user?.uid} onOpenWalk={(activityId) => router.push({ pathname: '/activity/[activityId]', params: { activityId } })} />;
+  return <HistoryScreen userId={user?.uid} onOpenWalk={(id) => router.push({ pathname: '/walk/[id]', params: { id } })} />;
 }

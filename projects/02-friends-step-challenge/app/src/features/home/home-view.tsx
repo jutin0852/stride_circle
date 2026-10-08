@@ -19,6 +19,7 @@ export type HomeViewProps = {
   goalEvent: number; source: string; healthBusy: boolean; connectionError: string | null;
   onProfile: () => void; onGoal: () => void; onCircles: () => void; onCircle: () => void; onHistory: () => void;
   onWalk?: () => void;
+  onPlanWalk?: () => void;
   onSelectCircle: (id: string) => Promise<void>; onConnect: () => Promise<void>; onHealthSettings: () => Promise<void>; onRetryCircle: () => void;
   social: { name: string; steps: number; status: 'loading' | 'idle' | 'sending' | 'sent' | 'error'; onCheer: () => Promise<void> } | null;
 };
@@ -231,6 +232,10 @@ export function HomeView(props: HomeViewProps) {
           <Companion colors={colors} size={narrow ? 56 : 64} reduced={reduced} happy={goalMet} helpful={props.health === 'stale' || props.health === 'unavailable'} goalEvent={props.goalEvent} />
         </View>
       </View>
+      {props.onWalk || props.onPlanWalk ? <View style={{ gap: 10, flexDirection: 'row', flexWrap: 'wrap' }}>
+        {props.onWalk ? <View style={{ flex: 1, minWidth: 130 }}><Action colors={colors} onPress={props.onWalk}>Start Walk</Action></View> : null}
+        {props.onPlanWalk ? <View style={{ flex: 1, minWidth: 130 }}><Action secondary colors={colors} onPress={props.onPlanWalk}>Plan a Walk</Action></View> : null}
+      </View> : null}
       {props.health === 'unavailable' || props.health === 'stale' ? <View style={[styles.notice, { backgroundColor: colors.panelEdge, borderColor: colors.line }]}>
         <Copy colors={colors} style={styles.remaining}>{props.health === 'stale' ? 'Today’s total may be incomplete' : 'Health access needs attention'}</Copy>
         <Pressable accessibilityRole="button" accessibilityLabel={props.health === 'stale' ? 'Open health connection details' : 'Connect health access'} onPress={() => openSheet('health', healthNoticeRef)} ref={healthNoticeRef} style={styles.textAction}><Copy colors={colors} style={{ color: colors.edge, fontWeight: '800' }}>{props.health === 'stale' ? 'Health connection details' : 'Connect health access'}</Copy><Ionicons name="arrow-forward" size={18} color={colors.edge} /></Pressable>

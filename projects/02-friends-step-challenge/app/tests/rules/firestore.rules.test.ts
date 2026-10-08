@@ -4,7 +4,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 
 const projectId = 'demo-stride-circle';
 let testEnv: RulesTestEnvironment;
@@ -91,5 +91,34 @@ describe('Firestore launch rules', () => {
     const score = doc(database, 'circles', 'public-circle', 'days', '2026-10-01', 'scores', 'member-1');
 
     await assertFails(setDoc(score, { steps: 999999, userId: 'member-1' }));
+  });
+});
+
+describe('private walking data', () => {
+  it('keeps raw GPS chunks readable and writable only by the activity owner', async () => {
+    const owner = testEnv.authenticatedContext('walker').firestore();
+    const outsider = testEnv.authenticatedContext('circle-member').firestore();
+    const guest = testEnv.unauthenticatedContext().firestore();
+    const path = ['users', 'walker', 'activities', 'walk', 'rawRoute', '0'] as const;
+    await assertSucceeds(setDoc(doc(owner, ...path), { samples: [{ latitude: 1, longitude: 1 }] }));
+    await assertSucceeds(getDoc(doc(owner, ...path)));
+    await assertFails(getDoc(doc(outsider, ...path))); await assertFails(getDoc(doc(guest, ...path)));
+    await assertFails(setDoc(doc(outsider, ...path), { samples: [] }));
+  });
+  it('protects private activity detail including endpoints and notes', async () => {
+    const owner = testEnv.authenticatedContext('walker').firestore();
+    const outsider = testEnv.authenticatedContext('circle-member').firestore();
+    await assertSucceeds(setDoc(doc(owner, 'users', 'walker', 'walkDetails', 'walk'), { notes: 'Private' }));
+    await assertFails(getDoc(doc(outsider, 'users', 'walker', 'walkDetails', 'walk')));
+    await assertFails(setDoc(doc(outsider, 'users', 'walker', 'walkDetails', 'walk'), { notes: 'Other' }));
+  });
+  it('lets only the route owner save, view, and delete a planned route', async () => {
+    const owner = testEnv.authenticatedContext('walker').firestore();
+    const outsider = testEnv.authenticatedContext('other').firestore();
+    await assertSucceeds(setDoc(doc(owner, 'users', 'walker', 'plannedWalks', 'route'), { name: 'Park' }));
+    await assertSucceeds(getDoc(doc(owner, 'users', 'walker', 'plannedWalks', 'route')));
+    await assertFails(getDoc(doc(outsider, 'users', 'walker', 'plannedWalks', 'route')));
+    await assertFails(deleteDoc(doc(outsider, 'users', 'walker', 'plannedWalks', 'route')));
+    await assertSucceeds(deleteDoc(doc(owner, 'users', 'walker', 'plannedWalks', 'route')));
   });
 });

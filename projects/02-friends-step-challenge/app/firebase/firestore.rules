@@ -54,6 +54,20 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /users/{userId}/activities/{activityId}/rawRoute/{chunkId} {
+      allow read, create, update: if signedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/walkDetails/{activityId} {
+      allow read, create, update: if signedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/plannedWalks/{routeId} {
+      allow read, create, update, delete: if signedIn() && request.auth.uid == userId;
+    }
+
     match /users/{userId}/blocks/{blockedUserId} {
       allow read: if signedIn() && request.auth.uid == userId;
       allow create: if signedIn()
