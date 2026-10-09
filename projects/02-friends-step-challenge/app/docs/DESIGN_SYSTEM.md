@@ -1,7 +1,7 @@
 # Stride Circle design system
 
 Status: launch design foundation  
-Last reviewed: 2026-10-02
+Last reviewed: 2026-10-08
 
 This is the implementation contract for the Stride Circle redesign. The screenshot reference establishes the visual language; the launch brief remains authoritative for product behavior, privacy, and scope.
 
@@ -30,11 +30,11 @@ Sync steps → see circle progress → choose to walk → compete or cheer → c
 ## Product guardrails
 
 - The first edition is steps-first and circle-scoped.
-- Global rankings, public user profiles, direct messaging, open comments, GPS routes, and paid rewards are deferred.
+- Global rankings, public user profiles, direct messaging, open comments, topic channels, GPS routes, and paid rewards are deferred.
 - Public circles are discoverable, broad-area only, and capped at 20 members.
 - Private circles are invite-only and never appear in discovery.
 - Health totals are described as synced from Apple Health or Health Connect.
-- Cheers are fixed, labeled reactions rather than chat.
+- Cheers are fixed, labeled reactions; circle chat is a separate, membership-scoped text surface.
 - The interface must not expose exact member locations or health details to other members.
 
 ## Visual personality

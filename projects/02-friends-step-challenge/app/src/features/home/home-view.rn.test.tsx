@@ -4,10 +4,11 @@ import { HomeView, type HomeViewProps } from './home-view';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
+jest.mock('@/components/dicebear-avatar', () => ({ DicebearAvatar: () => null }));
 function setup(overrides: Partial<HomeViewProps> = {}) {
   const action = jest.fn();
   const props: HomeViewProps = {
-    greeting: 'walker', streak: 12, steps: 6240, goal: 8000, health: 'confirmed', goalEvent: 0,
+    greeting: 'walker', profileName: 'Stride Circle member', profileAvatar: { seed: 'walker', style: 'sprouts' }, streak: 12, steps: 6240, goal: 8000, health: 'confirmed', goalEvent: 0,
     circle: null, circleStatus: 'ready', circles: [], source: 'Apple Health', healthBusy: false, connectionError: null,
     onProfile: action, onGoal: action, onHistory: action, onCircle: action, onCircles: action, onRetryCircle: action,
     onSelectCircle: async () => {}, onConnect: async () => {}, onHealthSettings: async () => {}, social: null, ...overrides,

@@ -49,6 +49,31 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /users/{userId}/walkingJournal/{dateKey} {
+      allow get, list: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['createdAt', 'dateKey', 'note', 'schemaVersion', 'updatedAt'])
+        && request.resource.data.dateKey == dateKey
+        && request.resource.data.note is string
+        && request.resource.data.note.size() > 0
+        && request.resource.data.note.size() <= 500
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['createdAt', 'dateKey', 'note', 'schemaVersion', 'updatedAt'])
+        && request.resource.data.dateKey == dateKey
+        && request.resource.data.note is string
+        && request.resource.data.note.size() > 0
+        && request.resource.data.note.size() <= 500
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
     match /users/{userId}/activities/{activityId} {
       allow create, read: if signedIn() && request.auth.uid == userId;
       allow update, delete: if false;
@@ -116,6 +141,16 @@ service cloud.firestore {
         );
     }
 
+    match /globalLeaderboards/{boardId} {
+      allow get: if signedIn();
+      allow list, create, update, delete: if false;
+
+      match /entries/{userId} {
+        allow get, list: if signedIn();
+        allow create, update, delete: if false;
+      }
+    }
+
     match /circles/{circleId} {
       allow get: if signedIn();
       allow list: if signedIn() && resource.data.visibility == 'public';
@@ -137,10 +172,11 @@ service cloud.firestore {
         && (
           (
             isCircleOwner(circleId)
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'discoverableArea', 'name', 'updatedAt'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'discoverableArea', 'name', 'updatedAt', 'weeklyStepGoal'])
             && request.resource.data.ownerId == resource.data.ownerId
             && request.resource.data.inviteCode == resource.data.inviteCode
             && request.resource.data.activityType == resource.data.activityType
+            && (!request.resource.data.keys().hasAny(['weeklyStepGoal']) || (request.resource.data.weeklyStepGoal is int && request.resource.data.weeklyStepGoal >= 10000 && request.resource.data.weeklyStepGoal <= 5000000))
           )
           || (
             isPublicOpenCircle(circleId)
@@ -225,6 +261,96 @@ service cloud.firestore {
           && request.resource.data.userId == request.auth.uid
           && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
         allow delete: if false;
+      }
+
+      match /messages/{messageId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          && request.resource.data.keys().hasOnly([
+            'authorAvatarSeed',
+            'authorAvatarStyle',
+            'authorId',
+            'authorName',
+            'body',
+            'circleId',
+            'clientMessageId',
+            'createdAt',
+            'schemaVersion'
+          ])
+          && request.resource.data.circleId == circleId
+          && request.resource.data.clientMessageId == messageId
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.displayName
+          && request.resource.data.authorAvatarSeed == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.avatarSeed
+          && request.resource.data.authorAvatarStyle == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.avatarStyle
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 500
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.schemaVersion == 1;
+        allow update, delete: if false;
+      }
+
+      match /walkPlans/{walkId} {
+        allow get, list: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        allow create: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          && request.resource.data.keys().hasOnly(['createdAt', 'createdBy', 'createdByName', 'details', 'meetupLabel', 'schemaVersion', 'startsAt', 'status', 'timeZone', 'title', 'updatedAt'])
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdByName == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.displayName
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 60
+          && request.resource.data.details is string
+          && request.resource.data.details.size() <= 240
+          && request.resource.data.meetupLabel is string
+          && request.resource.data.meetupLabel.size() <= 100
+          && request.resource.data.startsAt is timestamp
+          && request.resource.data.startsAt > request.time
+          && request.resource.data.timeZone is string
+          && request.resource.data.timeZone.size() > 0
+          && request.resource.data.timeZone.size() <= 100
+          && request.resource.data.status == 'scheduled'
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if signedIn()
+          && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+          && (resource.data.createdBy == request.auth.uid || isCircleOwner(circleId))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+          && resource.data.status == 'scheduled'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+
+        match /rsvps/{userId} {
+          allow get, list: if signedIn()
+            && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+          allow create: if signedIn()
+            && request.auth.uid == userId
+            && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+            && request.resource.data.keys().hasOnly(['createdAt', 'displayName', 'going', 'updatedAt', 'userId'])
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.displayName == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.displayName
+            && request.resource.data.going == true
+            && request.resource.data.createdAt == request.time
+            && request.resource.data.updatedAt == request.time;
+          allow update: if signedIn()
+            && request.auth.uid == userId
+            && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
+            && request.resource.data.keys().hasOnly(['createdAt', 'displayName', 'going', 'updatedAt', 'userId'])
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.displayName == get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.displayName
+            && request.resource.data.going == true
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.updatedAt == request.time;
+          allow delete: if signedIn()
+            && request.auth.uid == userId
+            && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+        }
       }
 
       match /days/{dateKey} {

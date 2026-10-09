@@ -109,6 +109,7 @@ export default function CirclesRoute() {
       onJoinInvite={handleJoinInvite}
       onJoinPublic={handleJoinPublic}
       onOpenCircle={(circleId) => router.push({ pathname: '/circle/[circleId]', params: { circleId } })}
+      onOpenGlobalLeaderboard={() => router.push('/global-leaderboard')}
       onRetryCircles={refresh}
       onRetryPublic={() => {
         setPublicCircleStatus('loading');

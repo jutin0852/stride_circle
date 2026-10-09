@@ -29,6 +29,7 @@ export type CirclesViewProps = {
   publicStatus: 'loading' | 'ready' | 'error';
   busyCircleId: string | null;
   onOpenCircle: (circleId: string) => void;
+  onOpenGlobalLeaderboard: () => void;
   onRetryCircles: () => void;
   onRetryPublic: () => void;
   onCreate: (input: CreateCircleInput) => Promise<string | null>;
@@ -140,6 +141,22 @@ export function CirclesView(props: CirclesViewProps) {
               <AppText style={styles.discoverAside}>Meet more walkers</AppText>
             </View>
             <AppText style={styles.discoverIntro}>Find your kind of walk.</AppText>
+
+            <Pressable
+              accessibilityLabel="Open global leaderboard"
+              accessibilityRole="button"
+              onPress={props.onOpenGlobalLeaderboard}
+              style={({ pressed }) => [styles.globalLeaderboardCard, pressed && styles.pressed]}
+            >
+              <View style={styles.globalLeaderboardIcon}>
+                <Ionicons color={colors.accentPressed} name="trophy-outline" size={20} />
+              </View>
+              <View style={styles.globalLeaderboardCopy}>
+                <AppText style={styles.globalLeaderboardTitle}>Global leaderboard</AppText>
+                <AppText tone="secondary" variant="caption">See where walkers rank worldwide</AppText>
+              </View>
+              <Ionicons color={colors.muted} name="chevron-forward" size={19} />
+            </Pressable>
 
             <View style={styles.searchBox}>
               <Ionicons color={colors.muted} name="search" size={19} />
@@ -261,11 +278,10 @@ function JoinedCircleRow({ circle, index, onLayout, preview, onPress }: {
   const colors = useAppColors();
   const styles = useCircleStyles();
   const marker = MARKERS[index % MARKERS.length];
-  const walkingText = preview ? `${preview.walkingTodayCount} walking today` : 'Walking with your people';
 
   return (
     <Pressable
-      accessibilityLabel={`Open ${circle.name}${preview ? `, ${preview.walkingTodayCount} walking today` : ''}`}
+      accessibilityLabel={`Open ${circle.name}`}
       accessibilityRole="button"
       onPress={onPress}
       onLayout={(event) => onLayout(event.nativeEvent.layout.height)}
@@ -276,10 +292,7 @@ function JoinedCircleRow({ circle, index, onLayout, preview, onPress }: {
       </View>
       <View style={styles.joinedCopy}>
         <AppText style={styles.circleName}>{circle.name}</AppText>
-        <View style={styles.walkingMeta}>
-          {preview?.members.length ? <AvatarStack members={preview.members} /> : null}
-          <AppText style={styles.walkingToday}>{walkingText}</AppText>
-        </View>
+        {preview?.members.length ? <View style={styles.walkingMeta}><AvatarStack members={preview.members} /></View> : null}
       </View>
       <Ionicons color={colors.placeholder} name="chevron-forward" size={19} />
     </Pressable>
@@ -500,7 +513,6 @@ function createCircleStyles(colors: CircleThemeColors) { return StyleSheet.creat
   joinedCopy: { flex: 1, justifyContent: 'center', marginLeft: 12, minWidth: 0 },
   circleName: { color: colors.ink, flexShrink: 1, fontSize: 15, fontWeight: '800', letterSpacing: -0.15, lineHeight: 20 },
   walkingMeta: { alignItems: 'flex-start', flexDirection: 'row', flexWrap: 'wrap', marginTop: 4, minHeight: 23 },
-  walkingToday: { color: colors.success, flexShrink: 1, fontSize: 11, fontWeight: '800', lineHeight: 16 },
   avatarStack: { alignItems: 'center', flexDirection: 'row', marginRight: 8, paddingLeft: 1 },
   avatarFrame: { backgroundColor: colors.card, borderColor: colors.card, borderRadius: 13, borderWidth: 1.5, height: 26, overflow: 'hidden', width: 26 },
   avatarOverlap: { marginLeft: -7 },
@@ -509,6 +521,10 @@ function createCircleStyles(colors: CircleThemeColors) { return StyleSheet.creat
   discoverHeading: { alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between' },
   discoverAside: { color: colors.muted, fontSize: 11, fontWeight: '700' },
   discoverIntro: { color: colors.muted, fontSize: 13, marginTop: 3 },
+  globalLeaderboardCard: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', gap: 11, marginTop: 14, minHeight: 68, paddingHorizontal: 14 },
+  globalLeaderboardIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 20, height: 40, justifyContent: 'center', width: 40 },
+  globalLeaderboardCopy: { flex: 1, gap: 2, minWidth: 0 },
+  globalLeaderboardTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' },
   searchBox: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', gap: 9, height: 48, marginTop: 13, paddingHorizontal: 14 },
   searchInput: { color: colors.ink, flex: 1, fontSize: 14, minHeight: 44, paddingVertical: 0 },
   discoverList: { marginTop: 5 },

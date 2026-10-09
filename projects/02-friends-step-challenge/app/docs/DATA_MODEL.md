@@ -1,7 +1,7 @@
 # Stride Circle launch data model
 
 Status: target versioned model  
-Last reviewed: 2026-10-02
+Last reviewed: 2026-10-08
 
 ## Identity and private data
 
@@ -13,6 +13,7 @@ users/{userId}/dailySteps/{dateKey}
 users/{userId}/weeklyRecaps/{weekKey}
 users/{userId}/activities/{activityId}
 users/{userId}/circleMemberships/{circleId}
+users/{userId}/walkingJournal/{dateKey}
 ```
 
 `users/{userId}/activities` remains private. A route or GPS trace must never be copied into a circle document or a member-visible projection.
@@ -26,6 +27,32 @@ syncState, providerRecordVersion, schemaVersion
 
 `source` is a provider label such as HealthKit or Health Connect. It is not a promise that the data is fraud-proof.
 
+The user profile stores `dailyStepGoal` and `weeklyStepGoal`. The weekly target is private and follows the user's local Monday-to-Sunday calendar. Journal documents contain `dateKey`, `note`, `createdAt`, `updatedAt`, and `schemaVersion`; only the owning user may read or write them.
+
+## Global leaderboard projections
+
+```text
+globalLeaderboards/{boardId}
+globalLeaderboards/{boardId}/entries/{userId}
+```
+
+At launch, `boardId` is either `walk_week_{mondayUtcDateKey}` or `walk_all_time`. The board document stores the period metadata and generation timestamp. Entry fields are:
+
+```text
+userId
+displayName              // limited public display snapshot
+avatarSeed
+avatarStyle
+activityType             // walk at launch
+periodKey
+verifiedSteps
+rank                     // server-generated integer placement
+updatedAt
+schemaVersion
+```
+
+Clients may read global projections but cannot create, update, or delete board documents or entries. The scheduled backend job derives them from provider-sourced daily step records. The projection is intentionally separate from private user history so the mobile client never scans every user's raw steps.
+
 ## Circles and membership
 
 ```text
@@ -35,6 +62,9 @@ circles/{circleId}/days/{dateKey}
 circles/{circleId}/days/{dateKey}/scores/{userId}
 circles/{circleId}/weeklyRecaps/{weekKey}
 circles/{circleId}/cheers/{cheerId}
+circles/{circleId}/messages/{messageId}
+circles/{circleId}/walkPlans/{walkId}
+circles/{circleId}/walkPlans/{walkId}/rsvps/{userId}
 circles/{circleId}/reports/{reportId}
 ```
 
@@ -52,6 +82,7 @@ inviteCode                // private only; null for public
 competitionTimeZone       // IANA timezone, fixed for competition boundaries
 discoverableArea          // approximate label/geospatial cell; never exact member location
 memberCount               // projection, bounded by 20
+weeklyStepGoal            // optional combined member steps for the competition week
 createdAt
 updatedAt
 ```
@@ -81,6 +112,22 @@ finalizedAt
 schemaVersion
 ```
 
+Circle message fields:
+
+```text
+authorId
+authorName               // display snapshot from the circle member record
+authorAvatarSeed         // display snapshot for the member avatar
+authorAvatarStyle        // display snapshot for the member avatar
+body                     // text-only message, maximum 500 characters
+circleId
+clientMessageId          // idempotent client-created document id
+createdAt                // server timestamp
+schemaVersion
+```
+
+Messages are scoped to one circle and do not contain health, GPS, or private profile data. The first implementation keeps messages immutable after creation and exposes the latest page plus older pages through a repository boundary.
+
 The score projection is derived from private user step records. It is not a place where clients can choose their own winner, rank, or verified total.
 
 Weekly recap fields:
@@ -93,8 +140,11 @@ participationCount
 streakHighlights
 milestones
 generatedAt
+topWalkers                // up to three display snapshots with rank and verifiedSteps
 schemaVersion
 ```
+
+Circle walk plans store a title, start timestamp, creator display snapshot, optional details, optional general meetup label, and scheduled/cancelled status. Each member's RSVP is a separate document keyed by their user id. Plans contain no GPS coordinates or route geometry.
 
 ## Safety data
 
@@ -108,6 +158,8 @@ Cheer fields should include sender, recipient, fixed cheer type, circle, competi
 - Private circles are never listable and are readable only through membership-aware paths.
 - Public discovery returns safe circle summaries, not member locations.
 - A member can read allowed aggregate standings but not another member's raw health data or route.
+- A current member can read messages for their circle and create only messages authored by their own member record.
+- Message documents cannot be updated or deleted by the client in the first edition.
 - Only owners can delete circles.
 - Owners and moderators can moderate; ordinary members cannot assign roles or resolve reports.
 - Clients cannot write authoritative winner, rank, or finalized fields.

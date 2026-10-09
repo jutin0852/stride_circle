@@ -19,7 +19,7 @@ function Preview() {
   const health = mode === 'unavailable' ? 'unavailable' : mode === 'stale' ? 'stale' : mode === 'loading' ? 'loading' : 'confirmed';
   return <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight }, insets: { top: 0, bottom: 0, left: 0, right: 0 } }}><View style={{ flex: 1 }}>
     <View style={{ backgroundColor: '#173342', padding: 8 }}><Text style={{ color: 'white', fontSize: 12 }}>DESIGN PREVIEW · FICTIONAL SAMPLE DATA</Text><Pressable accessibilityRole="button" accessibilityLabel="Simulate goal crossing" onPress={() => { setSteps(8240); setEvent((value) => value + 1); }}><Text style={{ color: 'white' }}>Simulate goal crossing</Text></Pressable></View>
-    <HomeView greeting="walker" streak={12} steps={health === 'unavailable' || health === 'loading' ? null : steps} goal={8000} health={health} goalEvent={event}
+    <HomeView greeting="walker" profileName="Maya Walker" profileAvatar={{ seed: 'home-preview', style: 'sprouts' }} streak={12} steps={health === 'unavailable' || health === 'loading' ? null : steps} goal={8000} health={health} goalEvent={event}
       circle={mode === 'empty' ? null : circle} circleStatus={mode === 'circle-error' ? 'error' : mode === 'circle-loading' ? 'loading' : 'ready'} circles={[{ id: 'Morning Crew', name: 'Morning Crew' }, { id: 'Lunch Loop', name: 'Lunch Loop' }]}
       source="Sample provider" healthBusy={false} connectionError={null}
       onProfile={() => setNotice('Profile opened')} onGoal={() => setNotice('Goal opened')} onHistory={() => setNotice('History opened')} onCircle={() => setNotice('Circle opened')} onCircles={() => setNotice('Discovery opened')}

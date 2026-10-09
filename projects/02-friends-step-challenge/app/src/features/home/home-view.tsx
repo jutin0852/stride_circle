@@ -5,7 +5,9 @@ import { AccessibilityInfo, ActivityIndicator, Animated, Easing, findNodeHandle,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
+import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { AppText } from '@/components/ui';
+import type { AvatarChoice } from '@/lib/avatar';
 import { getPersonalProgress, type HomeHealthState } from './home-model';
 import { homeMotion, homeTheme } from './tokens';
 import { useReducedHomeMotion } from './use-home-motion';
@@ -14,12 +16,13 @@ import { WalkingCompanion } from './walking-companion';
 export type HomeStanding = { userId: string; name: string; steps: number | null; rank: number | null; self: boolean };
 export type HomeCircle = { id: string; name: string; memberCount: number; rank: number | null; deadline: string; timeZone: string; standings: HomeStanding[]; scoreStatus: 'loading' | 'ready' | 'error' };
 export type HomeViewProps = {
-  greeting: string; streak: number | null; steps: number | null; goal: number | null; health: HomeHealthState;
+  greeting: string; profileName: string; profileAvatar: AvatarChoice; streak: number | null; steps: number | null; goal: number | null; health: HomeHealthState;
   circle: HomeCircle | null; circleStatus: 'loading' | 'ready' | 'error'; circles: { id: string; name: string }[];
   goalEvent: number; source: string; healthBusy: boolean; connectionError: string | null;
   onProfile: () => void; onGoal: () => void; onCircles: () => void; onCircle: () => void; onHistory: () => void;
   onWalk?: () => void;
   onPlanWalk?: () => void;
+  onReminders?: () => void;
   onSelectCircle: (id: string) => Promise<void>; onConnect: () => Promise<void>; onHealthSettings: () => Promise<void>; onRetryCircle: () => void;
   social: { name: string; steps: number; status: 'loading' | 'idle' | 'sending' | 'sent' | 'error'; onCheer: () => Promise<void> } | null;
 };
@@ -216,7 +219,7 @@ export function HomeView(props: HomeViewProps) {
     <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 12) + 8, paddingHorizontal: narrow ? 16 : 20 }]}>
       <View style={[styles.header, narrow && styles.wrap]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Open your private profile and health settings" onPress={() => openSheet('health', profileTriggerRef)} ref={profileTriggerRef} style={({ pressed }) => [styles.profile, { borderColor: colors.edge, backgroundColor: colors.ice, opacity: pressed ? 0.7 : 1 }]}>
-          <Ionicons name="person-outline" color={colors.edge} size={22} />
+          <DicebearAvatar choice={props.profileAvatar} fallback={getInitials(props.profileName)} size={36} />
         </Pressable>
         <View style={styles.fill}><Copy colors={colors} style={styles.greeting}>Hey, {props.greeting}!</Copy><Copy colors={colors} style={{ fontSize: 12, color: colors.muted }}>Let’s make today count.</Copy></View>
         <Pressable accessibilityRole="button" accessibilityLabel={props.streak === null ? 'Open your walking history' : `${props.streak}-day walking streak. Open history`} onPress={props.onHistory} style={styles.streak}>
@@ -290,6 +293,7 @@ export function HomeView(props: HomeViewProps) {
               void props.onSelectCircle(circle.id).then(() => closeSheet()).catch(() => setSheetError('That circle couldn’t be selected. Try again.')).finally(() => setSelecting(null));
             }}>{circle.name}{props.circle?.id === circle.id ? ' · Selected' : ''}</Action>) : <>
               <Action secondary colors={colors} onPress={() => closeSheet(props.onProfile)}>View your profile</Action>
+              {props.onReminders ? <Action secondary colors={colors} onPress={() => closeSheet(props.onReminders)}>Walking reminders</Action> : null}
               {props.onWalk ? <Action secondary colors={colors} onPress={() => closeSheet(props.onWalk)}>Open walking activity</Action> : null}
               <Copy colors={colors} accessibilityRole="header" style={styles.circleTitle}>Health connection</Copy>
               <Copy colors={colors} style={{ color: colors.muted }}>{props.health === 'confirmed' ? 'Connected' : props.health === 'stale' ? 'Today’s total may be incomplete' : props.health === 'loading' ? 'Checking access' : 'Access needs attention'} · {props.source}</Copy>
@@ -309,7 +313,7 @@ export function HomeView(props: HomeViewProps) {
 
 const styles = StyleSheet.create({
   page: { flex: 1 }, content: { gap: 20, paddingBottom: 28 }, copy: { fontSize: 16, lineHeight: 23, includeFontPadding: false }, fill: { flex: 1, minWidth: 0 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10 }, wrap: { flexWrap: 'wrap' }, profile: { borderWidth: 2, borderBottomWidth: 4, width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10 }, wrap: { flexWrap: 'wrap' }, profile: { borderWidth: 2, borderBottomWidth: 2, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   greeting: { fontWeight: '800', fontSize: 14 }, streak: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 4 }, streakText: { fontWeight: '800', fontSize: 13 }, title: { fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.8 },
   hero: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 22, position: 'relative' }, progressCopy: { width: '100%' }, label: { fontSize: 16, fontWeight: '800', paddingRight: 68 }, count: { fontSize: 48, lineHeight: 55, fontWeight: '800', letterSpacing: -1.5, fontVariant: ['tabular-nums'], paddingRight: 68 },
   goalLink: { minHeight: 44, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, paddingRight: 56 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }, ring: { height: 64, width: 64, alignItems: 'center', justifyContent: 'center' }, ringLabel: { position: 'absolute', fontSize: 13, fontWeight: '800' }, remaining: { fontSize: 14, lineHeight: 21, fontWeight: '700' },
@@ -319,3 +323,7 @@ const styles = StyleSheet.create({
   social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { fontSize: 14, fontWeight: '800' },
   notice: { padding: 16, borderWidth: 1, borderRadius: 16 }, textAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }, modalBackdrop: { flex: 1, justifyContent: 'flex-end' }, sheet: { maxHeight: '85%', borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2, padding: 20, gap: 12 }, sheetGrabber: { alignSelf: 'center', borderRadius: 999, height: 4, marginBottom: 2, width: 42 }, sheetContent: { gap: 16, paddingBottom: 8 },
 });
+
+function getInitials(name: string) {
+  return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC';
+}

@@ -1,7 +1,7 @@
 # Stride Circle decision log
 
 Status: active launch decisions  
-Last reviewed: 2026-10-05
+Last reviewed: 2026-10-08
 
 ## D-001 — Keep Firebase for the rebuild
 
@@ -15,11 +15,11 @@ Decision: build the launch loop around provider-sourced steps. GPS activities ar
 
 Reason: background step collection and permission recovery are the core reliability problem. Adding routes and live activity tracking before that is stable increases surface area and privacy risk.
 
-## D-003 — No global leaderboard in edition one
+## D-003 — Global walking leaderboard is a public Circles discovery surface
 
-Decision: competition is inside circles only.
+Decision: add a public global walking leaderboard inside Discover with `This Week` and `All Time` views. The weekly board uses a shared Monday `00:00 UTC` boundary. Ranks are server-generated integer placements; running is not included in this slice.
 
-Reason: circles are the intended social unit. A global ranking can be added later after retention, fairness, safety, and abuse patterns are understood.
+Reason: global discovery is now an approved extension of the walking competition loop. Keeping it walking-only avoids mixing activity metrics before running has a separate verified scoring contract.
 
 ## D-004 — Circle timezone is authoritative for competition
 
@@ -39,11 +39,11 @@ Decision: public circles are discoverable and open to join, but public discovery
 
 Reason: the product is available to anyone and includes health-adjacent activity data. Safety cannot be postponed until after discovery is open.
 
-## D-007 — Cheers instead of chat
+## D-007 — Circle chat stays scoped to the circle
 
-Decision: ship fixed reactions and celebrations, not direct messaging, open comments, or chat.
+Decision: ship fixed reactions and celebrations alongside one shared, text-only chat room per circle. Do not add direct messaging, open comments, or topic channels in the first edition.
 
-Reason: this preserves social reinforcement while reducing moderation, privacy, notification, and abuse complexity.
+Reason: members asked for lightweight coordination inside the existing social unit. Keeping chat membership-scoped, text-only, and bounded preserves the circle experience while reducing moderation, privacy, notification, and abuse complexity.
 
 ## D-008 — Health data wording
 
@@ -59,7 +59,7 @@ Reason: existing user history is valuable and a destructive migration would remo
 
 ## D-010 — Cloud Functions own privileged mutations
 
-Decision: direct client mutations are transitional only. Before public launch, circle membership, finalization, recap generation, notifications, moderation, and account deletion move behind idempotent Cloud Functions 2nd gen.
+Decision: direct client mutations are transitional only. Before public launch, circle membership, message writes, finalization, recap generation, notifications, moderation, and account deletion move behind idempotent Cloud Functions 2nd gen.
 
 Reason: authoritative outcomes and cross-document invariants cannot depend on a trusted mobile client.
 
@@ -74,3 +74,9 @@ Reason: the user selected B and wants a stable implementation handoff rather tha
 Decision: healthy Home has no Sync button, syncing indicator, provider explanation or routine update timestamp. Connection setup, source explanation, diagnostics and recovery belong in private settings. Home shows only actionable exceptions for unavailable/incomplete data; unknown is never zero. Automatic background delivery is OS-controlled and must be verified separately.
 
 Reason: Home should communicate walking progress and shared circle activity, not internal synchronization work. This changes presentation, not score provenance or the requirement for truthful recovery states.
+
+## D-013 — Add lightweight planning and reflection
+
+Decision: support member-created future circle walk plans with member-only RSVPs and general meetup text; allow the circle owner to set one combined weekly step target. Personal weekly targets and date-based journal notes remain private to the user.
+
+Reason: these features help circles meet and let people reflect on progress without adding direct messages, public activity feeds, exact-location sharing, or a reward economy.

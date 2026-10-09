@@ -28,7 +28,6 @@ async function setup(overrides: Partial<CirclesViewProps> = {}) {
           { avatarSeed: 'walker-a', avatarStyle: 'sprouts', displayName: 'Ari Walker', role: 'owner', userId: 'user-a' },
           { avatarSeed: 'walker-b', avatarStyle: 'clay', displayName: 'Bo Walker', role: 'member', userId: 'user-b' },
         ],
-        walkingTodayCount: 2,
       },
     },
     circleStatus: 'ready',
@@ -41,6 +40,7 @@ async function setup(overrides: Partial<CirclesViewProps> = {}) {
     onCreate: jest.fn().mockResolvedValue(null),
     onJoinInvite: jest.fn().mockResolvedValue(null),
     onJoinPublic: jest.fn().mockResolvedValue(null),
+    onOpenGlobalLeaderboard: jest.fn(),
     ...overrides,
   };
 
@@ -54,8 +54,8 @@ describe('Circles hub', () => {
 
     expect(screen.getByText('Your Circles')).toBeTruthy();
     expect(screen.getByText('1 joined')).toBeTruthy();
-    expect(screen.getByText('2 walking today')).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Open Morning Movers, 2 walking today' }));
+    expect(screen.queryByText('2 walking today')).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Open Morning Movers' }));
     expect(props.onOpenCircle).toHaveBeenCalledWith('circle-1');
 
     await user.press(screen.getByRole('tab', { name: 'Discover' }));
@@ -67,18 +67,27 @@ describe('Circles hub', () => {
     const { screen } = await setup();
     const user = userEvent.setup();
 
-    expect(screen.getByRole('button', { name: 'Open Morning Movers, 2 walking today' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open Morning Movers' })).toBeTruthy();
     expect(screen.queryByText('River Path Ramblers')).toBeNull();
     expect(screen.getByRole('button', { name: 'Create a Circle' })).toBeTruthy();
 
     await user.press(screen.getByRole('tab', { name: 'Discover' }));
-    expect(screen.queryByRole('button', { name: 'Open Morning Movers, 2 walking today' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open Morning Movers' })).toBeNull();
     expect(screen.getByText('River Path Ramblers')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Create a Circle' })).toBeNull();
 
     await user.press(screen.getByRole('tab', { name: 'Your Circles' }));
-    expect(screen.getByRole('button', { name: 'Open Morning Movers, 2 walking today' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open Morning Movers' })).toBeTruthy();
     expect(screen.queryByText('River Path Ramblers')).toBeNull();
+  });
+
+  it('opens the global leaderboard from Discover', async () => {
+    const { props, screen } = await setup();
+
+    await userEvent.setup().press(screen.getByRole('tab', { name: 'Discover' }));
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Open global leaderboard' }));
+
+    expect(props.onOpenGlobalLeaderboard).toHaveBeenCalledTimes(1);
   });
 
   it('filters public circles by name and area and explains an empty search', async () => {

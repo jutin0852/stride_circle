@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
+import { router } from 'expo-router';
 
 import { dateFromKey, localDateKey, monthRange, shiftMonth } from '@/domain/walking-history';
 import { useActivityHistory } from '@/hooks/use-activity-history';
 import { useWalks } from '@/hooks/use-walks';
 import { useDailyStepGoal } from '@/hooks/use-daily-step-goal';
+import { useWeeklyStepGoal } from '@/hooks/use-weekly-step-goal';
 import { getStreakSummary } from '@/lib/streaks';
 import { HistoryView } from './history-view';
 import { useWalkingHistory } from './use-walking-history';
@@ -17,6 +19,7 @@ export function HistoryScreen({ userId, onOpenWalk }: { userId: string | undefin
   const overview = useWalkingHistory(userId, null);
   const calendar = useWalkingHistory(userId, month);
   const goal = useDailyStepGoal(userId);
+  const weeklyGoal = useWeeklyStepGoal(userId);
   const walks = useActivityHistory(userId, selectedDay ?? today);
   const local = useWalks(userId);
   const combinedWalks = { ...walks, records: [
@@ -28,7 +31,7 @@ export function HistoryScreen({ userId, onOpenWalk }: { userId: string | undefin
   const summary = useMemo(() => getStreakSummary({ goal: goal.goal, records: overview.records, todaySteps: 0, now: dateFromKey(today) }), [goal.goal, overview.records, today]);
 
   function refresh() {
-    overview.refresh(); calendar.refresh(); goal.refresh(); walks.refresh();
+    overview.refresh(); calendar.refresh(); goal.refresh(); weeklyGoal.refresh(); walks.refresh();
   }
 
   function changeMonth(offset: number) {
@@ -38,7 +41,7 @@ export function HistoryScreen({ userId, onOpenWalk }: { userId: string | undefin
     setSelectedDay(next === monthRange(today).from ? today : next);
   }
 
-  return <HistoryView today={today} month={month} selected={selectedDay ?? today} summary={summary} overview={overview} calendar={calendar} goal={goal} walks={combinedWalks} refreshing={overview.refreshing} onRefresh={refresh} onMonthChange={changeMonth} onSelect={setSelectedDay} onOpenWalk={onOpenWalk} />;
+  return <HistoryView userId={userId} today={today} month={month} selected={selectedDay ?? today} summary={summary} overview={overview} calendar={calendar} goal={goal} weeklyGoal={weeklyGoal} walks={combinedWalks} refreshing={overview.refreshing} onRefresh={refresh} onMonthChange={changeMonth} onSelect={setSelectedDay} onOpenWalk={onOpenWalk} onEditWeeklyGoal={() => router.push('/daily-goal')} />;
 }
 
 function useLocalToday() {

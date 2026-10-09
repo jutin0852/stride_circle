@@ -12,10 +12,14 @@ import { getAvatarUrl } from '@/lib/avatar';
 export function Leaderboard({
   changes,
   friends,
+  limit,
+  podiumHeight = 152,
   podium = 'bars',
 }: {
   changes?: Record<string, number>;
   friends: Friend[];
+  limit?: number;
+  podiumHeight?: number;
   podium?: LeaderboardPodium;
 }) {
   const data = useMemo<LeaderboardEntry[]>(
@@ -42,8 +46,9 @@ export function Leaderboard({
       emptyText="No walkers have logged steps yet"
       formatValue={formatSteps}
       highlightId={highlightId}
+      limit={limit}
       podium={podium}
-      podiumHeight={152}
+      podiumHeight={podiumHeight}
       unit="steps"
     />
   );

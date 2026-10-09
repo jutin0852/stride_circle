@@ -45,6 +45,12 @@ export default function ProfileRoute() {
         <View style={styles.editIcon}><Ionicons color={colors.accentPressed} name="pencil" size={17} /></View>
       </Pressable>
 
+      <Pressable accessibilityRole="button" accessibilityLabel="Walking reminders" onPress={() => router.push('/walking-reminders')} style={({ pressed }) => [styles.reminderCard, pressed && styles.pressed]}>
+        <Ionicons color={colors.accentPressed} name="notifications-outline" size={24} />
+        <View style={styles.profileText}><AppText style={styles.profileTitle}>Walking reminders</AppText><AppText style={styles.profileCaption}>Choose a daily nudge at your own pace.</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+      </Pressable>
+
       <Pressable accessibilityRole="button" onPress={() => void handleSignOut()} style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
         <AppText style={styles.signOutText}>Sign out</AppText>
       </Pressable>
@@ -59,5 +65,6 @@ function getInitials(name: string) {
 function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
   page: { backgroundColor: colors.background }, content: { gap: 14, padding: 24, paddingBottom: 36 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1.2, lineHeight: 40 },
   profileCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 22, borderWidth: 2, flexDirection: 'row', marginTop: 8, padding: 18 }, profileText: { flex: 1, gap: 4, marginLeft: 14 }, profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, profileCaption: { color: colors.muted, fontSize: 13 }, editIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 14, height: 40, justifyContent: 'center', width: 40 },
+  reminderCard: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', minHeight: 80, padding: 18 },
   signOut: { alignItems: 'center', borderBottomWidth: 2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, pressed: { opacity: 0.84, transform: [{ translateY: 2 }] },
 }); }
