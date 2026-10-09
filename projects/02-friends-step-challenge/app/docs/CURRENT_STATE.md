@@ -31,7 +31,7 @@ Walking reminders use Expo Notifications for an opt-in daily local notification.
 - Circle weekly recap presentation backed by scheduled recap data, including a saved top-walker snapshot.
 - Walking reminder settings from Profile and Home settings: local daily time, explicit permission opt-in, five-second test, account-scoped on-device preferences, sign-out cancellation, and foreground permission reconciliation. Native delivery still requires an updated development build and device verification.
 - Global walking leaderboard entry in Circles Discover with This Week and All Time views, backed by a server-generated Firestore projection contract.
-- Personal History calendar, private per-day journal notes, weekly target progress, recap, saved walks, and private saved route details.
+- Personal History calendar, weekly target progress, recap, saved walks, and private saved route details. The History screen no longer exposes the per-day journal; legacy private notes remain stored but are not surfaced.
 - Optional foreground GPS walk recording with pause/resume/finish and native map rendering.
 - Loading, empty, error, stale, permission, reduced-motion, and narrow-layout states for the redesigned Home and History surfaces.
 

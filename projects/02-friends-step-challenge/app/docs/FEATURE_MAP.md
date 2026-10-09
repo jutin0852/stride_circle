@@ -12,7 +12,7 @@ This map describes the current repository, not the full launch wish list. `Imple
 | Shared circle goal | `/circle/[circleId]/weekly-goal` | Implemented/partial | Circle owner sets a combined weekly step target; current circle progress and 25/50/75/100% thresholds appear on standings. |
 | Circle chat | `/circle/[circleId]/chat` | Implemented/partial | Membership-scoped text chat with optimistic send/retry, member avatars, latest-message subscription, and older-message paging. Message moderation, notifications, unread state, and Functions routing remain incomplete. |
 | Circle management | `/circle/[circleId]/actions`, `/edit`, `/members` | Partial | Owner edit/delete/member removal and member leave exist. Moderator assignment, reports, blocks, and complete safety controls are missing. |
-| History | `/history` | Implemented | Personal step calendar, month browsing, private date-based journal, weekly target progress, seven-day recap, streak/milestones, and saved walk list. |
+| History | `/history` | Implemented | Personal step calendar, month browsing, weekly target progress, seven-day recap, streak/milestones, and saved walk list. Private date-based journal notes are retained in storage but are not exposed in the History screen. |
 | Walking activity | `/activity` | Partial | Optional foreground GPS walk recording with native map, pause/resume/finish, and save-to-history. Web is fallback-only; background GPS and production device proof are absent. |
 | Saved walk detail | `/activity/[activityId]` | Implemented/partial | Private saved route and walk summary. Legacy run records remain readable for compatibility. |
 | Profile | `/profile` | Implemented | Profile view, character entry point, and sign-out. It is not a visible tab; Home provides access. |

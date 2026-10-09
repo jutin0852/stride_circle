@@ -80,3 +80,9 @@ Reason: Home should communicate walking progress and shared circle activity, not
 Decision: support member-created future circle walk plans with member-only RSVPs and general meetup text; allow the circle owner to set one combined weekly step target. Personal weekly targets and date-based journal notes remain private to the user.
 
 Reason: these features help circles meet and let people reflect on progress without adding direct messages, public activity feeds, exact-location sharing, or a reward economy.
+
+## D-014 — Remove the History journal surface
+
+Decision: do not expose a per-day walking journal in History. Existing private journal notes remain stored and are not deleted by this presentation change.
+
+Reason: the History experience should focus on walking progress, recaps, and saved walks; journal entry was not requested.

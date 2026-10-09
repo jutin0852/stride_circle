@@ -41,7 +41,7 @@ export function HistoryScreen({ userId, onOpenWalk }: { userId: string | undefin
     setSelectedDay(next === monthRange(today).from ? today : next);
   }
 
-  return <HistoryView userId={userId} today={today} month={month} selected={selectedDay ?? today} summary={summary} overview={overview} calendar={calendar} goal={goal} weeklyGoal={weeklyGoal} walks={combinedWalks} refreshing={overview.refreshing} onRefresh={refresh} onMonthChange={changeMonth} onSelect={setSelectedDay} onOpenWalk={onOpenWalk} onEditWeeklyGoal={() => router.push('/daily-goal')} />;
+  return <HistoryView today={today} month={month} selected={selectedDay ?? today} summary={summary} overview={overview} calendar={calendar} goal={goal} weeklyGoal={weeklyGoal} walks={combinedWalks} refreshing={overview.refreshing} onRefresh={refresh} onMonthChange={changeMonth} onSelect={setSelectedDay} onOpenWalk={onOpenWalk} onEditWeeklyGoal={() => router.push('/daily-goal')} />;
 }
 
 function useLocalToday() {

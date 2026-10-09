@@ -17,7 +17,7 @@ export function SavedWalks({ records, status, onOpen, onRetry, dateKey }: { reco
   const [expanded, setExpanded] = useState(false);
   const walks = records.filter((record) => record.activityType === 'walk' && (!dateKey || record.dateKey === dateKey));
   const visibleWalks = expanded ? walks : walks.slice(0, 5);
-  return <View style={styles.section}>
+  return <View testID="history-saved-walks" style={styles.section}>
     <View style={styles.sectionHead}><AppText accessibilityRole="header" variant="titleSmall" style={styles.title}>Saved walks</AppText><AppText variant="label" style={styles.count}>{walks.length} {walks.length === 1 ? 'walk' : 'walks'}</AppText></View>
     {status === 'loading' ? <Skeleton style={{ width: '100%', height: 140, borderRadius: radii.xl, backgroundColor: historyColors.panelEdge }} /> : status === 'error' ? <StateCard tone="error" title="Walks couldn’t load" description="Your daily steps are separate from recorded walks." actionLabel="Try again" onAction={onRetry} /> : !walks.length ? <View style={styles.emptyState}><View style={styles.emptyIcon}><Ionicons name="footsteps-outline" size={24} color={historyColors.blueDeep} /></View><AppText variant="titleSmall" style={styles.emptyTitle}>A story waiting to be walked</AppText><AppText variant="bodySmall" tone="secondary">Walks you finish and save in the Walk tab appear here. Your daily steps still count without recording a walk.</AppText></View> : <View style={styles.list}>
       {visibleWalks.map((walk, index) => <Pressable key={walk.id} accessibilityRole="button" accessibilityLabel={`Walk on ${new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(dateFromKey(walk.dateKey))}, ${(walk.distanceMeters / 1000).toFixed(2)} kilometers`} accessibilityHint="Opens your private saved walk summary" onPress={() => onOpen(walk.id)} style={({ pressed }) => [styles.row, index === visibleWalks.length - 1 && styles.lastRow, pressed && styles.pressed]}>
@@ -36,7 +36,7 @@ function formatElapsed(milliseconds: number) {
 }
 
 function createStyles(historyColors: HistoryColorSet) { return StyleSheet.create({
-  section: { gap: spacing.lg },
+  section: { gap: spacing.lg, width: '100%' },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 24, fontWeight: '800' }, count: { color: historyColors.muted, fontSize: 12 },
   list: { gap: 0 },
