@@ -86,7 +86,7 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
 
           <Leaderboard friends={friends} limit={3} podium="bars" podiumHeight={140} />
 
-          {currentUser ? <YourRankCard entry={currentUser} /> : null}
+          {currentUser ? <YourRankCard entry={currentUser} entries={entries} period={period} /> : null}
 
           <Leaderboard friends={friends} podium="none" />
         </View>
@@ -95,14 +95,22 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
   );
 }
 
-function YourRankCard({ entry }: { entry: GlobalLeaderboardEntry }) {
+function YourRankCard({ entry, entries, period }: { entry: GlobalLeaderboardEntry; entries: GlobalLeaderboardEntry[]; period: GlobalLeaderboardPeriod }) {
+  const nextRank = entries
+    .filter((candidate) => candidate.verifiedSteps > entry.verifiedSteps)
+    .sort((first, second) => first.verifiedSteps - second.verifiedSteps)[0];
+  const stepsToNextRank = nextRank ? nextRank.verifiedSteps - entry.verifiedSteps + 1 : null;
+
   return (
     <Surface padding="lg" radius="md" style={stylesForRankCard.card} variant="soft">
-      <View>
-        <AppText tone="secondary" variant="caption">Your global position</AppText>
-        <AppText variant="titleSmall">Rank #{entry.rank}</AppText>
+      <View style={stylesForRankCard.copy}>
+        <View>
+          <AppText tone="secondary" variant="caption">Your global position</AppText>
+          <AppText variant="titleSmall">Rank #{entry.rank}</AppText>
+        </View>
+        <AppText tone="secondary" variant="bodySmall">{formatSteps(entry.verifiedSteps)} {period === 'week' ? 'this week' : 'all time'}</AppText>
+        <AppText tone="secondary" variant="caption">{stepsToNextRank === null ? 'You’re at the top of this board.' : `${formatSteps(stepsToNextRank)} more steps to rank #${nextRank?.rank}`}</AppText>
       </View>
-      <AppText tone="secondary" variant="bodySmall">{formatSteps(entry.verifiedSteps)} steps</AppText>
     </Surface>
   );
 }
@@ -133,7 +141,7 @@ function LoadingRows() {
   return <View style={styles.loadingRows}>{[0, 1, 2].map((item) => <View key={item} style={styles.loadingRow}><View style={styles.loadingAvatar} /><View style={styles.loadingCopy}><View style={styles.loadingLine} /><View style={styles.loadingSmallLine} /></View><View style={styles.loadingValue} /></View>)}</View>;
 }
 
-const stylesForRankCard = StyleSheet.create({ card: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' } });
+const stylesForRankCard = StyleSheet.create({ card: { alignItems: 'stretch', flexDirection: 'row' }, copy: { flex: 1, gap: 6 } });
 
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({

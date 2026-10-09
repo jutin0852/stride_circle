@@ -10,6 +10,7 @@ import {
 import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 
 import { auth, database, requireFirebase } from '@/lib/firebase';
+import { walkingReminders } from '@/services/notifications/walking-reminders';
 import {
   getAvatarChoiceFromUrl,
   getAvatarUrl,
@@ -96,8 +97,15 @@ export async function updateUserAvatar(input: { avatar: AvatarChoice; user: User
   await batch.commit();
 }
 
-export function signOutCurrentUser() {
-  return signOut(requireFirebase(auth, 'Authentication'));
+export async function signOutCurrentUser() {
+  const firebaseAuth = requireFirebase(auth, 'Authentication');
+  const previousUserId = firebaseAuth.currentUser?.uid ?? null;
+  await walkingReminders.activate(null);
+  try { await signOut(firebaseAuth); }
+  catch (error) {
+    await walkingReminders.activate(previousUserId).catch(() => {});
+    throw error;
+  }
 }
 
 export function getAuthErrorMessage(error: unknown) {

@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { BarChart } from 'panelui-native/components/bar-chart';
 
-import { AppText, StateCard } from '@/components/ui';
+import { AppText, ProgressBar, StateCard } from '@/components/ui';
+import { formatSteps } from '@/data/circle';
 import { getWeekDateKeys } from '@/domain/dates';
 import { dateFromKey, type StepDay } from '@/domain/walking-history';
 import { spacing } from '@/design-system/tokens';
@@ -10,7 +11,7 @@ import type { HistoryLoadState } from './use-walking-history';
 import { useHistoryTheme } from './history-tokens';
 import type { HistoryColorSet } from './history-tokens';
 
-export function HistoryRecap({ records, today, goal, goalReady, status, onRetry }: { records: StepDay[]; today: string; goal: number; goalReady: boolean; status: HistoryLoadState; onRetry: () => void }) {
+export function HistoryRecap({ records, today, goal, goalReady, weeklyGoal, weeklyGoalReady, onEditWeeklyGoal, status, onRetry }: { records: StepDay[]; today: string; goal: number; goalReady: boolean; weeklyGoal?: number; weeklyGoalReady?: boolean; onEditWeeklyGoal?: () => void; status: HistoryLoadState; onRetry: () => void }) {
   const { colors: historyColors } = useHistoryTheme();
   const styles = useMemo(() => createStyles(historyColors), [historyColors]);
   const weekDates = useMemo(() => getWeekDateKeys(today), [today]);
@@ -30,11 +31,18 @@ export function HistoryRecap({ records, today, goal, goalReady, status, onRetry 
   const maxDaySteps = Math.max(0, ...chartData.map((day) => day.steps));
   const scaleMax = getScaleMax(goalReady ? goal : 0, maxDaySteps);
   const goalDays = goalReady ? chartData.filter((day) => day.future === 0 && day.saved === 1 && day.steps >= goal).length : 0;
+  const weeklySteps = chartData.reduce((total, day) => total + (day.future ? 0 : day.steps), 0);
   const todaySteps = stepsByDate.get(today) ?? 0;
   const todayComplete = goalReady && todaySteps >= goal;
 
   return <View>
     <View style={styles.sectionTitle}><AppText accessibilityRole="header" variant="titleSmall" style={styles.title}>This week, so far</AppText></View>
+    {status === 'ready' && weeklyGoalReady && weeklyGoal ? <View style={styles.weeklyGoal}>
+      <View style={styles.weeklyGoalHeading}><AppText variant="label">Weekly target</AppText>{onEditWeeklyGoal ? <Pressable accessibilityRole="button" accessibilityLabel="Change weekly step target" onPress={onEditWeeklyGoal} hitSlop={8}><AppText variant="caption" style={styles.changeGoal}>Change</AppText></Pressable> : null}</View>
+      <AppText variant="titleSmall">{formatSteps(weeklySteps)} <AppText tone="secondary" variant="bodySmall">of {formatSteps(weeklyGoal)} steps</AppText></AppText>
+      <ProgressBar accessibilityLabel="Weekly step target progress" value={weeklySteps} max={weeklyGoal} fillColor={historyColors.blue} trackColor={historyColors.panel} />
+      <AppText tone="secondary" variant="caption">Steps saved from your health data this week.</AppText>
+    </View> : null}
     {status === 'error' ? <StateCard tone="error" title="Recap unavailable" description="We couldn’t load your saved steps." actionLabel="Try again" onAction={onRetry} /> : <View style={styles.chartSection}>
       <BarChart
         accessibilityLabel="Your saved steps from Monday through Sunday this week"
@@ -83,6 +91,9 @@ function createStyles(historyColors: HistoryColorSet) { return StyleSheet.create
   sectionTitle: { marginBottom: spacing.lg },
   title: { color: historyColors.ink, fontSize: 19, lineHeight: 24, fontWeight: '800' },
   chartSection: { paddingTop: spacing.xs },
+  weeklyGoal: { backgroundColor: historyColors.panel, borderColor: historyColors.panelLine, borderRadius: 16, borderWidth: 1, gap: spacing.sm, marginTop: spacing.sm, padding: spacing.md },
+  weeklyGoalHeading: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  changeGoal: { color: historyColors.blueDeep, fontWeight: '800' },
   rhythmNote: { marginTop: spacing.md, paddingHorizontal: 2, fontSize: 12, lineHeight: 18, color: historyColors.muted },
   rhythmStrong: { color: historyColors.greenDeep, fontWeight: '800', fontSize: 12, lineHeight: 18 },
 }); }

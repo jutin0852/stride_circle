@@ -37,10 +37,13 @@ Do not kill processes by name. Stop only a server started for this verification 
 - `/`: Home, including `Your walking day, together.`, `Today’s steps`, and `YOUR FEATURED CIRCLE` when the user has an active circle. Routine health synchronization is background work and is not a Home status panel.
 - `/circle`: `Circles`, create/join actions, private/public visibility, invite flow, and discoverable circles.
 - `/circle/[circleId]`: circle standings with daily/weekly scope and a selected day.
+- `/circle/[circleId]/walks`: member-only future walk plans, RSVP, and optional general meetup labels.
+- `/circle/[circleId]/weekly-goal`: circle owner's shared weekly target.
 - `/activity`: walking activity with `RECORD WALK`, `Ready to walk?`, `Walk`, and `Start`. This is an optional foreground GPS flow, not running.
-- `/history`: `YOUR WALKING STORY`, `Every step counts.`, `Your step calendar`, `A week in your shoes`, and `Saved walks`.
+- `/history`: `YOUR WALKING STORY`, `Every step counts.`, `Your step calendar`, private per-date journal, weekly target progress, `A week in your shoes`, and `Saved walks`.
 - `/profile`: reachable from Home; profile editing, character selection, and sign-out.
-- `/daily-goal`: daily step-goal presets and a custom goal.
+- `/daily-goal`: daily step-goal presets and a custom goal, plus weekly target presets and a custom target.
+- `/walking-reminders`: Profile/Home settings entry, opt-in daily local reminder, local 24-hour time, phone permission recovery, and a five-second test. Requires a development client containing `expo-notifications`; web shows an unsupported state. Follow `docs/WALKING_REMINDERS.md` for physical-device acceptance checks. Component/unit tests do not prove OS delivery.
 
 ## Evidence rules
 

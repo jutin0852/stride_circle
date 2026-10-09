@@ -294,11 +294,22 @@ export const generateWeeklyRecaps = onSchedule({
       });
     }
     const ranked = rankScores(Array.from(totals, ([userId, verifiedSteps]) => ({ userId, verifiedSteps })));
+    const topWalkers = await Promise.all(ranked.slice(0, 3).map(async (score) => {
+      const memberSnapshot = await circleSnapshot.ref.collection('members').doc(score.userId).get();
+      const displayName = memberSnapshot.data()?.displayName;
+      return {
+        displayName: typeof displayName === 'string' && displayName.trim() ? displayName : 'Stride Circle member',
+        rank: score.rank,
+        userId: score.userId,
+        verifiedSteps: score.verifiedSteps,
+      };
+    }));
     await recapRef.set({
       generatedAt: FieldValue.serverTimestamp(),
       participationCount: ranked.length,
       schemaVersion: 1,
       totalVerifiedSteps: ranked.reduce((total, score) => total + score.verifiedSteps, 0),
+      topWalkers,
       weekKey,
       winnerUserId: ranked[0]?.userId ?? null,
       winnerUserIds: ranked.filter((score) => score.isWinner).map((score) => score.userId),

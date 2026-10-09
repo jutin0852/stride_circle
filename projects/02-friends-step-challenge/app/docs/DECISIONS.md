@@ -74,3 +74,9 @@ Reason: the user selected B and wants a stable implementation handoff rather tha
 Decision: healthy Home has no Sync button, syncing indicator, provider explanation or routine update timestamp. Connection setup, source explanation, diagnostics and recovery belong in private settings. Home shows only actionable exceptions for unavailable/incomplete data; unknown is never zero. Automatic background delivery is OS-controlled and must be verified separately.
 
 Reason: Home should communicate walking progress and shared circle activity, not internal synchronization work. This changes presentation, not score provenance or the requirement for truthful recovery states.
+
+## D-013 — Add lightweight planning and reflection
+
+Decision: support member-created future circle walk plans with member-only RSVPs and general meetup text; allow the circle owner to set one combined weekly step target. Personal weekly targets and date-based journal notes remain private to the user.
+
+Reason: these features help circles meet and let people reflect on progress without adding direct messages, public activity feeds, exact-location sharing, or a reward economy.

@@ -22,6 +22,7 @@ export type HomeViewProps = {
   onProfile: () => void; onGoal: () => void; onCircles: () => void; onCircle: () => void; onHistory: () => void;
   onWalk?: () => void;
   onPlanWalk?: () => void;
+  onReminders?: () => void;
   onSelectCircle: (id: string) => Promise<void>; onConnect: () => Promise<void>; onHealthSettings: () => Promise<void>; onRetryCircle: () => void;
   social: { name: string; steps: number; status: 'loading' | 'idle' | 'sending' | 'sent' | 'error'; onCheer: () => Promise<void> } | null;
 };
@@ -292,6 +293,7 @@ export function HomeView(props: HomeViewProps) {
               void props.onSelectCircle(circle.id).then(() => closeSheet()).catch(() => setSheetError('That circle couldn’t be selected. Try again.')).finally(() => setSelecting(null));
             }}>{circle.name}{props.circle?.id === circle.id ? ' · Selected' : ''}</Action>) : <>
               <Action secondary colors={colors} onPress={() => closeSheet(props.onProfile)}>View your profile</Action>
+              {props.onReminders ? <Action secondary colors={colors} onPress={() => closeSheet(props.onReminders)}>Walking reminders</Action> : null}
               {props.onWalk ? <Action secondary colors={colors} onPress={() => closeSheet(props.onWalk)}>Open walking activity</Action> : null}
               <Copy colors={colors} accessibilityRole="header" style={styles.circleTitle}>Health connection</Copy>
               <Copy colors={colors} style={{ color: colors.muted }}>{props.health === 'confirmed' ? 'Connected' : props.health === 'stale' ? 'Today’s total may be incomplete' : props.health === 'loading' ? 'Checking access' : 'Access needs attention'} · {props.source}</Copy>

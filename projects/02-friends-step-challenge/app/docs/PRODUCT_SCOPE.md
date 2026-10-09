@@ -30,6 +30,8 @@ The first edition optimizes for a reliable social loop:
 - Discover includes a public global walking leaderboard with This Week and All Time views.
 - Each circle has one shared, membership-scoped text chat for coordinating walks and encouraging one another.
 - Streaks, milestones, weekly recaps, celebrations, and fixed cheers provide lightweight motivation.
+- Members can schedule future circle walks and RSVP, using a general meetup landmark or area.
+- A circle owner can set one combined weekly step target. A person can also set a private weekly target and add private notes to History dates.
 - Public circles include reporting, blocking, owner controls, moderator controls, and abuse handling before broad release.
 
 ## Explicitly out of scope for first edition

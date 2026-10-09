@@ -13,6 +13,7 @@ users/{userId}/dailySteps/{dateKey}
 users/{userId}/weeklyRecaps/{weekKey}
 users/{userId}/activities/{activityId}
 users/{userId}/circleMemberships/{circleId}
+users/{userId}/walkingJournal/{dateKey}
 ```
 
 `users/{userId}/activities` remains private. A route or GPS trace must never be copied into a circle document or a member-visible projection.
@@ -25,6 +26,8 @@ syncState, providerRecordVersion, schemaVersion
 ```
 
 `source` is a provider label such as HealthKit or Health Connect. It is not a promise that the data is fraud-proof.
+
+The user profile stores `dailyStepGoal` and `weeklyStepGoal`. The weekly target is private and follows the user's local Monday-to-Sunday calendar. Journal documents contain `dateKey`, `note`, `createdAt`, `updatedAt`, and `schemaVersion`; only the owning user may read or write them.
 
 ## Global leaderboard projections
 
@@ -60,6 +63,8 @@ circles/{circleId}/days/{dateKey}/scores/{userId}
 circles/{circleId}/weeklyRecaps/{weekKey}
 circles/{circleId}/cheers/{cheerId}
 circles/{circleId}/messages/{messageId}
+circles/{circleId}/walkPlans/{walkId}
+circles/{circleId}/walkPlans/{walkId}/rsvps/{userId}
 circles/{circleId}/reports/{reportId}
 ```
 
@@ -77,6 +82,7 @@ inviteCode                // private only; null for public
 competitionTimeZone       // IANA timezone, fixed for competition boundaries
 discoverableArea          // approximate label/geospatial cell; never exact member location
 memberCount               // projection, bounded by 20
+weeklyStepGoal            // optional combined member steps for the competition week
 createdAt
 updatedAt
 ```
@@ -134,8 +140,11 @@ participationCount
 streakHighlights
 milestones
 generatedAt
+topWalkers                // up to three display snapshots with rank and verifiedSteps
 schemaVersion
 ```
+
+Circle walk plans store a title, start timestamp, creator display snapshot, optional details, optional general meetup label, and scheduled/cancelled status. Each member's RSVP is a separate document keyed by their user id. Plans contain no GPS coordinates or route geometry.
 
 ## Safety data
 

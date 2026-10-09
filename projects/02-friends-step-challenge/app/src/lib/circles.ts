@@ -9,6 +9,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  updateDoc,
   type Unsubscribe,
   where,
   writeBatch,
@@ -43,6 +44,7 @@ export type Circle = {
   name: string;
   ownerId: string;
   visibility: CircleVisibility;
+  weeklyStepGoal?: number | null;
 };
 
 export type CircleActivityType = 'walk';
@@ -247,6 +249,14 @@ export async function updateCircle(input: { circleId: string; description: strin
   });
 
   await batch.commit();
+}
+
+export async function updateCircleWeeklyStepGoal(input: { circleId: string; weeklyStepGoal: number }) {
+  if (!Number.isInteger(input.weeklyStepGoal) || input.weeklyStepGoal < 10_000 || input.weeklyStepGoal > 5_000_000) {
+    throw new Error('Choose a shared weekly target between 10,000 and 5,000,000 steps.');
+  }
+  const db = requireFirebase(database, 'Firestore');
+  await updateDoc(doc(db, 'circles', input.circleId), { weeklyStepGoal: input.weeklyStepGoal, updatedAt: serverTimestamp() });
 }
 
 /**
@@ -609,6 +619,7 @@ export function watchCircleDetails(
         name: data.name,
         ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
         visibility: getVisibility(data.visibility),
+        weeklyStepGoal: typeof data.weeklyStepGoal === 'number' && Number.isInteger(data.weeklyStepGoal) && data.weeklyStepGoal >= 10_000 && data.weeklyStepGoal <= 5_000_000 ? data.weeklyStepGoal : null,
       };
       publish();
     },

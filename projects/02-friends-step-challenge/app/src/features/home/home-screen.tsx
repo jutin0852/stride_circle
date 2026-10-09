@@ -61,6 +61,7 @@ export function HomeScreen() {
     healthBusy={health.status === 'checking' || health.status === 'requesting'}
     connectionError={record.syncStatus === 'error' ? 'Your latest steps couldn’t be saved. They will be retried when you’re online again.' : health.status === 'error' ? 'Health data couldn’t be read. Check access and try again.' : null}
     onProfile={() => router.push('/profile')} onHistory={() => router.push('/history')} onGoal={() => router.push('/daily-goal')}
+    onReminders={() => router.push('/walking-reminders')}
     onWalk={() => router.push('/walk/record')} onPlanWalk={() => router.push('/walk/plan')}
     onCircles={() => router.push('/circle')} onCircle={() => { if (details) router.push({ pathname: '/circle/[circleId]', params: { circleId: details.circle.id } }); }}
     onSelectCircle={circle.selectCircle} onConnect={health.requestStepAccess} onHealthSettings={health.openHealthSettings} onRetryCircle={circle.refresh}

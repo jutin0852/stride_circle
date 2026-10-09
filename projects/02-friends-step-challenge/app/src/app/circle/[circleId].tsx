@@ -9,8 +9,11 @@ import { AppText, SectionHeader, SegmentedControl, StateCard } from '@/component
 import { type Friend } from '@/data/circle';
 import { getDateKeyDaysBefore, getDateKeyInTimeZone, getWeekDateKeys } from '@/domain/dates';
 import { aggregateCircleSteps, getRankMovement } from '@/features/circles/leaderboard-model';
+import { CircleWeeklyGoalCard } from '@/features/circles/circle-weekly-goal';
+import { CircleWeeklyRecap } from '@/features/circles/circle-weekly-recap';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { useCirclePeriodSteps } from '@/hooks/use-circle-period-steps';
+import { useCircleWalks } from '@/hooks/use-circle-walks';
 import { type CircleMember } from '@/lib/circles';
 import { radii, spacing } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
@@ -31,6 +34,7 @@ export default function CircleDetailRoute() {
   const circleId = Array.isArray(rawCircleId) ? rawCircleId[0] : rawCircleId;
   const { user } = useAuth();
   const { details, status } = useCircleDetails(circleId);
+  const circleWalks = useCircleWalks(details?.circle.id);
   const competitionTimeZone = details?.circle.competitionTimeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const currentDateKey = getDateKeyInTimeZone(new Date(), competitionTimeZone);
   const thisWeekDates = useMemo(
@@ -62,6 +66,8 @@ export default function CircleDetailRoute() {
     : currentDateKey;
   const memberIds = useMemo(() => (details?.members ?? []).map((member) => member.userId), [details?.members]);
   const activeTotals = useMemo(() => aggregateCircleSteps(activeDates, stepsByDate, memberIds), [activeDates, memberIds, stepsByDate]);
+  const weeklyTotals = useMemo(() => aggregateCircleSteps(thisWeekDates, stepsByDate, memberIds), [memberIds, stepsByDate, thisWeekDates]);
+  const weeklyTotal = useMemo(() => Object.values(weeklyTotals).reduce((total, steps) => total + steps, 0), [weeklyTotals]);
   const baselineTotals = useMemo(() => aggregateCircleSteps(baselineDates, stepsByDate, memberIds), [baselineDates, memberIds, stepsByDate]);
   const movement = useMemo(() => getRankMovement(activeTotals, baselineTotals), [activeTotals, baselineTotals]);
   const friends = useMemo(() => buildFriends(details?.members ?? [], activeTotals, user?.uid), [activeTotals, details?.members, user?.uid]);
@@ -84,6 +90,12 @@ export default function CircleDetailRoute() {
       <Pressable accessibilityRole="button" accessibilityLabel="Open circle chat" onPress={() => router.push({ pathname: '/circle/[circleId]/chat', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.chatAction, pressed && styles.chatActionPressed]}>
         <View style={styles.chatIcon}><Ionicons color={colors.accentPressed} name="chatbubbles-outline" size={21} /></View>
         <View style={styles.chatCopy}><AppText variant="label">Circle chat</AppText><AppText tone="secondary" variant="caption">Talk with your walkers</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={19} />
+      </Pressable>
+
+      <Pressable accessibilityRole="button" accessibilityLabel="Open circle walk plans" onPress={() => router.push({ pathname: '/circle/[circleId]/walks', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.walkAction, pressed && styles.chatActionPressed]}>
+        <View style={styles.chatIcon}><Ionicons color={colors.accentPressed} name="walk-outline" size={21} /></View>
+        <View style={styles.chatCopy}><AppText variant="label">Walk together</AppText><AppText tone="secondary" variant="caption">{circleWalks.status === 'loading' ? 'Checking upcoming plans…' : circleWalks.status === 'error' ? 'Walk plans could not load' : circleWalks.plans[0] ? `${circleWalks.plans[0].title} · ${formatShortWalkTime(circleWalks.plans[0].startsAt, circleWalks.plans[0].timeZone)}` : 'Plan a time to meet and walk'}</AppText></View>
         <Ionicons color={colors.muted} name="chevron-forward" size={19} />
       </Pressable>
 
@@ -120,6 +132,8 @@ export default function CircleDetailRoute() {
           </View>
         ) : null}
       </>}
+      {leaderboardStatus === 'ready' ? <CircleWeeklyGoalCard circleId={details.circle.id} goal={details.circle.weeklyStepGoal ?? null} steps={weeklyTotal} canManage={details.circle.ownerId === user?.uid} /> : null}
+      <CircleWeeklyRecap circle={details.circle} members={details.members} />
     </ScrollView>
   );
 }
@@ -138,6 +152,10 @@ function buildFriends(members: CircleMember[], steps: Record<string, number>, us
 
 function getInitials(name: string) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+}
+
+function formatShortWalkTime(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone, timeZoneName: 'short' }).format(date);
 }
 
 function dateFromKey(dateKey: string) {
@@ -185,6 +203,7 @@ function createStyles(colors: ReturnType<typeof useAppColors>) {
     circleTitle: { flex: 1, marginHorizontal: spacing.md, textAlign: 'center' },
     chatAction: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, flexDirection: 'row', gap: spacing.md, minHeight: 64, paddingHorizontal: spacing.md },
     chatActionPressed: { opacity: 0.78, transform: [{ translateY: 1 }] },
+    walkAction: { alignItems: 'center', backgroundColor: colors.soft, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, flexDirection: 'row', gap: spacing.md, minHeight: 64, paddingHorizontal: spacing.md },
     chatIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 20, height: 40, justifyContent: 'center', width: 40 },
     chatCopy: { flex: 1, gap: 1 },
     sectionHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },

@@ -3,6 +3,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 
 import { auth, firebaseIsConfigured } from '@/lib/firebase';
 import { restoreBackgroundRecording, stopBackgroundRecordingOnSignOut } from '@/lib/background-activity';
+import { walkingReminders } from '@/services/notifications/walking-reminders';
 
 type AuthContextValue = {
   isConfigured: boolean;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!auth) return;
 
     return onAuthStateChanged(auth, (nextUser) => {
+      void walkingReminders.activate(nextUser?.uid ?? null).catch(() => {});
       if (!nextUser) void stopBackgroundRecordingOnSignOut().catch(() => {});
       else if (process.env.EXPO_OS !== 'web') void restoreBackgroundRecording(nextUser.uid).catch(() => {});
       setUser(nextUser);
