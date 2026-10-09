@@ -11,10 +11,15 @@ const members = [
   { avatarSeed: 'you', avatarStyle: 'clay' as const, displayName: 'Jordan Walker', role: 'owner' as const, userId: 'you-id' },
 ];
 
-const messages = [
-  { author: { avatarSeed: 'ada', avatarStyle: 'sprouts' as const, displayName: 'Ada Walker', id: 'ada-id' }, body: 'Ready for today?', circleId: 'circle-1', createdAt: new Date('2026-10-08T08:00:00Z'), id: 'message-1', status: 'sent' as const },
-  { author: { avatarSeed: 'you', avatarStyle: 'clay' as const, displayName: 'Jordan Walker', id: 'you-id' }, body: 'Absolutely!', circleId: 'circle-1', createdAt: new Date('2026-10-08T08:01:00Z'), id: 'message-2', status: 'sent' as const },
-];
+function createMessages() {
+  const now = new Date();
+  const todayAtNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+
+  return [
+    { author: { avatarSeed: 'ada', avatarStyle: 'sprouts' as const, displayName: 'Ada Walker', id: 'ada-id' }, body: 'Ready for today?', circleId: 'circle-1', createdAt: todayAtNoon, id: 'message-1', status: 'sent' as const },
+    { author: { avatarSeed: 'you', avatarStyle: 'clay' as const, displayName: 'Jordan Walker', id: 'you-id' }, body: 'Absolutely!', circleId: 'circle-1', createdAt: new Date(todayAtNoon.getTime() + 60_000), id: 'message-2', status: 'sent' as const },
+  ];
+}
 
 async function setup(overrides: Partial<CircleChatViewProps> = {}) {
   const onSend = jest.fn().mockResolvedValue(true);
@@ -26,7 +31,7 @@ async function setup(overrides: Partial<CircleChatViewProps> = {}) {
     loadingOlder: false,
     memberCount: 2,
     members,
-    messages,
+    messages: createMessages(),
     onBack: jest.fn(),
     onLoadOlder: jest.fn(),
     onRetry: jest.fn(),
@@ -46,7 +51,7 @@ describe('circle chat view', () => {
     expect(screen.getByText('2 walkers')).toBeTruthy();
     expect(screen.getByText('Ready for today?')).toBeTruthy();
     expect(screen.getByText('Absolutely!')).toBeTruthy();
-    expect(screen.getByText(/TODAY|2026/)).toBeTruthy();
+    expect(screen.getByText('TODAY')).toBeTruthy();
     expect(screen.queryByText('Your circle chat')).toBeNull();
     expect(screen.queryByLabelText('2 circle members')).toBeNull();
   });
