@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="680" viewBox="0 0 600 680">
+<title>Asset sheet duck — editable base character</title>
+<desc>Vector reconstruction from the supplied white duck sheet. Independent named parts, transparent background, neutral pose, blue shoes. Left and right mean screen sides. Pivots and animations are not embedded.</desc>
+<g id="duck_root" stroke="#101111" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+  <g id="leg_left"><path id="leg_left_shape" d="M224 477L214 546Q232 563 255 548L263 484Z" fill="#fff"/><g id="shoe_left"><path d="M216 531Q206 548 195 563Q180 584 199 595Q220 605 266 597Q278 590 270 572L255 535Q238 542 216 531Z" fill="#079FF3"/><path d="M220 563Q233 557 246 562" fill="none" stroke-width="6"/></g></g>
+  <g id="leg_right"><path id="leg_right_shape" d="M337 484L345 548Q368 563 386 546L376 477Z" fill="#fff"/><g id="shoe_right"><path d="M384 531Q394 548 405 563Q420 584 401 595Q380 605 334 597Q322 590 330 572L345 535Q362 542 384 531Z" fill="#079FF3"/><path d="M380 563Q367 557 354 562" fill="none" stroke-width="6"/></g></g>
+  <g id="body"><path d="M219 276Q204 302 182 330Q151 368 171 412Q151 443 170 473Q199 511 291 510Q384 514 416 474Q444 438 418 398Q424 358 393 329Q363 302 355 276Z" fill="#fff"/>
+    <g id="wing_left"><path d="M198 329Q172 328 155 348Q137 370 142 391Q148 413 174 405Q195 399 207 378Q219 357 205 351Q222 336 198 329Z" fill="#fff"/></g>
+    <g id="wing_right"><path d="M402 329Q428 328 445 348Q463 370 458 391Q452 413 426 405Q405 399 393 378Q381 357 395 351Q378 336 402 329Z" fill="#fff"/></g>
+    <g id="head"><path d="M189 196C184 122 226 80 293 78C365 75 407 121 411 185L413 244Q409 295 354 307Q294 320 234 304Q187 296 186 252Z" fill="#fff"/>
+      <g id="face">
+        <g id="eyebrow_left" opacity="0"><path d="M235 167Q248 158 261 166" fill="none" stroke-width="6"/></g>
+        <g id="eyebrow_right" opacity="0"><path d="M339 166Q352 158 365 167" fill="none" stroke-width="6"/></g>
+        <g id="eye_left"><g id="pupil_left"><ellipse cx="249" cy="200" rx="10" ry="14" fill="#101111" stroke="none"/></g></g>
+        <g id="eye_right"><g id="pupil_right"><ellipse cx="351" cy="200" rx="10" ry="14" fill="#101111" stroke="none"/></g></g>
+        <g id="cheek_left" opacity="0"><ellipse cx="226" cy="229" rx="15" ry="9" fill="#FFA0A5" stroke="none"/></g>
+        <g id="cheek_right" opacity="0"><ellipse cx="374" cy="229" rx="15" ry="9" fill="#FFA0A5" stroke="none"/></g>
+        <g id="mouth_open" opacity="0"><path d="M267 246Q266 287 298 291Q328 290 335 246Z" fill="#251615" stroke-width="7"/><path d="M279 270Q297 260 316 270Q309 286 298 285Q285 285 279 270Z" fill="#FF6948" stroke="none"/></g>
+        <g id="beak_upper"><path d="M266 232Q277 230 284 218Q293 208 304 217Q314 230 330 233Q343 240 337 250Q321 259 299 256Q275 260 263 253Q253 244 266 232Z" fill="#FF9F2D" stroke-width="7"/></g>
+        <g id="beak_lower" opacity="0"><path d="M272 253Q300 268 329 253Q322 277 300 279Q279 277 272 253Z" fill="#FF9F2D" stroke-width="6"/></g>
+        <g id="closed_eye_left" opacity="0"><path d="M237 205Q249 185 262 204" fill="none" stroke-width="8"/></g>
+        <g id="closed_eye_right" opacity="0"><path d="M338 204Q351 185 364 205" fill="none" stroke-width="8"/></g>
+        <g id="sleepy_eye_left" opacity="0"><path d="M237 198Q249 218 262 198" fill="none" stroke-width="8"/></g>
+        <g id="sleepy_eye_right" opacity="0"><path d="M338 198Q351 218 364 198" fill="none" stroke-width="8"/></g>
+      </g>
+    </g>
+  </g>
+</g>
+</svg>

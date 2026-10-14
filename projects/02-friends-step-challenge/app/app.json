@@ -13,6 +13,14 @@
       "expo-system-ui",
       "expo-dev-client",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo to use in your walk share.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#2563EB",
@@ -34,7 +42,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Stride Circle uses your location to show your route, distance, and pace during an activity.",
+          "locationWhenInUsePermission": "Stride Circle uses your location to center the Activity map and record your route, distance, and pace when you start a walk.",
           "locationAlwaysAndWhenInUsePermission": "Stride Circle uses your location during an active walk so recording continues when your phone is locked. Recording stops when you pause or finish.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,

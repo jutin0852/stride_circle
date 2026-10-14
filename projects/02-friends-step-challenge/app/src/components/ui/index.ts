@@ -8,6 +8,7 @@ export { BrandLockup } from '@/components/ui/BrandLockup';
 export { Button } from '@/components/ui/Button';
 export type { ButtonSize, ButtonVariant } from '@/components/ui/Button';
 export { Divider } from '@/components/ui/Divider';
+export { FixedHeaderScreen } from '@/components/ui/FixedHeaderScreen';
 export { IconButton } from '@/components/ui/IconButton';
 export { ProgressBar } from '@/components/ui/ProgressBar';
 export { SectionHeader } from '@/components/ui/SectionHeader';

@@ -1,8 +1,12 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 import { formatCalendarSteps, WalkingCalendar } from './walking-calendar';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+let mockReducedMotion = false;
+jest.mock('@/hooks/use-reduced-motion', () => ({ useReducedMotion: () => mockReducedMotion }));
+beforeEach(() => { mockReducedMotion = false; });
+afterEach(() => { jest.restoreAllMocks(); });
 
 function setup(overrides: Partial<React.ComponentProps<typeof WalkingCalendar>> = {}) {
   const onSelect = jest.fn();
@@ -13,6 +17,53 @@ function setup(overrides: Partial<React.ComponentProps<typeof WalkingCalendar>> 
 }
 
 describe('walking calendar states', () => {
+  it('gives date presses subtle feedback without delaying selection', async () => {
+    const spring = jest.spyOn(Animated, 'spring');
+    const { props, onSelect } = setup();
+    const screen = await render(<WalkingCalendar {...props} />);
+    const date = screen.getByRole('button', { name: /October 2, 2026/ });
+    await fireEvent(date, 'pressIn');
+    expect(spring).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: 0.96 }));
+    await fireEvent.press(date);
+    expect(onSelect).toHaveBeenCalledWith('2026-10-02');
+    await fireEvent(date, 'pressOut');
+    expect(spring).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: 1 }));
+  });
+  it('transitions the current day details and keeps rapid selections accurate', async () => {
+    const timing = jest.spyOn(Animated, 'timing');
+    const { props } = setup({ records: [
+      { dateKey: '2026-10-01', steps: 1500 }, { dateKey: '2026-10-02', steps: 2500 }, { dateKey: '2026-10-03', steps: 4000 },
+    ] });
+    const screen = await render(<WalkingCalendar {...props} />);
+    expect(timing).not.toHaveBeenCalled();
+    await screen.rerender(<WalkingCalendar {...props} selected="2026-10-02" />);
+    expect(timing).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: 1, duration: 160 }));
+    await screen.rerender(<WalkingCalendar {...props} selected="2026-10-01" />);
+    expect(screen.getByText('1,500')).toBeTruthy();
+    expect(screen.queryByText('2,500')).toBeNull();
+    expect(screen.getByRole('button', { name: /October 1, 2026/ }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('button', { name: /October 2, 2026/ }).props.accessibilityState.selected).toBe(false);
+  });
+  it('keeps the existing single selection border', async () => {
+    const { props } = setup();
+    const screen = await render(<WalkingCalendar {...props} />);
+    const button = screen.getByRole('button', { name: /October 3, 2026/ });
+    const date = button.children[0];
+    if (typeof date === 'string') throw new Error('Expected date container');
+    expect(StyleSheet.flatten(date.props.style).borderWidth).toBe(2);
+  });
+  it('updates dates without animated movement when Reduce Motion is enabled', async () => {
+    mockReducedMotion = true;
+    const spring = jest.spyOn(Animated, 'spring');
+    const timing = jest.spyOn(Animated, 'timing');
+    const { props } = setup();
+    const screen = await render(<WalkingCalendar {...props} />);
+    await fireEvent(screen.getByRole('button', { name: /October 2, 2026/ }), 'pressIn');
+    await screen.rerender(<WalkingCalendar {...props} selected="2026-10-02" />);
+    expect(spring).not.toHaveBeenCalled();
+    expect(timing).not.toHaveBeenCalled();
+    expect(screen.getByText('No steps were recorded for this day.')).toBeTruthy();
+  });
   it('formats daily totals compactly for the calendar grid', () => {
     expect(formatCalendarSteps(0)).toBe('0');
     expect(formatCalendarSteps(835)).toBe('835');
@@ -80,8 +131,8 @@ describe('walking calendar states', () => {
     const { props } = setup({ records: [] });
     const screen = await render(<WalkingCalendar {...props} />);
     expect(screen.getByText('No steps were recorded for this day.')).toBeTruthy();
-    expect(screen.getByText('—')).toBeTruthy();
-    expect(screen.queryAllByText('0')).toHaveLength(0);
+    expect(screen.queryByText('—')).toBeNull();
+    expect(screen.getByText('0')).toBeTruthy();
     await screen.rerender(<WalkingCalendar {...props} records={[{ dateKey: '2026-10-03', steps: 0 }]} />);
     expect(screen.getAllByText('0').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /0 saved steps/ })).toBeTruthy();

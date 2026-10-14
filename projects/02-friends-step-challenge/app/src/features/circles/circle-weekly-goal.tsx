@@ -19,7 +19,7 @@ export function CircleWeeklyGoalCard({ circleId, goal, steps, canManage }: { cir
     </View>
     {goal ? <>
       <View style={styles.amount}><AppText variant="titleSmall">{formatSteps(steps)}</AppText><AppText tone="secondary" variant="bodySmall">of {formatSteps(goal)} steps · {percent}%</AppText></View>
-      <ProgressBar accessibilityLabel="Circle weekly goal progress" value={steps} max={goal} fillColor={colors.accent} trackColor={colors.soft} />
+      <ProgressBar animated accessibilityLabel="Circle weekly goal progress" value={steps} max={goal} fillColor={colors.accent} trackColor={colors.soft} />
       <View style={styles.milestones}>{MILESTONES.map((milestone) => <View key={milestone} accessibilityLabel={`${milestone}% circle goal milestone${percent >= milestone ? ', reached' : ', not yet reached'}`} style={[styles.milestone, percent >= milestone && styles.milestoneReached]}><AppText variant="caption" style={[styles.milestoneText, percent >= milestone && styles.milestoneTextReached]}>{milestone}%</AppText></View>)}</View>
     </> : <AppText tone="secondary" variant="bodySmall">{canManage ? 'Set a shared target and see your circle move toward it together.' : 'The circle owner can set a shared target for the week.'}</AppText>}
   </Surface>;

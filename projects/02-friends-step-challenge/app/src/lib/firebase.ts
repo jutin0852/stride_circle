@@ -2,12 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import * as FirebaseAuth from 'firebase/auth';
 import {
+  connectAuthEmulator,
   type Auth,
   getAuth,
   initializeAuth,
   type Persistence,
 } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
+
+import { getFirebaseEmulatorConfig } from '@/lib/firebase-emulator-config';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -50,6 +53,30 @@ function createAuth(): Auth | null {
 
 export const auth = createAuth();
 export const database: Firestore | null = app ? getFirestore(app) : null;
+
+const firebaseEmulatorConfig = getFirebaseEmulatorConfig({
+  development: process.env.NODE_ENV === 'development',
+  enabled: process.env.EXPO_PUBLIC_FIREBASE_USE_EMULATORS,
+  host: process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST,
+  projectId: firebaseConfig.projectId,
+});
+
+if (firebaseEmulatorConfig) {
+  if (auth) {
+    connectAuthEmulator(
+      auth,
+      `http://${firebaseEmulatorConfig.host}:${firebaseEmulatorConfig.authPort}`,
+      { disableWarnings: true },
+    );
+  }
+  if (database) {
+    connectFirestoreEmulator(
+      database,
+      firebaseEmulatorConfig.host,
+      firebaseEmulatorConfig.firestorePort,
+    );
+  }
+}
 
 export function requireFirebase<T>(service: T | null, name: string): T {
   if (!service) {

@@ -48,4 +48,4 @@ export function homeTheme(isDark: boolean) {
   return isDark ? homeDarkColors : homeColors;
 }
 
-export const homeMotion = { greeting: 600, progress: 550, goal: 1400, cheer: 420, circle: 180 } as const;
+export const homeMotion = { greeting: 600, progress: 220, goal: 1400, cheer: 420, circle: 180 } as const;

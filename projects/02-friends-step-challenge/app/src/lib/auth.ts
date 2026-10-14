@@ -15,19 +15,26 @@ import {
   getAvatarChoiceFromUrl,
   getAvatarUrl,
   getDefaultAvatarChoice,
+  isAvatarStyle,
   type AvatarChoice,
 } from '@/lib/avatar';
 
-async function createProfileIfMissing(user: User) {
+export async function createProfileIfMissing(user: User) {
   const db = requireFirebase(database, 'Firestore');
   const profileReference = doc(db, 'users', user.uid);
   const existingProfile = await getDoc(profileReference);
 
-  const storedAvatar = existingProfile.exists()
-    ? getAvatarChoiceFromUrl(existingProfile.data().photoURL)
-    : null;
-  const avatar = storedAvatar ?? getAvatarChoiceFromUrl(user.photoURL) ?? getDefaultAvatarChoice(user.uid);
-  const photoURL = getAvatarUrl(avatar);
+  const profile = existingProfile.exists() ? existingProfile.data() : null;
+  const storedPhotoURL = getRemotePhotoURL(profile?.photoURL);
+  const authPhotoURL = getRemotePhotoURL(user.photoURL);
+  const storedAvatar = getAvatarChoiceFromUrl(storedPhotoURL)
+    ?? (typeof profile?.avatarSeed === 'string' && profile.avatarSeed && isAvatarStyle(profile.avatarStyle)
+      ? { seed: profile.avatarSeed, style: profile.avatarStyle }
+      : null);
+  const avatar = storedAvatar ?? getAvatarChoiceFromUrl(authPhotoURL) ?? getDefaultAvatarChoice(user.uid);
+  // The saved profile is authoritative, including real photos and chosen characters.
+  // Only generate a character URL when neither profile nor Auth has a usable photo.
+  const photoURL = storedPhotoURL ?? authPhotoURL ?? getAvatarUrl(avatar);
 
   if (user.photoURL !== photoURL) await updateProfile(user, { photoURL });
 
@@ -39,6 +46,16 @@ async function createProfileIfMissing(user: User) {
     photoURL,
     ...(existingProfile.exists() ? { updatedAt: serverTimestamp() } : { createdAt: serverTimestamp() }),
   }, { merge: true });
+}
+
+function getRemotePhotoURL(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function createAccount(input: { displayName: string; email: string; password: string }) {
@@ -118,6 +135,10 @@ export function getAuthErrorMessage(error: unknown) {
     'auth/network-request-failed': 'Check your internet connection, then try again.',
     'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
     'auth/weak-password': 'Use a password with at least six characters.',
+    'auth/account-exists-with-different-credential': 'This email already uses another sign-in method. Sign in with that method first.',
+    'auth/operation-not-allowed': 'This sign-in method is not available yet. Please use email to sign in.',
+    'auth/unauthorized-domain': 'Google sign-in is not available from this web address yet.',
+    'auth/popup-blocked': 'Allow the sign-in pop-up in your browser, then try again.',
   };
 
   return messages[code] ?? (error instanceof Error ? error.message : 'Something went wrong. Please try again.');

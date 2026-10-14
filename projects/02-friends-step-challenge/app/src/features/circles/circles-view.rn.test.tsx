@@ -41,6 +41,7 @@ async function setup(overrides: Partial<CirclesViewProps> = {}) {
     onJoinInvite: jest.fn().mockResolvedValue(null),
     onJoinPublic: jest.fn().mockResolvedValue(null),
     onOpenGlobalLeaderboard: jest.fn(),
+    onReportCircle: jest.fn(),
     ...overrides,
   };
 
@@ -75,6 +76,7 @@ describe('Circles hub', () => {
     expect(screen.queryByRole('button', { name: 'Open Morning Movers' })).toBeNull();
     expect(screen.getByText('River Path Ramblers')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Create a Circle' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Search public Circles' })).toBeTruthy();
 
     await user.press(screen.getByRole('tab', { name: 'Your Circles' }));
     expect(screen.getByRole('button', { name: 'Open Morning Movers' })).toBeTruthy();
@@ -90,10 +92,22 @@ describe('Circles hub', () => {
     expect(props.onOpenGlobalLeaderboard).toHaveBeenCalledTimes(1);
   });
 
+  it('offers a separate report action for a discoverable public circle', async () => {
+    const { props, screen } = await setup();
+    await userEvent.setup().press(screen.getByRole('tab', { name: 'Discover' }));
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Report River Path Ramblers' }));
+
+    expect(props.onReportCircle).toHaveBeenCalledWith(publicCircle);
+    expect(screen.getByRole('button', { name: 'River Path Ramblers, 8 members, Yaba' })).toBeTruthy();
+  });
+
   it('filters public circles by name and area and explains an empty search', async () => {
     const second = { ...publicCircle, id: 'public-2', name: 'Neighborhood Wanderers', discoverableArea: 'Ikeja' };
     const { screen } = await setup({ publicCircles: [publicCircle, second] });
-    await userEvent.setup().press(screen.getByRole('tab', { name: 'Discover' }));
+    const user = userEvent.setup();
+    await user.press(screen.getByRole('tab', { name: 'Discover' }));
+    await user.press(screen.getByRole('button', { name: 'Search public Circles' }));
     const search = screen.getByLabelText('Search public Circles');
 
     fireEvent.changeText(search, 'ikeja');
@@ -102,6 +116,27 @@ describe('Circles hub', () => {
 
     fireEvent.changeText(search, 'zzz-not-found');
     await waitFor(() => expect(screen.getByText('No Circles match that search. Try another name.')).toBeTruthy());
+  });
+
+  it('opens focused search from the header, expands results, and removes the dead explore action', async () => {
+    const second = { ...publicCircle, id: 'public-2', name: 'Neighborhood Wanderers', discoverableArea: 'Ikeja' };
+    const third = { ...publicCircle, id: 'public-3', name: 'Garden Loop Club', discoverableArea: 'Victoria Island' };
+    const { screen } = await setup({ publicCircles: [publicCircle, second, third] });
+    const user = userEvent.setup();
+    await user.press(screen.getByRole('tab', { name: 'Discover' }));
+    expect(screen.queryByPlaceholderText('Search by circle or area')).toBeNull();
+    expect(screen.queryByText('Explore more Circles')).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: 'Search public Circles' }));
+    const search = screen.getByPlaceholderText('Search by circle or area');
+    expect(search.props.autoFocus).toBe(true);
+    fireEvent.changeText(search, 'victoria');
+    expect(screen.getByText('Garden Loop Club')).toBeTruthy();
+
+    await user.press(screen.getByRole('button', { name: 'Close circle search' }));
+    expect(screen.queryByPlaceholderText('Search by circle or area')).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId('discover-search-reveal', { includeHiddenElements: true })).toBeNull());
+    expect(screen.queryByText('Garden Loop Club')).toBeNull();
   });
 
   it('keeps the create flow functional, including public discovery-area input', async () => {
@@ -120,6 +155,23 @@ describe('Circles hub', () => {
       visibility: 'public',
     }));
     await waitFor(() => expect(screen.queryByText('Start a walking circle')).toBeNull());
+  });
+  it('clears search and resets it when leaving Discover', async () => {
+    const { screen } = await setup();
+    const user = userEvent.setup();
+    await user.press(screen.getByRole('tab', { name: 'Discover' }));
+    await user.press(screen.getByRole('button', { name: 'Search public Circles' }));
+    await fireEvent.changeText(screen.getByPlaceholderText('Search by circle or area'), 'not found');
+    expect(screen.getByText('No Circles match that search. Try another name.')).toBeTruthy();
+    await user.press(screen.getByRole('button', { name: 'Clear search' }));
+    expect(screen.getByText('River Path Ramblers')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Search by circle or area')).toBeTruthy();
+    await fireEvent.changeText(screen.getByPlaceholderText('Search by circle or area'), 'Yaba');
+    await user.press(screen.getByRole('tab', { name: 'Your Circles' }));
+    expect(screen.queryByPlaceholderText('Search by circle or area')).toBeNull();
+    await user.press(screen.getByRole('tab', { name: 'Discover' }));
+    expect(screen.queryByPlaceholderText('Search by circle or area')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Search public Circles' }).props.accessibilityState.expanded).toBe(false);
   });
 
   it('keeps private invite-code joining available from the create sheet', async () => {
@@ -143,7 +195,7 @@ describe('Circles hub', () => {
     const user = userEvent.setup();
 
     await user.press(screen.getByRole('tab', { name: 'Discover' }));
-    await user.press(screen.getByRole('button', { name: /River Path Ramblers/ }));
+    await user.press(screen.getByRole('button', { name: 'River Path Ramblers, 8 members, Yaba' }));
     await waitFor(() => expect(alert).toHaveBeenCalledWith(
       'Join River Path Ramblers?',
       'You’ll become a member of this public walking circle.',

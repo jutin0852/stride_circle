@@ -80,7 +80,7 @@ export const semanticColors = {
 
   contentPrimary: appColors.ink,
   contentSecondary: appColors.muted,
-  contentTertiary: '#78909A',
+  contentTertiary: '#596C75',
   contentDisabled: '#9AAAB1',
   contentInverse: palette.white,
   contentOnBrand: appColors.ink,

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { Leaderboard } from '@/components/leaderboard';
@@ -9,11 +10,12 @@ import { AppText, SectionHeader, SegmentedControl, StateCard } from '@/component
 import { type Friend } from '@/data/circle';
 import { getDateKeyDaysBefore, getDateKeyInTimeZone, getWeekDateKeys } from '@/domain/dates';
 import { aggregateCircleSteps, getRankMovement } from '@/features/circles/leaderboard-model';
-import { CircleWeeklyGoalCard } from '@/features/circles/circle-weekly-goal';
-import { CircleWeeklyRecap } from '@/features/circles/circle-weekly-recap';
+import { CircleActivityLink } from '@/features/circles/circle-activity-link';
+import { CircleChatIconButton } from '@/features/circles/circle-chat-icon-button';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { useCirclePeriodSteps } from '@/hooks/use-circle-period-steps';
-import { useCircleWalks } from '@/hooks/use-circle-walks';
+import { useCircleChatUnreadCount } from '@/hooks/use-circle-chat-unread-count';
+import { useBlockedPeople } from '@/hooks/use-blocked-people';
 import { type CircleMember } from '@/lib/circles';
 import { radii, spacing } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
@@ -30,11 +32,13 @@ const PERIODS = [
 export default function CircleDetailRoute() {
   const colors = useAppColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const { circleId: rawCircleId } = useLocalSearchParams<{ circleId: string }>();
   const circleId = Array.isArray(rawCircleId) ? rawCircleId[0] : rawCircleId;
   const { user } = useAuth();
   const { details, status } = useCircleDetails(circleId);
-  const circleWalks = useCircleWalks(details?.circle.id);
+  const blocked = useBlockedPeople(user?.uid);
+  const chatUnread = useCircleChatUnreadCount(details?.circle.id, user?.uid);
   const competitionTimeZone = details?.circle.competitionTimeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const currentDateKey = getDateKeyInTimeZone(new Date(), competitionTimeZone);
   const thisWeekDates = useMemo(
@@ -64,14 +68,15 @@ export default function CircleDetailRoute() {
   const selectedDateKey = period === 'this-week' && selectedDateKeyOverride && activeDates.includes(selectedDateKeyOverride)
     ? selectedDateKeyOverride
     : currentDateKey;
-  const memberIds = useMemo(() => (details?.members ?? []).map((member) => member.userId), [details?.members]);
+  const visibleMembers = useMemo(() => (details?.members ?? []).filter((member) => (
+    member.userId === user?.uid || (blocked.status === 'ready' && !blocked.ids.has(member.userId))
+  )), [blocked.ids, blocked.status, details?.members, user?.uid]);
+  const memberIds = useMemo(() => visibleMembers.map((member) => member.userId), [visibleMembers]);
   const activeTotals = useMemo(() => aggregateCircleSteps(activeDates, stepsByDate, memberIds), [activeDates, memberIds, stepsByDate]);
-  const weeklyTotals = useMemo(() => aggregateCircleSteps(thisWeekDates, stepsByDate, memberIds), [memberIds, stepsByDate, thisWeekDates]);
-  const weeklyTotal = useMemo(() => Object.values(weeklyTotals).reduce((total, steps) => total + steps, 0), [weeklyTotals]);
   const baselineTotals = useMemo(() => aggregateCircleSteps(baselineDates, stepsByDate, memberIds), [baselineDates, memberIds, stepsByDate]);
   const movement = useMemo(() => getRankMovement(activeTotals, baselineTotals), [activeTotals, baselineTotals]);
-  const friends = useMemo(() => buildFriends(details?.members ?? [], activeTotals, user?.uid), [activeTotals, details?.members, user?.uid]);
-  const dailyFriends = useMemo(() => buildFriends(details?.members ?? [], stepsByDate[selectedDateKey] ?? {}, user?.uid), [details?.members, selectedDateKey, stepsByDate, user?.uid]);
+  const friends = useMemo(() => buildFriends(visibleMembers, activeTotals, user?.uid), [activeTotals, user?.uid, visibleMembers]);
+  const dailyFriends = useMemo(() => buildFriends(visibleMembers, stepsByDate[selectedDateKey] ?? {}, user?.uid), [selectedDateKey, stepsByDate, user?.uid, visibleMembers]);
 
   if (status === 'loading') return <LoadingState />;
 
@@ -80,61 +85,60 @@ export default function CircleDetailRoute() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
-      <View style={styles.nav}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.roundButton}><Text style={styles.back}>‹</Text></Pressable>
-        <AppText accessibilityRole="header" numberOfLines={1} style={styles.circleTitle} variant="titleSmall">{details.circle.name}</AppText>
-        <Pressable accessibilityRole="button" accessibilityLabel="Circle actions" onPress={() => router.push({ pathname: '/circle/[circleId]/actions', params: { circleId: details.circle.id } })} style={styles.roundButton}><Text style={styles.more}>•••</Text></Pressable>
+    <View style={styles.page}>
+      <View testID="circle-fixed-header" style={[styles.fixedHeader, { paddingTop: insets.top + spacing.lg }]}>
+        <View style={styles.nav}>
+          <View style={styles.navSide}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.roundButton}><Text style={styles.back}>‹</Text></Pressable></View>
+          <AppText accessibilityRole="header" numberOfLines={2} style={styles.circleTitle} variant="titleSmall">{details.circle.name}</AppText>
+          <View style={styles.navActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Open circle options" onPress={() => router.push({ pathname: '/circle/[circleId]/actions', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.roundButton, styles.optionsButton, pressed && styles.buttonPressed]}>
+              <Ionicons color={colors.ink} name="ellipsis-horizontal" size={23} />
+            </Pressable>
+          </View>
+        </View>
+        <SegmentedControl
+          accessibilityLabel="Leaderboard period"
+          items={PERIODS}
+          onChange={(nextPeriod) => {
+            setPeriod(nextPeriod);
+            setSelectedDateKeyOverride(null);
+          }}
+          value={period}
+          variant="surface"
+        />
       </View>
 
-      <Pressable accessibilityRole="button" accessibilityLabel="Open circle chat" onPress={() => router.push({ pathname: '/circle/[circleId]/chat', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.chatAction, pressed && styles.chatActionPressed]}>
-        <View style={styles.chatIcon}><Ionicons color={colors.accentPressed} name="chatbubbles-outline" size={21} /></View>
-        <View style={styles.chatCopy}><AppText variant="label">Circle chat</AppText><AppText tone="secondary" variant="caption">Talk with your walkers</AppText></View>
-        <Ionicons color={colors.muted} name="chevron-forward" size={19} />
-      </Pressable>
-
-      <Pressable accessibilityRole="button" accessibilityLabel="Open circle walk plans" onPress={() => router.push({ pathname: '/circle/[circleId]/walks', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.walkAction, pressed && styles.chatActionPressed]}>
-        <View style={styles.chatIcon}><Ionicons color={colors.accentPressed} name="walk-outline" size={21} /></View>
-        <View style={styles.chatCopy}><AppText variant="label">Walk together</AppText><AppText tone="secondary" variant="caption">{circleWalks.status === 'loading' ? 'Checking upcoming plans…' : circleWalks.status === 'error' ? 'Walk plans could not load' : circleWalks.plans[0] ? `${circleWalks.plans[0].title} · ${formatShortWalkTime(circleWalks.plans[0].startsAt, circleWalks.plans[0].timeZone)}` : 'Plan a time to meet and walk'}</AppText></View>
-        <Ionicons color={colors.muted} name="chevron-forward" size={19} />
-      </Pressable>
-
-      <SegmentedControl
-        accessibilityLabel="Leaderboard period"
-        items={PERIODS}
-        onChange={(nextPeriod) => {
-          setPeriod(nextPeriod);
-          setSelectedDateKeyOverride(null);
-        }}
-        value={period}
-        variant="surface"
-      />
-
-      {leaderboardStatus === 'loading' ? <LoadingRows /> : leaderboardStatus === 'error' ? <StateCard description="We could not load this circle's standings. Check your connection and try again." title="Standings unavailable" tone="error" /> : friends.length === 0 ? <StateCard description="Invite a few walkers to start comparing verified steps together." title="No walkers yet" /> : <>
-        <View style={styles.sectionHeader}>
-          <AppText variant="titleSmall">{period === 'today' ? 'Today’s standings' : 'This week’s standings'}</AppText>
-          <AppText tone="secondary" variant="caption">{friends.length} {friends.length === 1 ? 'walker' : 'walkers'}</AppText>
-        </View>
-        <Leaderboard changes={movement} friends={friends} limit={3} podium="bars" podiumHeight={140} />
-        {period === 'today' ? <Leaderboard friends={friends} podium="none" /> : null}
-
-        {period === 'this-week' ? (
-          <View style={styles.dailySection}>
-            <SectionHeader title="Daily breakdown" />
-            <ScrollView horizontal contentContainerStyle={styles.dayPicker} showsHorizontalScrollIndicator={false}>
-              {activeDates.map((dateKey) => {
-                const day = getDayLabel(dateKey, competitionTimeZone, currentDateKey);
-                const selected = dateKey === selectedDateKey;
-                return <Pressable accessibilityRole="tab" accessibilityState={{ selected }} key={dateKey} onPress={() => setSelectedDateKeyOverride(dateKey)} style={({ pressed }) => [styles.day, selected && styles.dayActive, pressed && styles.dayPressed]}><AppText tone={selected ? 'onBrand' : 'secondary'} variant="caption">{day.label}</AppText><AppText style={[styles.dayDate, selected && styles.dayTextActive]}>{day.dayOfMonth}</AppText></Pressable>;
-              })}
-            </ScrollView>
-            <Leaderboard friends={dailyFriends} podium="none" />
+      <ScrollView testID="circle-standings-scroll" contentInsetAdjustmentBehavior="never" contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, spacing.lg) + 56 }]} showsVerticalScrollIndicator={false} style={styles.scroll}>
+        {blocked.status === 'loading' ? <StateCard description="Loading your safety preferences before showing circle standings." title="Loading standings" /> : blocked.status === 'error' ? <StateCard actionLabel="Retry" description="We could not load your blocked-people list, so standings are hidden until it can be checked." onAction={blocked.retry} title="Standings unavailable" tone="error" /> : leaderboardStatus === 'loading' ? <LoadingRows /> : leaderboardStatus === 'error' ? <StateCard description="We could not load this circle's standings. Check your connection and try again." title="Standings unavailable" tone="error" /> : friends.length === 0 ? <StateCard description="Invite a few walkers to start comparing verified steps together." title="No walkers yet" /> : <>
+          <View style={styles.sectionHeader}>
+            <AppText variant="titleSmall">{period === 'today' ? 'Today’s standings' : 'This week’s standings'}</AppText>
+            <CircleActivityLink onPress={() => router.push({ pathname: '/circle/[circleId]/activity', params: { circleId: details.circle.id } })} />
           </View>
-        ) : null}
-      </>}
-      {leaderboardStatus === 'ready' ? <CircleWeeklyGoalCard circleId={details.circle.id} goal={details.circle.weeklyStepGoal ?? null} steps={weeklyTotal} canManage={details.circle.ownerId === user?.uid} /> : null}
-      <CircleWeeklyRecap circle={details.circle} members={details.members} />
-    </ScrollView>
+          <Leaderboard changes={movement} friends={friends} limit={3} podium="bars" podiumHeight={140} />
+          {period === 'today' ? <Leaderboard friends={friends} podium="none" /> : null}
+
+          {period === 'this-week' ? (
+            <View style={styles.dailySection}>
+              <SectionHeader title="Daily breakdown" />
+              <ScrollView horizontal contentContainerStyle={styles.dayPicker} showsHorizontalScrollIndicator={false}>
+                {activeDates.map((dateKey) => {
+                  const day = getDayLabel(dateKey, competitionTimeZone, currentDateKey);
+                  const selected = dateKey === selectedDateKey;
+                  return <Pressable accessibilityRole="tab" accessibilityState={{ selected }} key={dateKey} onPress={() => setSelectedDateKeyOverride(dateKey)} style={({ pressed }) => [styles.day, selected && styles.dayActive, pressed && styles.dayPressed]}><AppText tone={selected ? 'onBrand' : 'secondary'} variant="caption">{day.label}</AppText><AppText style={[styles.dayDate, selected && styles.dayTextActive]}>{day.dayOfMonth}</AppText></Pressable>;
+                })}
+              </ScrollView>
+              <Leaderboard friends={dailyFriends} podium="none" />
+            </View>
+          ) : null}
+        </>}
+      </ScrollView>
+      <CircleChatIconButton
+        moreMayBeUnread={chatUnread.moreMayBeUnread}
+        onPress={() => router.push({ pathname: '/circle/[circleId]/chat', params: { circleId: details.circle.id } })}
+        unreadCount={chatUnread.unreadCount}
+        style={[styles.chatFloating, { bottom: Math.max(insets.bottom, spacing.lg) + spacing.md }]}
+      />
+    </View>
   );
 }
 
@@ -152,10 +156,6 @@ function buildFriends(members: CircleMember[], steps: Record<string, number>, us
 
 function getInitials(name: string) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
-}
-
-function formatShortWalkTime(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone, timeZoneName: 'short' }).format(date);
 }
 
 function dateFromKey(dateKey: string) {
@@ -188,24 +188,24 @@ function SkeletonBlock({ colors, height, marginTop, width }: { colors: ReturnTyp
 
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({
-    page: { backgroundColor: colors.background },
-    content: { gap: spacing.lg, paddingHorizontal: spacing.xxl, paddingTop: spacing.lg, paddingBottom: 56 },
+    page: { backgroundColor: colors.background, flex: 1 },
+    fixedHeader: { backgroundColor: colors.background, gap: spacing.lg, paddingBottom: spacing.md, paddingHorizontal: spacing.xxl, zIndex: 1 },
+    scroll: { flex: 1 },
+    content: { gap: spacing.lg, paddingHorizontal: spacing.xxl, paddingTop: spacing.md, paddingBottom: 56 },
     loading: { backgroundColor: colors.background, flex: 1 },
     detailSkeleton: { gap: spacing.md, padding: spacing.xxl },
     leaderboardSkeleton: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, overflow: 'hidden' },
     skeletonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 72, paddingHorizontal: spacing.lg },
     skeletonCopy: { flex: 1, gap: spacing.xs, marginLeft: spacing.md },
-    nav: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+    nav: { alignItems: 'center', flexDirection: 'row' },
+    navSide: { alignItems: 'flex-start', width: 44 },
+    navActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'flex-end', width: 44 },
     roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
     back: { color: colors.ink, fontSize: 32, fontWeight: '300', lineHeight: 34 },
-    more: { color: colors.ink, fontSize: 17, fontWeight: '800', letterSpacing: 1, marginTop: -7 },
-    walkerCount: { flex: 1, marginHorizontal: spacing.md, textAlign: 'center' },
-    circleTitle: { flex: 1, marginHorizontal: spacing.md, textAlign: 'center' },
-    chatAction: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, flexDirection: 'row', gap: spacing.md, minHeight: 64, paddingHorizontal: spacing.md },
-    chatActionPressed: { opacity: 0.78, transform: [{ translateY: 1 }] },
-    walkAction: { alignItems: 'center', backgroundColor: colors.soft, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, flexDirection: 'row', gap: spacing.md, minHeight: 64, paddingHorizontal: spacing.md },
-    chatIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 20, height: 40, justifyContent: 'center', width: 40 },
-    chatCopy: { flex: 1, gap: 1 },
+    buttonPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
+    optionsButton: { padding: 0 },
+    circleTitle: { flex: 1, minWidth: 0, paddingHorizontal: spacing.md, textAlign: 'center' },
+    chatFloating: { elevation: 8, position: 'absolute', right: spacing.xl, shadowColor: colors.ink, shadowOffset: { height: 3, width: 0 }, shadowOpacity: 0.2, shadowRadius: 8, zIndex: 8 },
     sectionHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
     dailySection: { gap: spacing.md, marginTop: spacing.sm },
     dayPicker: { gap: spacing.sm },

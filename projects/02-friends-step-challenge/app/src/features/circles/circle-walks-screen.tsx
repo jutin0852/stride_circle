@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
-import { AppText, Button, IconButton, StateCard, Surface } from '@/components/ui';
+import { AppText, Button, FixedHeaderScreen, IconButton, StateCard, Surface } from '@/components/ui';
 import { formatCircleWalkTime, localDateKeyAfter, MAX_CIRCLE_WALK_DETAILS_LENGTH, MAX_CIRCLE_WALK_MEETUP_LENGTH, MAX_CIRCLE_WALK_TITLE_LENGTH, parseCircleWalkDateTime } from '@/domain/circle-walks';
 import { useAppColors } from '@/design-system/use-app-theme';
 import { useCircleDetails } from '@/hooks/use-circle-details';
@@ -66,12 +66,17 @@ export function CircleWalksScreen() {
   if (circleStatus === 'loading') return <View style={styles.loading}><AppText tone="secondary">Loading circle…</AppText></View>;
   if (circleStatus === 'error' || !circleDetails || !member) return <View style={styles.loading}><StateCard tone="error" title="Circle walks unavailable" description="You need to be a current member of this circle to view its plans." actionLabel="Back" onAction={() => router.back()} /></View>;
 
-  return <ScrollView contentInsetAdjustmentBehavior="never" style={styles.page} contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 12) + 8, paddingBottom: Math.max(insets.bottom, 24) + 20 }]}>
-    <View style={styles.header}>
+  return <FixedHeaderScreen
+    backgroundColor={colors.background}
+    contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}
+    header={<View style={styles.header}>
       <IconButton accessibilityLabel="Go back" onPress={() => router.back()}><Ionicons color={colors.ink} name="arrow-back" size={21} /></IconButton>
       <View style={styles.headerCopy}><AppText accessibilityRole="header" variant="titleSmall">Walk together</AppText><AppText tone="secondary" variant="caption">{circleDetails.circle.name}</AppText></View>
       <View style={styles.headerSpacer} />
-    </View>
+    </View>}
+    headerStyle={styles.fixedHeader}
+    scrollViewProps={{ contentInsetAdjustmentBehavior: 'never' }}
+  >
 
     <Surface padding="lg" radius="lg" style={styles.form}>
       <AppText variant="titleSmall">Plan a circle walk</AppText>
@@ -90,7 +95,7 @@ export function CircleWalksScreen() {
 
     <View style={styles.sectionTitle}><AppText accessibilityRole="header" variant="titleSmall">Upcoming walks</AppText><AppText tone="secondary" variant="caption">{plansState.plans.length}</AppText></View>
     {plansState.status === 'loading' ? <Surface padding="lg" radius="lg"><AppText tone="secondary">Loading walk plans…</AppText></Surface> : plansState.status === 'error' ? <StateCard tone="error" title="Walk plans unavailable" description="We could not load upcoming walks." actionLabel="Try again" onAction={plansState.refresh} /> : plansState.plans.length === 0 ? <StateCard title="No walks planned yet" description="Create the first plan and invite your circle to walk together." /> : plansState.plans.map((plan) => <CircleWalkCard key={plan.id} circleId={circleId!} plan={plan} userId={member.userId} memberIds={memberIds} displayName={member.displayName} canCancel={plan.createdBy === member.userId || circleDetails.circle.ownerId === member.userId} />)}
-  </ScrollView>;
+  </FixedHeaderScreen>;
 }
 
 function Field({ children, label, style }: { children: ReactNode; label: string; style?: object }) {
@@ -144,7 +149,8 @@ function useStyles() {
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({
     page: { backgroundColor: colors.background, flex: 1 },
-    content: { gap: 16, paddingHorizontal: 20 },
+    fixedHeader: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
+    content: { gap: 16, paddingHorizontal: 20, paddingTop: 12 },
     loading: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center', padding: 24 },
     header: { alignItems: 'center', flexDirection: 'row', gap: 12 },
     headerCopy: { flex: 1, gap: 2 },

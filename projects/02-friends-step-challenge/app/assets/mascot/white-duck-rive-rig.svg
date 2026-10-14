@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  White Duck — Rive rig prototype
+  Original vector reconstruction inspired by the supplied reference image.
+  Each animation-critical part is kept in its own named group for SVG import.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="560" viewBox="0 0 480 560" fill="none">
+  <title>White Duck Rive Rig Prototype</title>
+  <desc>A friendly rounded white duck built from independent vector groups for rigging.</desc>
+
+  <g id="duck_root" aria-label="Duck root">
+    <!-- Keep this behind the character or delete it after import. -->
+    <g id="ground_shadow" aria-label="Ground shadow">
+      <ellipse cx="240" cy="484" rx="126" ry="18" fill="#11131A" opacity="0.12"/>
+    </g>
+
+    <!-- Legs and feet sit behind the body so they can swing independently. -->
+    <g id="leg_left" data-rive-pivot="190,405" aria-label="Left leg">
+      <path d="M184 382C182 405 180 425 184 443" stroke="#E79A29" stroke-width="15" stroke-linecap="round"/>
+    </g>
+    <g id="leg_right" data-rive-pivot="286,405" aria-label="Right leg">
+      <path d="M290 382C292 405 295 425 291 443" stroke="#E79A29" stroke-width="15" stroke-linecap="round"/>
+    </g>
+    <g id="foot_left" data-rive-pivot="178,451" aria-label="Left foot">
+      <path d="M178 431C164 431 149 439 144 450C141 458 150 463 162 463H194C207 463 211 455 202 447C195 440 187 432 178 431Z" fill="#F0A52E" stroke="#17171B" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M164 453L174 446M179 456L188 447" stroke="#C97920" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <g id="foot_right" data-rive-pivot="299,451" aria-label="Right foot">
+      <path d="M302 431C316 431 331 439 336 450C339 458 330 463 318 463H286C273 463 269 455 278 447C285 440 293 432 302 431Z" fill="#F0A52E" stroke="#17171B" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M316 453L306 446M301 456L292 447" stroke="#C97920" stroke-width="4" stroke-linecap="round"/>
+    </g>
+
+    <!-- Main torso. Pivot near the lower centre for breathing and squash/stretch. -->
+    <g id="body" data-rive-pivot="240,350" aria-label="Body">
+      <path d="M119 315C121 275 151 248 191 243C221 239 259 239 289 243C329 248 359 275 361 315L365 367C367 422 326 450 240 450C154 450 113 422 115 367L119 315Z" fill="#FAFCFF" stroke="#17171B" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M141 356C147 406 181 427 240 430C299 427 333 406 339 356" stroke="#E8EDF3" stroke-width="10" stroke-linecap="round" opacity="0.95"/>
+      <path d="M160 314C174 287 199 273 223 270" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+    </g>
+
+    <!-- Head is separate from the torso so it can nod, tilt, or bounce. -->
+    <g id="head" data-rive-pivot="240,255" aria-label="Head">
+      <path d="M138 171C140 120 180 88 240 88C300 88 340 120 342 171L346 252C348 293 313 318 240 318C167 318 132 293 134 252L138 171Z" fill="#FBFDFF" stroke="#17171B" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M158 158C173 123 204 108 240 106C276 108 307 123 322 158" stroke="#E8EDF3" stroke-width="10" stroke-linecap="round" opacity="0.95"/>
+    </g>
+
+    <!-- Wings are separate for walking swings and celebration poses. -->
+    <g id="wing_left" data-rive-pivot="145,318" aria-label="Left wing">
+      <path d="M151 294C126 299 108 321 111 349C113 371 126 385 145 390C157 393 168 382 165 369C160 345 165 322 173 307C177 299 166 291 151 294Z" fill="#F4F7FA" stroke="#17171B" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M130 333C134 348 143 359 155 366" stroke="#D8E0E8" stroke-width="7" stroke-linecap="round"/>
+    </g>
+    <g id="wing_right" data-rive-pivot="335,318" aria-label="Right wing">
+      <path d="M329 294C354 299 372 321 369 349C367 371 354 385 335 390C323 393 312 382 315 369C320 345 315 322 307 307C303 299 314 291 329 294Z" fill="#F4F7FA" stroke="#17171B" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M350 333C346 348 337 359 325 366" stroke="#D8E0E8" stroke-width="7" stroke-linecap="round"/>
+    </g>
+
+    <!-- Face groups are independent so blink, gaze, brow, and expression can be mixed. -->
+    <g id="face" aria-label="Face">
+      <g id="eyebrow_left" data-rive-pivot="198,178" aria-label="Left eyebrow">
+        <path d="M177 178C188 168 203 166 215 172" stroke="#17171B" stroke-width="8" stroke-linecap="round"/>
+      </g>
+      <g id="eyebrow_right" data-rive-pivot="282,178" aria-label="Right eyebrow">
+        <path d="M265 172C277 166 292 168 303 178" stroke="#17171B" stroke-width="8" stroke-linecap="round"/>
+      </g>
+
+      <g id="eye_left" data-rive-pivot="198,216" aria-label="Left eye white">
+        <ellipse cx="198" cy="216" rx="30" ry="36" fill="#FFFFFF" stroke="#17171B" stroke-width="7"/>
+      </g>
+      <g id="eye_right" data-rive-pivot="282,216" aria-label="Right eye white">
+        <ellipse cx="282" cy="216" rx="30" ry="36" fill="#FFFFFF" stroke="#17171B" stroke-width="7"/>
+      </g>
+      <g id="pupil_left" data-rive-pivot="198,219" aria-label="Left pupil">
+        <ellipse cx="202" cy="219" rx="12" ry="17" fill="#17171B"/>
+        <ellipse cx="206" cy="212" rx="4" ry="5" fill="#FFFFFF"/>
+      </g>
+      <g id="pupil_right" data-rive-pivot="282,219" aria-label="Right pupil">
+        <ellipse cx="286" cy="219" rx="12" ry="17" fill="#17171B"/>
+        <ellipse cx="290" cy="212" rx="4" ry="5" fill="#FFFFFF"/>
+      </g>
+
+      <g id="cheek_left" data-rive-pivot="168,258" aria-label="Left cheek">
+        <ellipse cx="168" cy="259" rx="13" ry="7" fill="#F3B8BC" opacity="0.82"/>
+      </g>
+      <g id="cheek_right" data-rive-pivot="312,258" aria-label="Right cheek">
+        <ellipse cx="312" cy="259" rx="13" ry="7" fill="#F3B8BC" opacity="0.82"/>
+      </g>
+
+      <g id="beak_upper" data-rive-pivot="240,259" aria-label="Upper beak">
+        <path d="M207 253C218 242 262 242 273 253C278 258 274 266 266 270C251 277 229 277 214 270C206 266 202 258 207 253Z" fill="#F0A52E" stroke="#17171B" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+      <g id="beak_lower" data-rive-pivot="240,272" aria-label="Lower beak">
+        <path d="M214 269C229 274 251 274 266 269C262 282 253 288 240 288C227 288 218 282 214 269Z" fill="#E38D25" stroke="#17171B" stroke-width="6" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <!-- Optional expression accents. Keep hidden until needed in Rive. -->
+    <g id="expression_accents" aria-label="Expression accents" opacity="0">
+      <path id="sweat_left" d="M154 235C148 244 148 251 154 256C160 251 160 244 154 235Z" fill="#79C9E8"/>
+      <path id="sweat_right" d="M326 235C320 244 320 251 326 256C332 251 332 244 326 235Z" fill="#79C9E8"/>
+      <path id="spark_left" d="M112 174V194M102 184H122" stroke="#F0A52E" stroke-width="5" stroke-linecap="round"/>
+      <path id="spark_right" d="M368 174V194M358 184H378" stroke="#F0A52E" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

@@ -1,2 +1,1 @@
-import { Redirect } from 'expo-router';
-export default function ActivityRoute() { return <Redirect href="/walk/record" />; }
+export { ActivityScreen as default } from '@/features/walks/activity-screen';

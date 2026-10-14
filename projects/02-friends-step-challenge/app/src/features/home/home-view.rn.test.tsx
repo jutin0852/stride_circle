@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { render, userEvent, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HomeView, type HomeViewProps } from './home-view';
 
@@ -54,5 +54,25 @@ describe('Home data states', () => {
     const { props, action } = setup(); const screen = await show(props);
     await userEvent.setup().press(screen.getByRole('button', { name: 'Find your circle' }));
     expect(action).toHaveBeenCalledTimes(1);
+  });
+  it('keeps walk and route-planning actions out of Home', async () => {
+    const { props } = setup(); const screen = await show(props);
+    expect(screen.queryByRole('button', { name: 'Start Walk' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Plan a Walk' })).toBeNull();
+  });
+  it('keeps a compact streak shortcut in the fixed header and opens History', async () => {
+    const onHistory = jest.fn();
+    const { props } = setup({ onHistory }); const screen = await show(props);
+    const fixedHeader = screen.getByTestId('home-fixed-header');
+    const scrollContent = screen.getByTestId('home-content-scroll');
+    expect(within(fixedHeader).getByRole('button', { name: 'Open your private profile and health settings' })).toBeTruthy();
+    expect(within(fixedHeader).getByRole('button', { name: '12-day walking streak. Open history' })).toBeTruthy();
+    expect(scrollContent.props.showsVerticalScrollIndicator).toBe(false);
+    expect(within(scrollContent).queryByRole('button', { name: 'Open your private profile and health settings' })).toBeNull();
+    expect(within(scrollContent).queryByText('Look at you, showing up.')).toBeNull();
+    expect(screen.queryByText('day streak')).toBeNull();
+    const banner = screen.getByRole('button', { name: '12-day walking streak. Open history' });
+    await userEvent.setup().press(banner);
+    expect(onHistory).toHaveBeenCalledTimes(1);
   });
 });

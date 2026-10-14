@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Blue duck celebration preview</title>
+<style>
+body{margin:0;background:#edf3f7;color:#182735;font:16px system-ui;display:grid;place-items:center;min-height:100vh}main{text-align:center;width:min(94vw,640px)}h1{font-size:24px;margin:20px 0 8px}p{color:#516170}svg{width:min(88vw,490px);display:block;margin:auto}button{border:0;border-radius:30px;background:#17669b;color:white;padding:14px 26px;font:600 16px system-ui;cursor:pointer}button:focus-visible{outline:3px solid #e1a932;outline-offset:4px}.jump,.squash{transform-box:view-box;transform-origin:300px 490px}.wing{transform-box:view-box}.left{transform-origin:202px 373px}.right{transform-origin:431px 370px}.happy,.sparkles,.feet{opacity:0}.play .jump{animation:jump 2s both}.play .squash{animation:squash 2s both}.play .left{animation:wingL 2s both}.play .right{animation:wingR 2s both}.play .normal{animation:normal 2s both}.play .happy,.play .feet{animation:reveal 2s both}.play .sparkles{animation:spark 2s both}.play .shadow{animation:shadow 2s both;transform-origin:300px 506px}.play .tail{animation:tail 2s both;transform-origin:191px 163px}
+@keyframes jump{0%,16%,86%,100%{transform:translateY(0)}35%{transform:translateY(-95px)}49%{transform:translateY(-110px)}68%{transform:translateY(0)}74%{transform:translateY(5px)}}
+@keyframes squash{0%,100%{transform:scale(1)}16%{transform:scale(1.1,.84)}28%{transform:scale(.91,1.1)}43%,56%{transform:scale(1)}69%{transform:scale(1.14,.81)}82%{transform:scale(.97,1.04)}92%{transform:scale(1)}}
+@keyframes wingL{0%,16%,100%{transform:rotate(0)}36%,56%{transform:rotate(150deg)}78%{transform:rotate(30deg)}}
+@keyframes wingR{0%,16%,100%{transform:rotate(0)}36%,56%{transform:rotate(-150deg)}78%{transform:rotate(-30deg)}}
+@keyframes normal{0%,17%,90%,100%{opacity:1}25%,80%{opacity:0}}
+@keyframes reveal{0%,17%,90%,100%{opacity:0}25%,80%{opacity:1}}
+@keyframes spark{0%,25%,80%,100%{opacity:0;transform:translateY(0)}37%,56%{opacity:1}72%{opacity:0;transform:translateY(-20px)}}
+@keyframes shadow{0%,16%,69%,100%{transform:scaleX(1);opacity:.14}40%,52%{transform:scaleX(.64);opacity:.07}}
+@keyframes tail{0%,100%{transform:rotate(0)}28%{transform:rotate(-18deg)}55%{transform:rotate(10deg)}73%{transform:rotate(-10deg)}}
+@media(prefers-reduced-motion:reduce){.play *{animation-duration:.01ms!important}}
+</style></head><body><main><h1>Duck celebration</h1><p>Crouch · jump · cheer · soft landing</p>
+<svg id="stage" viewBox="0 0 600 600" role="img" aria-label="Blue duck wearing a white headband, jumping and raising its wings to celebrate">
+<ellipse class="shadow" cx="300" cy="506" rx="151" ry="13" fill="#172737" opacity=".14"/>
+<g class="sparkles" stroke="#F0B632" stroke-width="6" stroke-linecap="round"><path d="M103 149v24m-12-12h24M486 112v26m-13-13h26M92 293v18m-9-9h18M513 273v18m-9-9h18"/><circle cx="143" cy="96" r="5" fill="#69B8EC" stroke="none"/><circle cx="463" cy="237" r="5" fill="#69B8EC" stroke="none"/></g>
+<g class="jump"><g class="squash" stroke="#141414" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<g class="feet" fill="#FFC43B"><path d="M222 473l-6 27q-22-2-29 11q0 8 18 8h31q9-10-7-19l3-27z"/><path d="M378 473l6 27q22-2 29 11q0 8-18 8h-31q-9-10 7-19l-3-27z"/></g>
+<path d="M198 155Q230 113 269 103Q330 79 382 100Q418 113 435 143Q458 183 461 275Q463 310 473 342Q495 413 493 437Q490 478 436 484C384 490 243 494 162 486Q118 482 110 450C100 412 134 330 155 274Q176 218 198 155Z" fill="#66B9ED"/>
+<g class="tail" fill="white"><path d="M199 151Q188 119 170 111Q163 113 157 142L177 163Z"/><path d="M180 152Q155 140 140 146Q134 153 141 178Q150 186 180 175L199 165Z"/><path d="M180 176Q174 160 188 151Q201 146 210 159L198 181Z"/></g>
+<path d="M199 161Q318 135 434 141Q450 141 449 155Q461 160 455 178Q336 166 186 198Q189 178 199 161Z" fill="white"/>
+<g class="normal"><path d="M278 224L330 230C332 252 320 265 304 265C287 264 274 248 278 224Z" fill="white" stroke-width="6"/><ellipse cx="307" cy="235" rx="7" ry="10" fill="#141414" stroke="none"/><path d="M274 222Q306 227 333 228L334 221" fill="none" stroke-width="6"/><path d="M371 229L421 220C429 242 415 259 398 260C380 260 369 246 371 229Z" fill="white" stroke-width="6"/><ellipse cx="397" cy="234" rx="7" ry="10" fill="#141414" stroke="none"/><path d="M369 229L423 220" fill="none" stroke-width="6"/></g>
+<g class="happy"><path d="M277 241Q304 207 329 241M371 241Q398 207 423 241" fill="none"/><ellipse cx="275" cy="272" rx="13" ry="6" fill="#EDAEC1" stroke="none"/><ellipse cx="425" cy="272" rx="13" ry="6" fill="#EDAEC1" stroke="none"/></g>
+<path d="M324 280C331 266 365 266 377 276C387 287 368 292 348 293C331 294 318 290 324 280Z" fill="#FFC43B" stroke-width="5"/>
+<g class="happy"><path d="M333 289Q350 321 369 289Z" fill="#141414" stroke-width="4"/><path d="M342 302Q351 296 360 302" stroke="#EDAEC1" stroke-width="5" fill="none"/></g>
+<g class="wing left"><path d="M202 373Q221 395 222 413Q226 438 211 443Q200 446 188 436Q176 441 157 420Q154 390 174 376Q187 370 202 373Z" fill="#66B9ED" stroke="none"/><path d="M202 373Q221 395 222 413Q226 438 211 443Q200 446 188 436Q176 441 157 420" fill="none"/></g>
+<g class="wing right"><path d="M431 370Q410 402 412 423Q411 442 426 441Q440 437 454 420Q455 390 444 378Z" fill="#66B9ED" stroke="none"/><path d="M431 370Q410 402 412 423Q411 442 426 441Q440 437 454 420" fill="none"/></g>
+</g></g></svg><button id="replay">Celebrate again</button><p style="font-size:13px">Animation concept preview · Rive timeline pending connection</p>
+<script>const stage=document.getElementById('stage');function celebrate(){stage.classList.remove('play');void stage.getBoundingClientRect();stage.classList.add('play')}document.getElementById('replay').addEventListener('click',celebrate);celebrate();</script>
+</main></body></html>

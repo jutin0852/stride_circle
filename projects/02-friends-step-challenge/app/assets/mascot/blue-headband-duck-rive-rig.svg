@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Blue Headband Duck — Rive rig prototype
+  Original vector reconstruction based on the supplied top-row, fourth duck.
+  Only the character, headband, facial features, wings, and feet are included.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" fill="none">
+  <title>Blue Headband Duck Rive Rig Prototype</title>
+  <desc>Compact blue duck with a white headband, narrowed eyes, orange beak, wings, and feet.</desc>
+
+  <g id="duck_root" aria-label="Duck root">
+    <g id="ground_shadow" aria-label="Ground shadow">
+      <ellipse cx="240" cy="433" rx="134" ry="17" fill="#101820" opacity="0.14"/>
+    </g>
+
+    <g id="leg_left" data-rive-pivot="181,367" aria-label="Left leg">
+      <path d="M181 351C180 370 180 385 184 397" stroke="#E59A2B" stroke-width="14" stroke-linecap="round"/>
+    </g>
+    <g id="leg_right" data-rive-pivot="299,367" aria-label="Right leg">
+      <path d="M299 351C300 370 300 385 296 397" stroke="#E59A2B" stroke-width="14" stroke-linecap="round"/>
+    </g>
+    <g id="foot_left" data-rive-pivot="173,406" aria-label="Left foot">
+      <path d="M173 390C158 390 145 398 141 408C139 416 149 421 161 421H190C204 421 207 414 198 406C191 399 183 391 173 390Z" fill="#F0A42E" stroke="#121417" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M159 410L169 403M175 413L184 404" stroke="#C87920" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <g id="foot_right" data-rive-pivot="307,406" aria-label="Right foot">
+      <path d="M307 390C322 390 335 398 339 408C341 416 331 421 319 421H290C276 421 273 414 282 406C289 399 297 391 307 390Z" fill="#F0A42E" stroke="#121417" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M321 410L311 403M305 413L296 404" stroke="#C87920" stroke-width="4" stroke-linecap="round"/>
+    </g>
+
+    <!-- Lower body remains separate for breathing, squash, and bounce. -->
+    <g id="body" data-rive-pivot="240,323" aria-label="Body">
+      <path d="M104 214C105 177 132 154 170 148C207 142 273 142 310 148C348 154 375 177 376 214L382 322C384 382 333 412 240 412C147 412 96 382 98 322L104 214Z" fill="#4B98D1" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M125 307C133 365 172 389 240 391C308 389 347 365 355 307" stroke="#3280BB" stroke-width="10" stroke-linecap="round" opacity="0.65"/>
+      <path d="M133 239C146 207 174 188 204 182" stroke="#76B8E4" stroke-width="13" stroke-linecap="round" opacity="0.85"/>
+    </g>
+
+    <!-- Head is movable independently. Its lower edge is intentionally open to avoid a visible seam. -->
+    <g id="head" data-rive-pivot="240,228" aria-label="Head">
+      <path d="M119 182C121 118 168 78 240 78C312 78 359 118 361 182L365 248C366 283 318 307 240 307C162 307 114 283 115 248L119 182Z" fill="#4B98D1"/>
+      <path d="M119 182C121 118 168 78 240 78C312 78 359 118 361 182L365 248C366 276 342 294 311 302M169 302C138 294 114 276 115 248L119 182" stroke="#121417" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M142 159C159 119 193 99 240 96C287 99 321 119 338 159" stroke="#72B4E2" stroke-width="9" stroke-linecap="round" opacity="0.75"/>
+    </g>
+
+    <!-- Headband pieces are separate for tilt, knot movement, and celebration poses. -->
+    <g id="headband_band" data-rive-pivot="240,130" aria-label="Headband band">
+      <path d="M128 127C165 113 315 113 352 127L347 157C312 145 168 145 133 157L128 127Z" fill="#FCFCF8" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M145 132C187 123 293 123 335 132" stroke="#D9E1E7" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <g id="headband_knot" data-rive-pivot="126,127" aria-label="Headband knot">
+      <path d="M132 127C116 117 103 108 91 111C92 124 100 137 117 140L135 145Z" fill="#FCFCF8" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M130 128C117 139 104 149 91 145C92 135 101 124 115 119Z" fill="#FCFCF8" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+    <g id="headband_tail" data-rive-pivot="111,137" aria-label="Headband tail">
+      <path d="M105 140C95 153 87 164 88 177C99 174 112 164 120 151Z" fill="#FCFCF8" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+
+    <g id="wing_left" data-rive-pivot="139,284" aria-label="Left wing">
+      <path d="M143 269C121 273 108 292 112 315C115 333 128 342 145 345C157 347 166 337 162 325C157 307 162 290 169 280C173 273 159 266 143 269Z" fill="#3D89C4" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M126 302C131 316 140 326 151 331" stroke="#6CB0DC" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <g id="wing_right" data-rive-pivot="341,284" aria-label="Right wing">
+      <path d="M337 269C359 273 372 292 368 315C365 333 352 342 335 345C323 347 314 337 318 325C323 307 318 290 311 280C307 273 321 266 337 269Z" fill="#3D89C4" stroke="#121417" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M354 302C349 316 340 326 329 331" stroke="#6CB0DC" stroke-width="6" stroke-linecap="round"/>
+    </g>
+
+    <g id="face" aria-label="Face">
+      <g id="eyebrow_left" data-rive-pivot="194,184" aria-label="Left eyebrow">
+        <path d="M169 183C183 174 202 173 216 179" stroke="#121417" stroke-width="9" stroke-linecap="round"/>
+      </g>
+      <g id="eyebrow_right" data-rive-pivot="286,184" aria-label="Right eyebrow">
+        <path d="M264 179C278 173 297 174 311 183" stroke="#121417" stroke-width="9" stroke-linecap="round"/>
+      </g>
+      <g id="eye_left" data-rive-pivot="194,218" aria-label="Left eye">
+        <path d="M165 212C178 196 206 196 219 212C207 226 178 226 165 212Z" fill="#FFFFFF" stroke="#121417" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+      <g id="eye_right" data-rive-pivot="286,218" aria-label="Right eye">
+        <path d="M261 212C274 196 302 196 315 212C302 226 274 226 261 212Z" fill="#FFFFFF" stroke="#121417" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+      <g id="pupil_left" data-rive-pivot="194,213" aria-label="Left pupil">
+        <ellipse cx="196" cy="213" rx="8" ry="10" fill="#121417"/>
+        <circle cx="199" cy="210" r="2.8" fill="#FFFFFF"/>
+      </g>
+      <g id="pupil_right" data-rive-pivot="286,213" aria-label="Right pupil">
+        <ellipse cx="284" cy="213" rx="8" ry="10" fill="#121417"/>
+        <circle cx="287" cy="210" r="2.8" fill="#FFFFFF"/>
+      </g>
+      <g id="beak_upper" data-rive-pivot="240,248" aria-label="Upper beak">
+        <path d="M211 245C220 236 260 236 269 245C273 250 269 257 261 260C249 265 231 265 219 260C211 257 207 250 211 245Z" fill="#F0A52E" stroke="#121417" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+      <g id="beak_lower" data-rive-pivot="240,260" aria-label="Lower beak">
+        <path d="M219 259C231 263 249 263 261 259C258 270 250 276 240 276C230 276 222 270 219 259Z" fill="#DF8C25" stroke="#121417" stroke-width="6" stroke-linejoin="round"/>
+      </g>
+      <g id="cheek_left" data-rive-pivot="163,254" aria-label="Left cheek">
+        <ellipse cx="163" cy="254" rx="11" ry="6" fill="#A7D7F2" opacity="0.65"/>
+      </g>
+      <g id="cheek_right" data-rive-pivot="317,254" aria-label="Right cheek">
+        <ellipse cx="317" cy="254" rx="11" ry="6" fill="#A7D7F2" opacity="0.65"/>
+      </g>
+    </g>
+
+    <g id="expression_accents" aria-label="Expression accents" opacity="0">
+      <path id="tired_sweat_left" d="M147 231C141 240 141 247 147 252C153 247 153 240 147 231Z" fill="#A7E1F4"/>
+      <path id="tired_sweat_right" d="M333 231C327 240 327 247 333 252C339 247 339 240 333 231Z" fill="#A7E1F4"/>
+      <path id="celebration_spark_left" d="M107 209V229M97 219H117" stroke="#D8F0FF" stroke-width="5" stroke-linecap="round"/>
+      <path id="celebration_spark_right" d="M373 209V229M363 219H383" stroke="#D8F0FF" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

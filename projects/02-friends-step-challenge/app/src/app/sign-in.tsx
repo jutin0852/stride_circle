@@ -1,17 +1,15 @@
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
 import { Redirect } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { GoogleMark } from '@/components/google-mark';
-import { createAccount, getAuthErrorMessage, signInWithEmail, signInWithGoogleIdToken } from '@/lib/auth';
+import { FixedHeaderScreen } from '@/components/ui';
+import { createAccount, getAuthErrorMessage, signInWithEmail } from '@/lib/auth';
+import { signInWithGoogle } from '@/services/auth/google-sign-in';
 import { useAppColors } from '@/design-system/use-app-theme';
-
-WebBrowser.maybeCompleteAuthSession();
 
 type Mode = 'sign-in' | 'sign-up';
 type Field = 'displayName' | 'email' | 'password';
@@ -29,38 +27,7 @@ export default function SignInRoute() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<Field | null>(null);
-
-  const googleReady = Boolean(
-    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
-      && process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
-      && process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  );
-  const [googleRequest, googleResponse, promptGoogle] = Google.useIdTokenAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? 'not-configured',
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? 'not-configured',
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? 'not-configured',
-    selectAccount: true,
-  });
-
-  useEffect(() => {
-    const idToken = googleResponse?.type === 'success' ? googleResponse.params.id_token : undefined;
-    if (!idToken) return;
-
-    async function completeGoogleSignIn() {
-      setIsSubmitting(true);
-      setErrorMessage(null);
-
-      try {
-        await signInWithGoogleIdToken(idToken!);
-      } catch (error) {
-        setErrorMessage(getAuthErrorMessage(error));
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-
-    void completeGoogleSignIn();
-  }, [googleResponse]);
+  const submissionLock = useRef(false);
 
   if (isLoading) {
     return <View style={styles.loadingPage}><View style={styles.loadingMark}><Text style={styles.brandMarkText}>SC</Text></View><ActivityIndicator color={colors.accent} /><Text style={styles.loadingText}>Opening Stride Circle</Text></View>;
@@ -71,18 +38,19 @@ export default function SignInRoute() {
     Alert.alert('Firebase configuration required', 'Configure Firebase before continuing.');
   }
 
-  function handleGooglePress() {
+  async function handleGooglePress() {
     if (!isConfigured) {
       showFirebaseConfigurationAlert();
       return;
     }
 
-    if (!googleReady) {
-      Alert.alert('Google sign-in unavailable', 'Configure Google OAuth before continuing.');
-      return;
-    }
-
-    void promptGoogle();
+    if (submissionLock.current) return;
+    submissionLock.current = true;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try { await signInWithGoogle(); }
+    catch (error) { setErrorMessage(getAuthErrorMessage(error)); }
+    finally { submissionLock.current = false; setIsSubmitting(false); }
   }
 
   async function handleEmailSubmit() {
@@ -96,6 +64,8 @@ export default function SignInRoute() {
       return;
     }
 
+    if (submissionLock.current) return;
+    submissionLock.current = true;
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -108,24 +78,25 @@ export default function SignInRoute() {
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
+      submissionLock.current = false;
       setIsSubmitting(false);
     }
   }
 
   return (
     <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding' })} style={styles.page}>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24, paddingTop: insets.top + 24 }]} keyboardShouldPersistTaps="handled">
+      <FixedHeaderScreen backgroundColor={colors.background} header={<View style={styles.signInHeader}>
         <View style={styles.brand}>
           <View style={styles.brandMark}><Text style={styles.brandMarkText}>SC</Text></View>
           <Text style={styles.brandName}>Stride Circle</Text>
         </View>
-
         <View style={styles.intro}>
           <Text style={styles.title}>{mode === 'sign-up' ? 'Create your account' : 'Welcome back'}</Text>
           <Text style={styles.subtitle}>{mode === 'sign-up' ? 'Join friends and make every walk count.' : 'Your circle is waiting for you.'}</Text>
         </View>
+      </View>} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}>
 
-        <Pressable accessibilityRole="button" disabled={!googleRequest || isSubmitting} onPress={handleGooglePress} style={({ pressed }) => [styles.googleButton, (!googleRequest || isSubmitting) && styles.disabledButton, pressed && !isSubmitting && styles.buttonPressed]}><View style={styles.googleIcon}><GoogleMark /></View><Text style={styles.googleText}>{mode === 'sign-up' ? 'Sign up with Google' : 'Sign in with Google'}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }} disabled={isSubmitting} onPress={() => void handleGooglePress()} style={({ pressed }) => [styles.googleButton, isSubmitting && styles.disabledButton, pressed && !isSubmitting && styles.buttonPressed]}><View style={styles.googleIcon}><GoogleMark /></View><Text style={styles.googleText}>{mode === 'sign-up' ? 'Sign up with Google' : 'Sign in with Google'}</Text></Pressable>
 
         <View style={styles.divider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>or continue with</Text><View style={styles.dividerLine} /></View>
 
@@ -147,7 +118,7 @@ export default function SignInRoute() {
 
         {mode === 'sign-up' && <Text style={styles.legal}>By continuing, you agree to the Stride Circle Terms of Service and Privacy Policy.</Text>}
         <Pressable accessibilityRole="button" disabled={isSubmitting} onPress={() => { setMode(mode === 'sign-up' ? 'sign-in' : 'sign-up'); setErrorMessage(null); }} style={({ pressed }) => [styles.modeButton, pressed && styles.modeButtonPressed]}><Text style={styles.modeText}>{mode === 'sign-up' ? 'Already have an account? Sign in' : 'New to Stride Circle? Create an account'}</Text></Pressable>
-      </ScrollView>
+      </FixedHeaderScreen>
     </KeyboardAvoidingView>
   );
 }
@@ -157,7 +128,8 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   loadingPage: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: 14, justifyContent: 'center' },
   loadingMark: { alignItems: 'center', backgroundColor: colors.hero, borderColor: colors.brandActionPressed, borderRadius: 18, borderWidth: 2, height: 58, justifyContent: 'center', width: 58 },
   loadingText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
-  content: { gap: 22, minHeight: '100%', paddingHorizontal: 28 },
+  signInHeader: { gap: 0, paddingHorizontal: 28, paddingTop: 24 },
+  content: { gap: 22, paddingHorizontal: 28, paddingTop: 22 },
   brand: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   brandMark: { alignItems: 'center', backgroundColor: colors.accent, borderColor: colors.brandActionPressed, borderRadius: 10, borderWidth: 2, height: 30, justifyContent: 'center', width: 30 }, brandMarkText: { color: colors.onAccent, fontSize: 11, fontWeight: '900', letterSpacing: -0.4 }, brandName: { color: colors.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
   intro: { gap: 9, marginTop: 58 },

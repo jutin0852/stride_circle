@@ -6,17 +6,21 @@ export type ActivityMapRegion = ActivityMapPoint & { latitudeDelta: number; long
 
 type ActivityMapProps = {
   currentLocation?: ActivityMapPoint | null;
+  cameraTarget?: ActivityMapPoint | null;
   fallback?: ReactNode;
   fitRoute?: boolean;
   initialRegion?: ActivityMapRegion;
   route: ActivityMapPoint[];
   plannedRoute?: ActivityMapPoint[];
+  waypoints?: ActivityMapPoint[];
   onSelectCoordinate?: (point: ActivityMapPoint) => void;
+  onRecenter?: () => void;
   showsUserLocation?: boolean;
+  showsRecenterButton?: boolean;
   style: StyleProp<ViewStyle>;
 };
 
 /** react-native-maps is native-only. Keep web useful instead of crashing the entire router. */
 export function ActivityMap({ fallback, style }: ActivityMapProps) {
-  return fallback ? <>{fallback}</> : <View style={style} />;
+  return <View style={style}>{fallback}</View>;
 }

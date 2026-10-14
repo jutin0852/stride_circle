@@ -23,7 +23,7 @@ export type GlobalLeaderboardSnapshot = {
 
 export function watchGlobalLeaderboard(input: {
   onChange: (snapshot: GlobalLeaderboardSnapshot) => void;
-  onError: () => void;
+  onError: (error: unknown) => void;
   period: GlobalLeaderboardPeriod;
   userId: string;
 }): Unsubscribe {
@@ -35,11 +35,9 @@ export function watchGlobalLeaderboard(input: {
   let currentUser: GlobalLeaderboardEntry | null = null;
   let generatedAt: Date | null = null;
   let entriesReady = false;
-  let boardReady = false;
-  let currentUserReady = false;
 
   const publish = () => {
-    if (!entriesReady || !boardReady || !currentUserReady) return;
+    if (!entriesReady) return;
     input.onChange({ currentUser, entries, generatedAt });
   };
 
@@ -54,14 +52,12 @@ export function watchGlobalLeaderboard(input: {
     }, input.onError),
     onSnapshot(boardReference, (snapshot) => {
       generatedAt = snapshot.exists() ? readDate(snapshot.data()?.generatedAt) : null;
-      boardReady = true;
       publish();
-    }, input.onError),
+    }, () => undefined),
     onSnapshot(doc(boardReference, 'entries', input.userId), (snapshot) => {
       currentUser = snapshot.exists() ? readEntry(snapshot.id, snapshot.data()) : null;
-      currentUserReady = true;
       publish();
-    }, input.onError),
+    }, () => undefined),
   ];
 
   return () => subscriptions.forEach((unsubscribe) => unsubscribe());

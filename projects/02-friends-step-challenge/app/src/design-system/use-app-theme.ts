@@ -42,7 +42,7 @@ export function useAppColors() {
     brandActionSoft: colors.brandActionSoft,
     brandActionPressed: colors.brandActionPressed,
     success: colors.successContent,
-    placeholder: isDark ? '#A0B2BA' : '#78909A',
+    placeholder: colors.contentTertiary,
     overlay: colors.overlay,
     warningSurface: colors.warningSurface,
     warningContent: colors.warningContent,

@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Leaderboard } from '@/components/leaderboard';
-import { AppText, SegmentedControl, StateCard, Surface } from '@/components/ui';
+import { AppText, FixedHeaderScreen, SegmentedControl, StateCard, Surface } from '@/components/ui';
 import { type Friend, formatSteps } from '@/data/circle';
 import { type GlobalLeaderboardEntry, type GlobalLeaderboardPeriod } from '@/domain/global-leaderboard';
 import { spacing, radii } from '@/design-system/tokens';
@@ -33,27 +33,24 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
   const friends = useMemo(() => buildFriends(entries, currentUser?.userId), [currentUser?.userId, entries]);
 
   return (
-    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" style={styles.page}>
-      <View style={styles.nav}>
-        <Pressable accessibilityLabel="Go back" accessibilityRole="button" onPress={onBack} style={styles.roundButton}>
-          <Ionicons color={colors.ink} name="arrow-back" size={21} />
-        </Pressable>
-        <AppText accessibilityRole="header" style={styles.title} variant="titleSmall">Global leaderboard</AppText>
-        <View style={styles.navSpacer} />
-      </View>
-
+    <FixedHeaderScreen
+      backgroundColor={colors.background}
+      contentContainerStyle={styles.content}
+      header={<>
+        <View style={styles.nav}>
+          <Pressable accessibilityLabel="Go back" accessibilityRole="button" onPress={onBack} style={styles.roundButton}><Ionicons color={colors.ink} name="arrow-back" size={21} /></Pressable>
+          <AppText accessibilityRole="header" style={styles.title} variant="titleSmall">Global leaderboard</AppText>
+          <View style={styles.navSpacer} />
+        </View>
+        <SegmentedControl accessibilityLabel="Global leaderboard period" items={PERIODS} onChange={onChangePeriod} value={period} variant="surface" />
+      </>}
+      headerStyle={styles.fixedHeader}
+      scrollViewProps={{ contentInsetAdjustmentBehavior: 'never' }}
+    >
       <View style={styles.intro}>
         <AppText variant="title">Walking worldwide</AppText>
         <AppText tone="secondary" variant="bodySmall">Compare verified walking steps with everyone on the app.</AppText>
       </View>
-
-      <SegmentedControl
-        accessibilityLabel="Global leaderboard period"
-        items={PERIODS}
-        onChange={onChangePeriod}
-        value={period}
-        variant="surface"
-      />
 
       <View style={styles.metaRow}>
         <AppText tone="secondary" variant="caption">Walking · verified steps</AppText>
@@ -91,7 +88,7 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
           <Leaderboard friends={friends} podium="none" />
         </View>
       ) : null}
-    </ScrollView>
+    </FixedHeaderScreen>
   );
 }
 
@@ -146,7 +143,8 @@ const stylesForRankCard = StyleSheet.create({ card: { alignItems: 'stretch', fle
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({
     page: { backgroundColor: colors.background, flex: 1 },
-    content: { gap: spacing.lg, paddingBottom: 56, paddingHorizontal: spacing.xxl, paddingTop: spacing.lg },
+    fixedHeader: { gap: spacing.lg, paddingBottom: spacing.md, paddingHorizontal: spacing.xxl, paddingTop: spacing.lg },
+    content: { gap: spacing.lg, paddingBottom: 56, paddingHorizontal: spacing.xxl, paddingTop: spacing.md },
     nav: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
     roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
     navSpacer: { height: 44, width: 44 },

@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, IconButton, Surface } from '@/components/ui';
+import { AppText, Button, FixedHeaderScreen, IconButton, Surface } from '@/components/ui';
 import { spacing } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
 import type { ReminderPermission } from '@/domain/walking-reminders';
@@ -20,13 +20,14 @@ export function WalkingReminderView(props: WalkingReminderViewProps) {
   const unavailable = props.permission === 'unavailable' || props.permission === 'unsupported';
   const blocked = props.permission === 'denied';
   const disabled = props.loading || props.busy;
-  return <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]} keyboardShouldPersistTaps="handled">
+  return <FixedHeaderScreen backgroundColor={colors.background} header={<View style={styles.headerContent}>
     <IconButton accessibilityLabel="Go back" onPress={props.onBack}><Ionicons color={colors.ink} name="chevron-back" size={22} /></IconButton>
     <View style={styles.intro}>
       <AppText variant="eyebrow" tone="secondary">YOUR WALKING ROUTINE</AppText>
       <AppText accessibilityRole="header" variant="title">Walking reminders</AppText>
       <AppText tone="secondary">A gentle nudge at a time that works for you. A few steps can be a good start.</AppText>
     </View>
+  </View>} headerStyle={styles.fixedHeader} contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]} scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}>
     <Surface padding="lg" style={styles.card}>
       <View style={styles.row}>
         <View style={styles.copy}><AppText variant="titleSmall">Daily reminder</AppText><AppText variant="bodySmall" tone="secondary">One reminder each day. You’re in control.</AppText></View>
@@ -45,11 +46,13 @@ export function WalkingReminderView(props: WalkingReminderViewProps) {
     <Button disabled={props.loading || (unavailable && props.enabled)} loading={props.busy} onPress={props.onSave}>Save reminder</Button>
     <Button disabled={disabled || !props.scheduled || props.permission !== 'granted'} onPress={props.onTest} variant="tertiary">Send a test reminder</Button>
     <AppText variant="caption" tone="secondary">Saved for your account on this phone. Signing out stops reminders; signing back in restores your choice.</AppText>
-  </ScrollView>;
+  </FixedHeaderScreen>;
 }
 
 const styles = StyleSheet.create({
-  content: { gap: spacing.lg, paddingHorizontal: spacing.lg },
+  fixedHeader: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md },
+  headerContent: { gap: spacing.lg },
+  content: { gap: spacing.lg, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   intro: { gap: spacing.sm }, card: { gap: spacing.lg },
   row: { alignItems: 'center', flexDirection: 'row', gap: spacing.md }, copy: { flex: 1, gap: spacing.xs },
   time: { borderWidth: 1, borderRadius: 12, fontSize: 24, fontVariant: ['tabular-nums'], minHeight: 56, paddingHorizontal: spacing.md, width: 120 },

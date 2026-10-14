@@ -1,16 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 export function useReducedHomeMotion() {
-  const [reduced, setReduced] = useState(true);
-  useEffect(() => {
-    let active = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((value) => { if (active) setReduced(value); }).catch(() => {});
-    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
-    return () => { active = false; subscription.remove(); };
-  }, []);
-  return reduced;
+  return useReducedMotion();
 }
 
 /** Celebrate a live crossing only; opening with a completed/cached goal is quiet. */

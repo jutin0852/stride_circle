@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/auth/auth-provider';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
-import { AppText } from '@/components/ui';
+import { AppText, FixedHeaderScreen } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, updateUserDisplayName } from '@/lib/auth';
 import { useAppColors } from '@/design-system/use-app-theme';
@@ -34,11 +34,17 @@ export default function EditProfileRoute() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
-      <View style={styles.nav}><Pressable accessibilityLabel="Go back" accessibilityRole="button" onPress={() => router.back()} style={styles.roundButton}><Ionicons color={colors.ink} name="chevron-back" size={22} /></Pressable></View>
-      <AppText style={styles.eyebrow}>PROFILE</AppText>
-      <AppText style={styles.title}>Edit profile</AppText>
-
+    <FixedHeaderScreen
+      backgroundColor={colors.background}
+      contentContainerStyle={styles.content}
+      header={<View style={styles.fixedCopy}>
+        <View style={[styles.nav, { marginHorizontal: -4, marginVertical: -4, padding: 4 }]}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={4} onPress={() => router.back()} style={styles.roundButton}><Ionicons color={colors.ink} name="chevron-back" size={22} /></Pressable></View>
+        <AppText style={styles.eyebrow}>PROFILE</AppText>
+        <AppText accessibilityRole="header" style={styles.title}>Edit profile</AppText>
+      </View>}
+      headerStyle={styles.fixedHeader}
+      scrollViewProps={{ contentInsetAdjustmentBehavior: 'never', testID: 'edit-profile-form' }}
+    >
       <AppText style={styles.sectionTitle}>Your character</AppText>
       <Pressable accessibilityHint="Opens the character picker" accessibilityRole="button" onPress={() => router.push('/profile-character')} style={({ pressed }) => [styles.characterCard, pressed && styles.pressed]}>
         <DicebearAvatar choice={avatar} fallback={getInitials(displayName)} size={70} />
@@ -52,13 +58,13 @@ export default function EditProfileRoute() {
       <Pressable accessibilityRole="button" disabled={isSaving} onPress={() => void handleSave()} style={({ pressed }) => [styles.saveButton, isSaving && styles.disabled, pressed && !isSaving && styles.pressed]}>
         {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <AppText style={styles.saveText}>Save changes</AppText>}
       </Pressable>
-    </ScrollView>
+    </FixedHeaderScreen>
   );
 }
 
 function getInitials(name: string) { return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC'; }
 
 function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
-  page: { backgroundColor: colors.background }, content: { gap: 14, padding: 24, paddingBottom: 40 }, nav: { flexDirection: 'row' }, roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, height: 40, justifyContent: 'center', width: 40 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 32, fontWeight: '800', letterSpacing: -1.1 }, sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800', marginTop: 10 },
+  fixedHeader: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 12 }, fixedCopy: { gap: 14 }, content: { gap: 14, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 40 }, nav: { flexDirection: 'row' }, roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, height: 40, justifyContent: 'center', width: 40 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 32, lineHeight: 40, fontWeight: '800', letterSpacing: -1.1 }, sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800', marginTop: 10 },
   characterCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 20, borderWidth: 2, flexDirection: 'row', padding: 16 }, characterCopy: { flex: 1, marginLeft: 13 }, characterCaption: { color: colors.muted, fontSize: 13, lineHeight: 18 }, nameCard: { backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 18, borderWidth: 2, gap: 7, padding: 17 }, fieldLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }, input: { backgroundColor: colors.background, borderColor: colors.border, borderRadius: 13, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 51, paddingHorizontal: 14 }, saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderBottomWidth: 4, borderColor: colors.brandActionPressed, borderRadius: 15, borderWidth: 2, justifyContent: 'center', marginTop: 10, minHeight: 55 }, saveText: { color: colors.onAccent, fontSize: 15, fontWeight: '800' }, disabled: { opacity: 0.6 }, pressed: { borderBottomWidth: 2, opacity: 0.84, transform: [{ translateY: 2 }] },
 }); }

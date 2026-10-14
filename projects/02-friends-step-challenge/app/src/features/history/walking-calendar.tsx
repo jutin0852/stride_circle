@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Platform, Pressable, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Skeleton } from '@/components/skeleton';
@@ -11,6 +11,7 @@ import { dateFromKey, monthCellsSundayFirst, monthRange, shiftDateKey, type Step
 import type { HistoryLoadState } from './use-walking-history';
 import { useHistoryTheme } from './history-tokens';
 import type { HistoryColorSet } from './history-tokens';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 type Props = {
   month: string; today: string; selected: string; records: StepDay[]; goal: number;
@@ -27,6 +28,19 @@ export function WalkingCalendar(props: Props) {
   const styles = useMemo(() => createStyles(historyColors, isDark), [historyColors, isDark]);
   const { fontScale } = useWindowDimensions();
   const { month, selected, records, goal, goalReady, protectedDays, status } = props;
+  const reducedMotion = useReducedMotion();
+  const [detailReveal] = useState(() => new Animated.Value(1));
+  const previousSelection = useRef(selected);
+  useEffect(() => {
+    const changed = previousSelection.current !== selected;
+    previousSelection.current = selected;
+    detailReveal.stopAnimation();
+    if (reducedMotion || !changed) { detailReveal.setValue(1); return; }
+    detailReveal.setValue(0.72);
+    const animation = Animated.timing(detailReveal, { toValue: 1, duration: 160, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== 'web', isInteraction: false });
+    animation.start();
+    return () => animation.stop();
+  }, [detailReveal, reducedMotion, selected]);
   const cells = monthCellsSundayFirst(month);
   const byDate = useMemo(() => new Map(records.map((day) => [day.dateKey, day.steps])), [records]);
   const monthTotal = status === 'ready' ? cells.reduce((total, day) => total + (day && day <= props.today ? (byDate.get(day) ?? 0) : 0), 0) : null;
@@ -73,29 +87,51 @@ export function WalkingCalendar(props: Props) {
             // Missing records are not failed goals; a saved zero is real data.
             const below = status === 'ready' && goalReady && !future && !met && !protectedDay && typeof steps === 'number';
             const dataDescription = status === 'loading' ? 'Saved steps are loading' : future ? 'Future day' : steps === undefined ? 'No saved steps' : `${formatSteps(steps)} saved steps`;
-            return <Pressable key={day} disabled={future} hitSlop={props.compact ? 6 : 4} accessibilityRole="button" accessibilityState={{ selected: active, disabled: future }} accessibilityLabel={`${new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(dateFromKey(day))}. ${dataDescription}${met ? '. Goal reached' : ''}${protectedDay ? '. Streak protected' : ''}${today ? '. Today' : ''}`} onPress={() => props.onSelect(day)} style={({ pressed }) => [cellStyle, pressed && styles.pressed]}>
+            return <CalendarDateCell key={day} disabled={future} selected={active} reducedMotion={reducedMotion} hitSlop={props.compact ? 6 : 4} accessibilityLabel={`${new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(dateFromKey(day))}. ${dataDescription}${met ? '. Goal reached' : ''}${protectedDay ? '. Streak protected' : ''}${today ? '. Today' : ''}`} onPress={() => props.onSelect(day)} style={cellStyle}>
               <View style={[styles.date, props.compact && styles.dateCompact, met && styles.dateGoal, protectedDay && styles.dateProtected, below && styles.dateBelow, today && styles.today, active && styles.selected]}>
                 {showSteps ? <AppText numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} variant="caption" style={[styles.stepLabel, met && styles.stepLabelGoal, protectedDay && styles.stepLabelState, below && styles.stepLabelBelow, active && styles.stepLabelSelected]}>{formatCalendarSteps(steps)}</AppText> : null}
                 <AppText variant="label" style={[styles.dayNumber, largeText && { lineHeight: Math.ceil(17 * fontScale) }, met && styles.dayNumberGoal, protectedDay && styles.dayNumberState, below && styles.dayNumberBelow, future && styles.disabled]}>{dateFromKey(day).getDate()}</AppText>
               </View>
               {met ? <View pointerEvents="none" style={styles.goalMarker}><AppText style={styles.goalMarkerText}>✓</AppText></View> : protectedDay ? <Ionicons name="shield-checkmark" color={historyColors.yellow} size={13} style={styles.protectedMarker} /> : below && !today ? <View pointerEvents="none" style={styles.belowMarker}>{steps === 0 ? <AppText style={styles.goalMarkerText}>0</AppText> : null}</View> : null}
               {today && !active ? <View pointerEvents="none" style={styles.todayMarker} /> : null}
-            </Pressable>;
+            </CalendarDateCell>;
           })}</View>)}
         </View>
       </View>
       <View style={styles.detail}>
         <View pointerEvents="none" style={[styles.detailConnector, { left: `${((selectedColumn + 0.5) / 7) * 100}%` }]} />
-        {status === 'loading' ? <Skeleton style={styles.detailSkeleton} /> : <>
+        {status === 'loading' ? <Skeleton style={styles.detailSkeleton} /> : <Animated.View testID="history-selected-day-details" style={{ gap: 1, opacity: detailReveal, transform: [{ translateY: detailReveal.interpolate({ inputRange: [0.72, 1], outputRange: [3, 0], extrapolate: 'clamp' }) }] }}>
           <AppText variant="eyebrow" style={styles.detailDate}>{new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', weekday: 'long' }).format(dateFromKey(selected)).toUpperCase()}</AppText>
-          <View style={styles.stepsRow}><AppText selectable variant="numeric" style={styles.selectedSteps}>{selectedSteps === undefined ? '—' : formatSteps(selectedSteps)}</AppText><AppText variant="bodySmall" style={{ color: historyColors.muted, fontSize: 13 }}>{goalReady ? `of ${formatSteps(goal)} steps` : selectedSteps === undefined ? 'no steps saved' : 'saved steps'}</AppText></View>
-          {selectedSteps !== undefined && goalReady ? <View style={styles.progressRow}><View style={styles.progressTrack}><ProgressBar accessibilityLabel="Selected day goal progress" value={selectedSteps} max={goal} fillColor={historyColors.blue} trackColor={historyColors.panel} /></View><AppText variant="label" style={styles.progressPercent}>{Math.min(100, Math.round((selectedSteps / goal) * 100))}%</AppText></View> : null}
+          <View style={styles.stepsRow}><AppText selectable variant="numeric" style={styles.selectedSteps}>{formatSteps(selectedSteps ?? 0)}</AppText><AppText variant="bodySmall" style={{ color: historyColors.muted, fontSize: 13 }}>{goalReady ? `of ${formatSteps(goal)} steps` : selectedSteps === undefined ? 'no steps saved' : 'saved steps'}</AppText></View>
+          {selectedSteps !== undefined && goalReady ? <View style={styles.progressRow}><View style={styles.progressTrack}><ProgressBar animated accessibilityLabel="Selected day goal progress" value={selectedSteps} max={goal} fillColor={historyColors.blue} trackColor={historyColors.panel} /></View><AppText variant="label" style={styles.progressPercent}>{Math.min(100, Math.round((selectedSteps / goal) * 100))}%</AppText></View> : null}
           <AppText variant="bodySmall" tone="secondary" style={styles.detailCaption}>{isProtected && goalReady ? 'An earned protection kept your streak going.' : selectedSteps === undefined ? 'No steps were recorded for this day.' : goalReady && selectedSteps >= goal ? 'Goal reached. Keep the journey going.' : goalReady ? `${formatSteps(Math.max(0, goal - selectedSteps))} steps to your current goal.` : 'Your goal is unavailable. Saved steps are shown above.'}</AppText>
-        </>}
+        </Animated.View>}
       </View>
     </>}
   </View>;
 }
+
+function CalendarDateCell({ children, disabled, selected, reducedMotion, hitSlop, accessibilityLabel, onPress, style }: {
+  children: React.ReactNode; disabled: boolean; selected: boolean; reducedMotion: boolean;
+  hitSlop: number; accessibilityLabel: string; onPress: () => void; style: StyleProp<ViewStyle>;
+}) {
+  const [scale] = useState(() => new Animated.Value(1));
+  useEffect(() => {
+    scale.stopAnimation(); scale.setValue(1);
+    return () => scale.stopAnimation();
+  }, [disabled, reducedMotion, scale]);
+  function pressFeedback(pressed: boolean) {
+    scale.stopAnimation();
+    if (disabled || reducedMotion) { scale.setValue(1); return; }
+    Animated.spring(scale, { toValue: pressed ? 0.96 : 1, damping: 30, stiffness: 420, mass: 0.7, overshootClamping: true, useNativeDriver: Platform.OS !== 'web' }).start();
+  }
+  return <Animated.View style={[style, { transform: [{ scale }] }]}>
+    <Pressable disabled={disabled} hitSlop={hitSlop} accessibilityRole="button" accessibilityState={{ selected, disabled }} accessibilityLabel={accessibilityLabel}
+      onPress={onPress} onPressIn={() => pressFeedback(true)} onPressOut={() => pressFeedback(false)}
+      style={({ pressed }) => [dateCellContent, pressed && { opacity: 0.7 }]}>{children}</Pressable>
+  </Animated.View>;
+}
+const dateCellContent: ViewStyle = { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' };
 
 /** Short values keep every saved day legible inside a small calendar cell. */
 export function formatCalendarSteps(steps: number) {

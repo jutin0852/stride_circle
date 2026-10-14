@@ -16,3 +16,12 @@ export async function readSessionSteps(session: RecordingSession, provider: Heal
   }
   return total;
 }
+
+/** Ask for sensor access only when a new walk begins and the OS says it is not determined yet. */
+export async function requestStepAccessIfNeeded(provider: HealthDataProvider): Promise<boolean> {
+  if (!await provider.isAvailable()) return false;
+  const permission = await provider.getPermissionStatus();
+  if (permission.granted) return true;
+  if (permission.status !== 'not-determined') return false;
+  return (await provider.requestPermission()).granted;
+}

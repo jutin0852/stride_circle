@@ -1,5 +1,5 @@
 import { createConnection } from 'node:net';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +19,12 @@ const appTypeScriptBuildInfo = join(verificationCacheDirectory, 'app.tsbuildinfo
 const functionsTypeScriptBuildInfo = join(verificationCacheDirectory, 'functions.tsbuildinfo');
 const appEslintCache = join(verificationCacheDirectory, 'app-eslint.cache');
 const functionsEslintCache = join(verificationCacheDirectory, 'functions-eslint.cache');
+const functionsTestFiles = readdirSync(join(projectRoot, 'functions', 'tests'))
+  .filter((fileName) => fileName.endsWith('.test.cjs'))
+  .map((fileName) => join(projectRoot, 'functions', 'tests', fileName));
+const activityTestFiles = readdirSync(join(projectRoot, 'tests'))
+  .filter((fileName) => fileName.endsWith('.test.cjs'))
+  .map((fileName) => join(projectRoot, 'tests', fileName));
 
 function localTool(name, scope = projectRoot) {
   const suffix = process.platform === 'win32' ? '.cmd' : '';
@@ -42,6 +48,14 @@ function elapsed(start) {
 function tail(value, limit = 12_000) {
   const text = value.trim();
   return text.length > limit ? `…${text.slice(-limit)}` : text;
+}
+
+function getPreviewDiagnostics() {
+  const labels = ['Expo Metro', 'Home preview server', 'History preview server'];
+  return serverChildren.map(({ output }, index) => {
+    const details = tail(`${output.stdout}\n${output.stderr}`, 4_000);
+    return details ? `${labels[index] ?? `Preview process ${index + 1}`} output:\n${details}` : '';
+  }).filter(Boolean).join('\n\n');
 }
 
 function prepareCommand(command, args) {
@@ -161,8 +175,10 @@ function getFastChecks() {
     ['App lint', localTool('eslint'), ['src', '--cache', '--cache-location', appEslintCache]],
     ['Functions lint', localTool('eslint'), ['functions/src', '--cache', '--cache-location', functionsEslintCache]],
     ['Vitest tests', localTool('vitest'), ['run'], { useHarnessTemp: true }],
-    ['React Native component tests', nodeCommand, ['scripts/run-rn-tests.mjs']],
+    ['Activity and persistence tests', nodeCommand, ['--test', ...activityTestFiles]],
+    ['React Native component tests', nodeCommand, ['scripts/run-rn-tests.mjs'], { timeoutMs: 480_000 }],
     ['Functions build', localTool('tsc', join(projectRoot, 'functions')), ['-p', 'functions/tsconfig.json', '--incremental', '--tsBuildInfoFile', functionsTypeScriptBuildInfo]],
+    ['Functions unit tests', nodeCommand, ['--test', ...functionsTestFiles]],
   ];
 }
 
@@ -273,7 +289,7 @@ async function startPreviewEnvironment() {
 async function main() {
   if (process.argv.includes('--list')) {
     const quick = ['TypeScript', 'App lint', 'Vitest'];
-    const fast = [...quick, 'Functions lint/build', 'React Native tests'];
+    const fast = [...quick, 'Functions lint/build', 'Activity and persistence tests', 'React Native tests', 'Functions unit tests'];
     const visual = ['Metro readiness (bounded)', 'Home UI preview', 'History UI preview'];
     console.log((mode === 'quick' ? quick : mode === 'fast' ? fast : mode === 'visual' ? visual : [...fast, 'Expo Doctor', 'Firestore Rules emulator', ...visual]).join('\n'));
     return;
@@ -320,6 +336,8 @@ try {
   console.log(process.argv.includes('--list') ? '\nPlan only; no checks executed.' : `\nVerification passed in ${elapsed(started)}.`);
 } catch (error) {
   if (!(error instanceof VerificationFailure)) console.error(`\nVerification failed: ${error.message}`);
+  const previewDiagnostics = getPreviewDiagnostics();
+  if (previewDiagnostics) console.error(`\nPreview process diagnostics:\n${previewDiagnostics}`);
   process.exitCode = 1;
 } finally {
   await stopAllChildren();

@@ -17,6 +17,7 @@ export function MilestonesSheet({ visible, onClose, returnFocusRef, summary }: {
   const closeButtonRef = useRef<View>(null);
   return <AppSheet
     accessibilityLabel="Walking milestones"
+    swipeToDismiss
     initialFocusRef={closeButtonRef}
     keyboardAware
     onClose={onClose}
@@ -25,14 +26,14 @@ export function MilestonesSheet({ visible, onClose, returnFocusRef, summary }: {
     visible={visible}
   >
         <View style={styles.toolbar}><AppText variant="titleSmall">Walking milestones</AppText><IconButton accessibilityLabel="Close milestones" onPress={onClose} ref={closeButtonRef}><Ionicons name="close" size={22} color={historyColors.ink} /></IconButton></View>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.hero}>
             <StreakEmblem large />
             <AppText accessibilityRole="header" variant="headline" style={styles.center}>Small steps.{ '\n' }Big milestones.</AppText>
             <AppText variant="bodySmall" style={styles.center}>Every day you show up is worth celebrating.</AppText>
             <View style={styles.stats}><Stat value={summary.currentStreak} label="CURRENT STREAK" /><View style={styles.separator} /><Stat value={summary.bestStreak} label="BEST IN SAVED HISTORY" /></View>
           </View>
-          <View style={styles.intro}><AppText variant="titleSmall">Your next little victory</AppText><AppText variant="bodySmall" tone="secondary">{next ? `${Math.max(0, next.days - summary.currentStreak)} more streak days to ${next.title.toLowerCase()}.` : 'You’ve reached every milestone. Keep walking your way.'}</AppText><ProgressBar value={summary.currentStreak} max={next?.days ?? 365} tone="coral" trackColor={historyColors.panelEdge} accessibilityLabel="Next walking milestone" /></View>
+          <View style={styles.intro}><AppText variant="titleSmall">Your next little victory</AppText><AppText variant="bodySmall" tone="secondary">{next ? `${Math.max(0, next.days - summary.currentStreak)} more streak days to ${next.title.toLowerCase()}.` : 'You’ve reached every milestone. Keep walking your way.'}</AppText><ProgressBar animated value={summary.currentStreak} max={next?.days ?? 365} tone="coral" trackColor={historyColors.panelEdge} accessibilityLabel="Next walking milestone" /></View>
           {WALKING_MILESTONES.map((milestone) => {
             const earned = summary.bestStreak >= milestone.days;
             return <View key={milestone.days} style={[styles.reward, earned && styles.rewardEarned]}>

@@ -28,6 +28,10 @@ Run against Firebase Auth, Firestore, Functions, and Security Rules emulators:
 - Members see allowed aggregate scores but not raw routes.
 - Only owners can delete circles.
 - Owners can remove members; moderators can perform allowed moderation actions.
+- Signed-in nonmembers can report a public open circle but cannot read its report inbox.
+- Circle members can report valid members/messages; spoofed targets and self-reports are rejected.
+- Only owners can change mirrored moderator roles; only owners/moderators can review reports.
+- Users can read/write/delete only their own block-list records; blocked people are filtered from the reporting user's circle chat and standings.
 - Ordinary users cannot assign roles or edit another user's score.
 - Clients cannot write arbitrary winners, ranks, or finalized recaps.
 - Blocked users cannot interact on relevant surfaces.
@@ -65,4 +69,4 @@ Run on real iPhone and Android devices, with a development build:
 
 ## Current implementation checkpoint
 
-The circle domain model, public/private circle UI, transitional Firestore rules, HealthKit/Health Connect adapters, idempotent Cloud Functions, health-provider boundary, pure-domain tests, React Native smoke test, and emulator-backed Firestore Rules tests are implemented. Native device verification, App Check wiring, function integration tests, moderation flows, location-safe discovery, and device test automation remain subsequent slices.
+The circle domain model, public/private circle UI, transitional Firestore rules, HealthKit/Health Connect adapters, idempotent Cloud Functions, health-provider boundary, pure-domain tests, React Native smoke test, and emulator-backed Firestore Rules tests are implemented. Native device verification, App Check wiring, function integration tests, admin moderation escalation, location-safe discovery, and device test automation remain subsequent slices.

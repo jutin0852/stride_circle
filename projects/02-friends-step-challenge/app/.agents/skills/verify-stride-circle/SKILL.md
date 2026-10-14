@@ -37,10 +37,16 @@ Do not kill processes by name. Stop only a server started for this verification 
 - `/`: Home, including `Your walking day, together.`, `Today’s steps`, and `YOUR FEATURED CIRCLE` when the user has an active circle. Routine health synchronization is background work and is not a Home status panel.
 - `/circle`: `Circles`, create/join actions, private/public visibility, invite flow, and discoverable circles.
 - `/circle/[circleId]`: circle standings with daily/weekly scope and a selected day.
+- `/circle/[circleId]/activity`: shared weekly goal progress and routes to last week’s recap and circle walk plans.
+- `/circle/[circleId]/recap`: saved previous-week circle results and top walkers.
+- Circle standings show a chat icon with a device-local unread badge; opening chat advances that device’s read cursor.
+- `/circle/[circleId]/chat`: membership-only group chat; messages visible while this route is focused advance the local read cursor.
 - `/circle/[circleId]/walks`: member-only future walk plans, RSVP, and optional general meetup labels.
 - `/circle/[circleId]/weekly-goal`: circle owner's shared weekly target.
-- `/activity`: walking activity with `RECORD WALK`, `Ready to walk?`, `Walk`, and `Start`. This is an optional foreground GPS flow, not running.
-- `/history`: `YOUR WALKING STORY`, `Every step counts.`, `Your step calendar`, private per-date journal, weekly target progress, `A week in your shoes`, and `Saved walks`.
+- `/activity`: Activity tab with a location-centered map, `Start a walk`, and `Plan a walk`. Location permission is requested in this context; denial should offer a clear retry/settings path without exposing a world-scale map.
+- `/walk/record`: live GPS walk with the blue route, pause/resume/finish, first-use step access prompt, and save-to-History. Step denial must not stop GPS recording.
+- `/walk/plan`: named place search, map-tap waypoints, walking directions, and saved-route reuse; no latitude/longitude fields.
+- `/history`: `YOUR WALKING STORY`, `Every step counts.`, `Your step calendar`, weekly target progress, `A week in your shoes`, and `Saved walks`. The per-day journal is intentionally not shown in History (decision D-014); legacy private notes may remain stored.
 - `/profile`: reachable from Home; profile editing, character selection, and sign-out.
 - `/daily-goal`: daily step-goal presets and a custom goal, plus weekly target presets and a custom target.
 - `/walking-reminders`: Profile/Home settings entry, opt-in daily local reminder, local 24-hour time, phone permission recovery, and a five-second test. Requires a development client containing `expo-notifications`; web shows an unsupported state. Follow `docs/WALKING_REMINDERS.md` for physical-device acceptance checks. Component/unit tests do not prove OS delivery.
@@ -49,7 +55,7 @@ Do not kill processes by name. Stop only a server started for this verification 
 
 Record the target, command or URL, exact action, expected result, observed result, and any prerequisite. A passing typecheck, unit test, or web preview does not prove native HealthKit, Health Connect, background sync, notification, or GPS behavior. Use screenshots or logs when they make the result reproducible. Keep test data isolated and clean up only records created for the run.
 
-For normal edits use `npm run verify` (alias `verify:quick`) and targeted tests for changed components. This runs incremental TypeScript, cached lint, and Vitest without Metro, browsers, screenshots, Doctor, or emulators. Use `npm run verify:fast` for broader deterministic checks. Use `npm run verify:visual` only when explicitly requested or rendered UI validation is genuinely necessary; use `npm run verify:full` for milestones, releases, broad architecture changes, or explicit requests. Stronger checks remain unchanged in scope.
+For normal edits use `npm run verify` (alias `verify:quick`) and targeted tests for changed components. This runs incremental TypeScript, cached lint, and Vitest without Metro, browsers, screenshots, Doctor, or emulators. Use `npm run verify:fast` for broader deterministic checks, including Node activity/background/persistence tests and Functions domain tests. Use `npm run verify:visual` only when explicitly requested or rendered UI validation is genuinely necessary; use `npm run verify:full` for milestones, releases, broad architecture changes, or explicit requests. Stronger checks remain unchanged in scope.
 
 Never automatically escalate verification tiers. On infrastructure failure, preserve the error and report visual verification as incomplete rather than claiming success. Permit at most one reasonable retry, then stop. Do not repeatedly restart Metro, clear caches, or retry browser captures. The runner bounds bundle warmup to two attempts in 60 seconds and cleans up its own processes.
 

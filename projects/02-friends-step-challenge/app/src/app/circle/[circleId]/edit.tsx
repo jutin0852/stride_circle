@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { Skeleton } from '@/components/skeleton';
+import { FixedHeaderScreen } from '@/components/ui';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { updateCircle } from '@/lib/circles';
 import { useAppColors } from '@/design-system/use-app-theme';
 
 export default function EditCircleRoute() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { circleId: rawCircleId } = useLocalSearchParams<{ circleId: string }>();
   const circleId = Array.isArray(rawCircleId) ? rawCircleId[0] : rawCircleId;
@@ -45,11 +48,11 @@ export default function EditCircleRoute() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
+    <FixedHeaderScreen backgroundColor={colors.background} header={<View style={styles.sheetHeader}>
       <View style={styles.grabber} />
       <Text accessibilityRole="header" style={styles.title}>Edit circle</Text>
       <Text style={styles.subtitle}>Keep the name clear so friends know which group they are joining.</Text>
-
+    </View>} contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) + 20 }]} scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}>
       <View style={styles.form}>
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>CIRCLE NAME</Text>
@@ -66,7 +69,7 @@ export default function EditCircleRoute() {
       <Pressable accessibilityRole="button" disabled={isSaving || !form.name.trim()} onPress={() => void save()} style={({ pressed }) => [styles.saveButton, (isSaving || !form.name.trim()) && styles.disabled, pressed && !isSaving && styles.pressed]}>
         {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.saveText}>Save changes</Text>}
       </Pressable>
-    </ScrollView>
+    </FixedHeaderScreen>
   );
 }
 
@@ -74,8 +77,8 @@ function EditSkeleton() { const colors = useAppColors(); const styles = useMemo(
 function getMessage(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
 
 function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
-  page: { backgroundColor: colors.background },
-  content: { gap: 16, padding: 24, paddingBottom: 40 },
+  sheetHeader: { gap: 16, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 12 },
+  content: { gap: 16, paddingHorizontal: 24, paddingTop: 12 },
   skeleton: { backgroundColor: colors.background, flex: 1, padding: 24 },
   grabber: { alignSelf: 'center', backgroundColor: colors.border, borderRadius: 3, height: 5, width: 42 },
   title: { color: colors.ink, fontSize: 28, fontWeight: '800', letterSpacing: -0.7, marginTop: 7 },

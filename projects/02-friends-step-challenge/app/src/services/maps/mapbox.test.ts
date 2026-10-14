@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { matchWalkingRoute, parseWalkingDirections, staticWalkMapUrl, walkingDirections } from './mapbox';
+import { matchWalkingRoute, parseWalkingDirections, parseWalkingPlaceResults, searchWalkingPlaces, staticWalkMapUrl, walkingDirections } from './mapbox';
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 it('parses walking geometry with longitude-first coordinates', () => {
   expect(parseWalkingDirections({ code: 'Ok', routes: [{ distance: 1000, duration: 800, geometry: { coordinates: [[3, 6], [3.1, 6.1]] } }] })).toEqual({ coordinates: [{ latitude: 6, longitude: 3 }, { latitude: 6.1, longitude: 3.1 }], distanceMeters: 1000, estimatedDurationSeconds: 800 });
@@ -8,11 +8,38 @@ it('rejects malformed and unavailable directions', () => {
   expect(() => parseWalkingDirections({ code: 'NoRoute' })).toThrow();
   expect(() => parseWalkingDirections({ code: 'Ok', routes: [{ distance: 1, duration: 1, geometry: { coordinates: [[900, 1], [1, 1]] } }] })).toThrow();
 });
+it('parses place-search results into safe map waypoints and drops invalid coordinates', () => {
+  expect(parseWalkingPlaceResults({ features: [
+    { geometry: { coordinates: [3.4, 6.5] }, properties: { name: 'Park', full_address: 'Lagos, Nigeria' } },
+    { geometry: { coordinates: [190, 6] }, properties: { name: 'Invalid' } },
+  ] })).toEqual([{ label: 'Park', detail: 'Lagos, Nigeria', point: { longitude: 3.4, latitude: 6.5 } }]);
+});
+it('requests nearby autocomplete suggestions using the current location as proximity', async () => {
+  vi.stubEnv('EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN', 'pk.test');
+  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ features: [] }) }); vi.stubGlobal('fetch', fetch);
+  await searchWalkingPlaces('coffee', { latitude: 6.5, longitude: 3.4 });
+  const requestUrl = new URL(fetch.mock.calls[0][0]);
+  expect(requestUrl.searchParams.get('auto_complete')).toBe('true');
+  expect(requestUrl.searchParams.get('limit')).toBe('5');
+  expect(requestUrl.searchParams.get('proximity')).toBe('3.4,6.5');
+});
 it('rejects missing credentials and invalid waypoints without a request', async () => {
   vi.stubEnv('EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN', ''); const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
   await expect(walkingDirections([{ latitude: 0, longitude: 0 }])).rejects.toThrow();
   await expect(walkingDirections([{ latitude: 0, longitude: 0 }, { latitude: 1, longitude: 1 }])).rejects.toThrow();
   expect(fetch).not.toHaveBeenCalled(); expect(staticWalkMapUrl([])).toBeNull();
+});
+it('keeps long share-map routes below the static-image URL limit', () => {
+  vi.stubEnv('EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN', 'pk.test');
+  const route = Array.from({ length: 1500 }, (_, index) => ({ latitude: 6.5 + index * 0.000001, longitude: 3.4 + index * 0.000001 }));
+  const url = staticWalkMapUrl(route);
+  expect(url).not.toBeNull();
+  expect(url!.length).toBeLessThan(8000);
+  expect(url).toContain('/static/geojson(');
+});
+it('does not request a static map when every route segment has only one point', () => {
+  vi.stubEnv('EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN', 'pk.test');
+  expect(staticWalkMapUrl([{ latitude: 6.5, longitude: 3.4 }, { latitude: 6.51, longitude: 3.41, segmentStart: true }])).toBeNull();
 });
 it('matching failure preserves the original route reference', async () => {
   vi.stubEnv('EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN', 'pk.test'); vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));

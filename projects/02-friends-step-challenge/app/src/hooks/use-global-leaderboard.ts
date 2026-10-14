@@ -29,7 +29,10 @@ export function useGlobalLeaderboard(period: GlobalLeaderboardPeriod, userId: st
     try {
       unsubscribe = watchGlobalLeaderboard({
         onChange: (snapshot) => setState({ ...snapshot, key: requestKey, status: 'ready' }),
-        onError: () => setState((current) => current.key === requestKey ? { ...current, status: 'error' } : current),
+        onError: (error) => {
+          if (__DEV__) console.error(`[Global leaderboard] Ranked entries failed to load (${getErrorCode(error)}).`);
+          setState((current) => current.key === requestKey ? { ...current, status: 'error' } : current);
+        },
         period,
         userId,
       });
@@ -46,4 +49,9 @@ export function useGlobalLeaderboard(period: GlobalLeaderboardPeriod, userId: st
   }, [period, requestKey, userId]);
 
   return state.key === requestKey ? state : { ...EMPTY_SNAPSHOT, status: 'loading' };
+}
+
+function getErrorCode(error: unknown) {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return 'unknown';
+  return typeof error.code === 'string' ? error.code : 'unknown';
 }

@@ -3,9 +3,9 @@ import { Alert, AppState } from 'react-native';
 
 import { GPS_STALE_MS, recordingElapsed } from '@/lib/activity-recording';
 import { beginBackgroundRecording, finishBackgroundRecording, getBackgroundRecording, pauseBackgroundRecording,
-  refreshBackgroundRecording, resetBackgroundRecording, restoreBackgroundRecording, retryBackgroundStop, subscribeBackgroundRecording, updateRecordingSteps } from '@/lib/background-activity';
+  discardBackgroundRecording, refreshBackgroundRecording, resetBackgroundRecording, restoreBackgroundRecording, retryBackgroundStop, subscribeBackgroundRecording, updateRecordingSteps } from '@/lib/background-activity';
 import { createHealthDataProvider } from '@/services/health-data';
-import { readSessionSteps } from '@/services/walks/session-steps';
+import { readSessionSteps, requestStepAccessIfNeeded } from '@/services/walks/session-steps';
 import type { ActivityStatus, FinishedActivity, GpsSignalStatus } from './use-activity-tracking';
 
 export type { ActivityStatus, FinishedActivity, GpsSignalStatus, PauseReason, RoutePoint } from './use-activity-tracking';
@@ -60,8 +60,17 @@ export function useActivityTracking(userId?: string) {
     return () => clearInterval(timer);
   }, [userId, value.session?.status, value.session?.userId]);
 
-  const start = useCallback((activityType: 'walk' | 'run' = 'walk', plannedRouteId?: string) => userId
-    ? beginBackgroundRecording({ userId, activityType, resuming: false, confirmBackgroundAccess, allowForegroundFallback: true, plannedRouteId }) : Promise.resolve(), [userId]);
+  const start = useCallback(async (activityType: 'walk' | 'run' = 'walk', plannedRouteId?: string) => {
+    if (!userId) return;
+    await beginBackgroundRecording({ userId, activityType, resuming: false, confirmBackgroundAccess, allowForegroundFallback: true, plannedRouteId });
+    const session = getBackgroundRecording().session;
+    if (session?.userId !== userId || session.status !== 'tracking') return;
+    try {
+      if (await requestStepAccessIfNeeded(provider)) await refreshSteps();
+    } catch {
+      // Step access is optional: a sensor failure must not interrupt the GPS walk.
+    }
+  }, [provider, refreshSteps, userId]);
   const resume = useCallback(() => userId
     ? beginBackgroundRecording({ userId, activityType: getBackgroundRecording().session?.activityType ?? 'walk', resuming: true, confirmBackgroundAccess, allowForegroundFallback: true }) : Promise.resolve(), [userId]);
   const finish = useCallback(async (): Promise<FinishedActivity | null> => {
@@ -76,6 +85,7 @@ export function useActivityTracking(userId?: string) {
   }, [userId, provider]);
   const pause = useCallback(() => { if (userId) void pauseBackgroundRecording(userId).catch(() => {}); }, [userId]);
   const reset = useCallback(() => { if (userId) void resetBackgroundRecording(userId).catch(() => {}); }, [userId]);
+  const discard = useCallback(() => userId ? discardBackgroundRecording(userId) : Promise.resolve(), [userId]);
   const retryStop = useCallback(() => { void retryBackgroundStop().catch(() => {}); }, []);
   const requestStepAccess = useCallback(async () => { await provider.requestPermission(); await refreshSteps(); }, [provider, refreshSteps]);
 
@@ -92,5 +102,5 @@ export function useActivityTracking(userId?: string) {
     elapsedMs: session ? recordingElapsed(session, now) : 0, distanceMeters: session?.distanceMeters ?? 0,
     currentPaceSecondsPerKm: stale ? null : session?.currentPaceSecondsPerKm ?? null,
     route: session?.route ?? [], currentLocation: session?.currentLocation ?? null, accuracyMeters: session?.accuracyMeters ?? null,
-    gpsSignal, backgroundIssue: issue, recordedActivityType: session?.activityType ?? null, start, pause, resume, finish, reset, retryStop };
+    gpsSignal, backgroundIssue: issue, recordedActivityType: session?.activityType ?? null, start, pause, resume, finish, reset, discard, retryStop };
 }

@@ -3,6 +3,8 @@ import { FieldValue, getFirestore, type DocumentData } from 'firebase-admin/fire
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { getWeekStartKey, isDateKey } from './date-keys.js';
+import { rankScores } from './ranking.js';
 
 initializeApp();
 
@@ -16,11 +18,6 @@ setGlobalOptions({
   maxInstances: 10,
   region: 'us-central1',
 });
-
-type ScoreInput = {
-  userId: string;
-  verifiedSteps: number;
-};
 
 function requireUser(request: { auth?: { uid: string } | null }) {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in to continue.');
@@ -67,27 +64,6 @@ function getDateKeyDaysBefore(date: Date, timeZone: string, daysBefore: number) 
   const [year, month, day] = getDateKeyInTimeZone(date, timeZone).split('-').map(Number);
   const shifted = new Date(Date.UTC(year, month - 1, day - daysBefore, 12));
   return [shifted.getUTCFullYear(), String(shifted.getUTCMonth() + 1).padStart(2, '0'), String(shifted.getUTCDate()).padStart(2, '0')].join('-');
-}
-
-function getWeekStartKey(dateKey: string) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day, 12));
-  const daysFromMonday = (date.getUTCDay() + 6) % 7;
-  date.setUTCDate(date.getUTCDate() - daysFromMonday);
-  return [date.getUTCFullYear(), String(date.getUTCMonth() + 1).padStart(2, '0'), String(date.getUTCDate()).padStart(2, '0')].join('-');
-}
-
-function rankScores(scores: ScoreInput[]) {
-  const ordered = [...scores].sort((first, second) => {
-    if (second.verifiedSteps !== first.verifiedSteps) return second.verifiedSteps - first.verifiedSteps;
-    return first.userId.localeCompare(second.userId);
-  });
-
-  return ordered.map((score, index) => {
-    const previous = ordered[index - 1];
-    const rank = previous && previous.verifiedSteps === score.verifiedSteps ? index : index + 1;
-    return { ...score, isWinner: ordered[0]?.verifiedSteps === score.verifiedSteps, rank };
-  });
 }
 
 function createInviteCode() {
@@ -227,7 +203,6 @@ export const leaveCircle = onCall(async (request) => {
 });
 
 async function finalizeCircleDay(circleSnapshot: FirebaseFirestore.QueryDocumentSnapshot, dateKey: string) {
-  const circle = circleSnapshot.data();
   const dayRef = circleSnapshot.ref.collection('days').doc(dateKey);
   const daySnapshot = await dayRef.get();
   if (daySnapshot.data()?.finalizedAt) return;
@@ -318,12 +293,6 @@ export const generateWeeklyRecaps = onSchedule({
 });
 
 type GlobalLeaderboardPeriod = 'week' | 'all-time';
-
-function isDateKey(value: unknown): value is string {
-  return typeof value === 'string'
-    && /^\d{4}-\d{2}-\d{2}$/.test(value)
-    && !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`));
-}
 
 function getGlobalLeaderboardBoardId(period: GlobalLeaderboardPeriod, weekKey?: string) {
   return period === 'all-time' ? 'walk_all_time' : `walk_week_${weekKey ?? getWeekStartKey(getDateKeyInTimeZone(new Date(), 'UTC'))}`;

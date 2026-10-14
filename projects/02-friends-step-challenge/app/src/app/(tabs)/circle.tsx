@@ -110,6 +110,10 @@ export default function CirclesRoute() {
       onJoinPublic={handleJoinPublic}
       onOpenCircle={(circleId) => router.push({ pathname: '/circle/[circleId]', params: { circleId } })}
       onOpenGlobalLeaderboard={() => router.push('/global-leaderboard')}
+      onReportCircle={(circle) => router.push({
+        pathname: '/circle/[circleId]/report',
+        params: { circleId: circle.id, targetId: circle.id, targetLabel: circle.name, targetType: 'circle' },
+      })}
       onRetryCircles={refresh}
       onRetryPublic={() => {
         setPublicCircleStatus('loading');

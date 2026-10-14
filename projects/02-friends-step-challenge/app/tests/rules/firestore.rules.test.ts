@@ -4,7 +4,8 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
+import { request as httpRequest } from 'node:http';
+import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 
 const projectId = 'demo-stride-circle';
 let testEnv: RulesTestEnvironment;
@@ -36,7 +37,7 @@ async function seedCircle() {
       discoverableArea: 'Lagos',
       inviteCode: null,
       joinPolicy: 'open',
-      memberCount: 1,
+      memberCount: 2,
       name: 'Public Circle',
       ownerId: 'owner-1',
       visibility: 'public',
@@ -47,6 +48,25 @@ async function seedCircle() {
       displayName: 'Member One',
       role: 'member',
       userId: 'member-1',
+    });
+    await setDoc(doc(database, 'circles', 'public-circle', 'members', 'owner-1'), {
+      avatarSeed: 'owner-1',
+      avatarStyle: 'sprouts',
+      displayName: 'Circle Owner',
+      role: 'owner',
+      userId: 'owner-1',
+    });
+    await setDoc(doc(database, 'users', 'member-1', 'circleMemberships', 'public-circle'), {
+      circleId: 'public-circle',
+      circleName: 'Public Circle',
+      joinedAt: serverTimestamp(),
+      role: 'member',
+    });
+    await setDoc(doc(database, 'users', 'owner-1', 'circleMemberships', 'public-circle'), {
+      circleId: 'public-circle',
+      circleName: 'Public Circle',
+      joinedAt: serverTimestamp(),
+      role: 'owner',
     });
     await setDoc(doc(database, 'circles', 'private-circle'), {
       activityType: 'walking',
@@ -62,8 +82,36 @@ async function seedCircle() {
   });
 }
 
+async function clearFirestoreData() {
+  const emulator = testEnv.emulators.firestore;
+  if (!emulator) throw new Error('Firestore emulator is required to run these rules tests.');
+
+  // jest-expo replaces fetch with a response shim that fails on the emulator's empty DELETE response.
+  await new Promise<void>((resolve, reject) => {
+    const request = httpRequest({
+      hostname: emulator.host,
+      port: emulator.port,
+      path: `/emulator/v1/projects/${projectId}/databases/(default)/documents`,
+      method: 'DELETE',
+    }, (response) => {
+      let body = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk: string) => { body += chunk; });
+      response.on('end', () => {
+        const status = response.statusCode ?? 0;
+        if (status >= 200 && status < 300) resolve();
+        else reject(new Error(`Firestore emulator cleanup failed (${status}): ${body}`));
+      });
+    });
+
+    request.on('error', reject);
+    request.end();
+  });
+}
+
 describe('Firestore launch rules', () => {
   beforeEach(async () => {
+    await clearFirestoreData();
     await seedCircle();
   });
 
@@ -154,6 +202,169 @@ describe('Firestore launch rules', () => {
       createdAt: serverTimestamp(),
       schemaVersion: 1,
     }));
+  });
+
+  it('lets a signed-in nonmember report a public circle without exposing reports to them', async () => {
+    const outsider = testEnv.authenticatedContext('outsider-1').firestore();
+    const owner = testEnv.authenticatedContext('owner-1').firestore();
+    const report = doc(outsider, 'circles', 'public-circle', 'reports', 'outsider-1_circle_public-circle');
+    const payload = {
+      circleId: 'public-circle',
+      createdAt: serverTimestamp(),
+      details: 'This circle appears to be impersonating another group.',
+      reason: 'spam',
+      reporterId: 'outsider-1',
+      schemaVersion: 1,
+      status: 'open',
+      targetId: 'public-circle',
+      targetLabel: 'Public Circle',
+      targetPreview: '',
+      targetType: 'circle',
+    };
+
+    await assertSucceeds(setDoc(report, payload));
+    await assertFails(getDoc(report));
+    await assertSucceeds(getDoc(doc(owner, 'circles', 'public-circle', 'reports', 'outsider-1_circle_public-circle')));
+    await assertFails(setDoc(report, payload));
+  });
+
+  it('restricts report targets and prevents members from reporting themselves', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const wrongCircle = doc(member, 'circles', 'public-circle', 'reports', 'member-1_circle_private-circle');
+    await assertFails(setDoc(wrongCircle, {
+      circleId: 'public-circle',
+      createdAt: serverTimestamp(),
+      details: '',
+      reason: 'spam',
+      reporterId: 'member-1',
+      schemaVersion: 1,
+      status: 'open',
+      targetId: 'private-circle',
+      targetLabel: 'Private Circle',
+      targetPreview: '',
+      targetType: 'circle',
+    }));
+
+    const selfReport = doc(member, 'circles', 'public-circle', 'reports', 'member-1_member_member-1');
+    await assertFails(setDoc(selfReport, {
+      circleId: 'public-circle',
+      createdAt: serverTimestamp(),
+      details: '',
+      reason: 'harassment',
+      reporterId: 'member-1',
+      schemaVersion: 1,
+      status: 'open',
+      targetId: 'member-1',
+      targetLabel: 'Member One',
+      targetPreview: '',
+      targetType: 'member',
+    }));
+  });
+
+  it('accepts a message report only with the original author and message preview', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const message = doc(member, 'circles', 'public-circle', 'messages', 'message-7');
+    await assertSucceeds(setDoc(message, {
+      authorAvatarSeed: 'member-1',
+      authorAvatarStyle: 'sprouts',
+      authorId: 'member-1',
+      authorName: 'Member One',
+      body: 'Meet at the park entrance.',
+      circleId: 'public-circle',
+      clientMessageId: 'message-7',
+      createdAt: serverTimestamp(),
+      schemaVersion: 1,
+    }));
+
+    const report = doc(member, 'circles', 'public-circle', 'reports', 'member-1_message_message-7');
+    const payload = {
+      circleId: 'public-circle',
+      createdAt: serverTimestamp(),
+      details: 'This includes a private address.',
+      reason: 'privacy',
+      reporterId: 'member-1',
+      schemaVersion: 1,
+      status: 'open',
+      targetId: 'message-7',
+      targetLabel: 'Member One',
+      targetPreview: 'Meet at the park entrance.',
+      targetType: 'message',
+    };
+    await assertSucceeds(setDoc(report, payload));
+
+    const spoofedReport = doc(member, 'circles', 'public-circle', 'reports', 'member-1_message_message-7-spoof');
+    await assertFails(setDoc(spoofedReport, { ...payload, targetId: 'message-7-spoof', targetPreview: 'Someone else’s message.' }));
+  });
+
+  it('allows only owners to assign a mirrored moderator role', async () => {
+    const owner = testEnv.authenticatedContext('owner-1').firestore();
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const ownerBatch = writeBatch(owner);
+    ownerBatch.update(doc(owner, 'circles', 'public-circle', 'members', 'member-1'), { role: 'moderator' });
+    ownerBatch.update(doc(owner, 'users', 'member-1', 'circleMemberships', 'public-circle'), { role: 'moderator' });
+    await assertSucceeds(ownerBatch.commit());
+
+    const memberBatch = writeBatch(member);
+    memberBatch.update(doc(member, 'circles', 'public-circle', 'members', 'member-1'), { role: 'owner' });
+    memberBatch.update(doc(member, 'users', 'member-1', 'circleMemberships', 'public-circle'), { role: 'owner' });
+    await assertFails(memberBatch.commit());
+  });
+
+  it('lets moderators review reports but prevents other members from changing them', async () => {
+    const owner = testEnv.authenticatedContext('owner-1').firestore();
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const reportPath = ['circles', 'public-circle', 'reports', 'member-1_member_owner-1'] as const;
+    await assertSucceeds(setDoc(doc(member, ...reportPath), {
+      circleId: 'public-circle',
+      createdAt: serverTimestamp(),
+      details: '',
+      reason: 'harassment',
+      reporterId: 'member-1',
+      schemaVersion: 1,
+      status: 'open',
+      targetId: 'owner-1',
+      targetLabel: 'Circle Owner',
+      targetPreview: '',
+      targetType: 'member',
+    }));
+    await assertFails(getDoc(doc(member, ...reportPath)));
+
+    const closedAt = serverTimestamp();
+    const resolution = {
+      resolvedAt: closedAt,
+      resolvedBy: 'member-1',
+      resolution: 'Reviewed and addressed by circle moderators.',
+      status: 'resolved',
+      updatedAt: closedAt,
+    };
+    await assertFails(setDoc(doc(member, ...reportPath), resolution, { merge: true }));
+    await assertSucceeds(setDoc(doc(owner, ...reportPath), {
+      resolvedAt: serverTimestamp(),
+      resolvedBy: 'owner-1',
+      resolution: 'Reviewed and addressed by circle moderators.',
+      status: 'resolved',
+      updatedAt: serverTimestamp(),
+    }, { merge: true }));
+  });
+
+  it('allows a user to block another person only in their own block list', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const owner = testEnv.authenticatedContext('owner-1').firestore();
+    const ownBlock = doc(member, 'users', 'member-1', 'blocks', 'owner-1');
+    await assertSucceeds(setDoc(ownBlock, {
+      blockedUserId: 'owner-1',
+      createdAt: serverTimestamp(),
+      displayName: 'Circle Owner',
+      schemaVersion: 1,
+    }));
+    await assertSucceeds(getDoc(ownBlock));
+    await assertFails(setDoc(doc(member, 'users', 'member-1', 'blocks', 'member-1'), {
+      blockedUserId: 'member-1',
+      createdAt: serverTimestamp(),
+      displayName: 'Me',
+      schemaVersion: 1,
+    }));
+    await assertFails(getDoc(doc(owner, 'users', 'member-1', 'blocks', 'owner-1')));
   });
 });
 

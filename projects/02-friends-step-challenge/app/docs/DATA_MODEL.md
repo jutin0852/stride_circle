@@ -148,7 +148,14 @@ Circle walk plans store a title, start timestamp, creator display snapshot, opti
 
 ## Safety data
 
-Reports should include the reporter, target type/id, reason, status, timestamps, and moderation resolution. They must be immutable to the reported user. Blocks should be represented in a user-scoped collection or a dedicated relationship collection so blocked interactions can be filtered consistently.
+```text
+users/{userId}/blocks/{blockedUserId}
+circles/{circleId}/reports/{reporterId}_{targetType}_{targetId}
+```
+
+Block documents are user-owned and contain `blockedUserId`, a display-name snapshot, `createdAt`, and `schemaVersion`. The user can delete their own block to unblock. The client hides blocked people from circle chat, standings, and recap names; blocking does not delete circle messages or prevent other circle members from reading the shared chat collection.
+
+Report documents contain `circleId`, `reporterId`, `targetType`, `targetId`, authoritative `targetLabel` and optional message preview, a fixed `reason`, bounded `details`, `status` (`open | resolved | dismissed`), `createdAt`, and `schemaVersion`. Moderator review adds `resolvedBy`, `resolvedAt`, `updatedAt`, and a bounded resolution label. The document ID limits each reporter to one report per target. Read/resolve access is role-based: current circle owners/moderators can access every report in that circle, including reports involving themselves; ordinary reporters and reported members cannot. A signed-in nonmember may report a public open circle, but cannot read its safety inbox or report its members/messages.
 
 Cheer fields should include sender, recipient, fixed cheer type, circle, competition day, and creation time. Backend limits should prevent spam and duplicate reactions.
 
@@ -161,7 +168,7 @@ Cheer fields should include sender, recipient, fixed cheer type, circle, competi
 - A current member can read messages for their circle and create only messages authored by their own member record.
 - Message documents cannot be updated or deleted by the client in the first edition.
 - Only owners can delete circles.
-- Owners and moderators can moderate; ordinary members cannot assign roles or resolve reports.
+- Only the owner can assign/demote moderators; owners and moderators can read/resolve circle reports; ordinary members cannot assign roles or resolve reports.
 - Clients cannot write authoritative winner, rank, or finalized fields.
 - Account deletion removes or anonymizes data according to the retention policy.
 

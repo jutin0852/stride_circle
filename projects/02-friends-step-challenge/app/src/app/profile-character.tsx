@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/auth/auth-provider';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
-import { AppText } from '@/components/ui';
+import { AppText, FixedHeaderScreen } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, updateUserAvatar } from '@/lib/auth';
 import { avatarGroups, avatarStyles, type AvatarChoice } from '@/lib/avatar';
@@ -35,8 +35,7 @@ export default function ProfileCharacterRoute() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} style={styles.page}>
-      <View style={styles.header}><View><AppText style={styles.title}>Choose a character</AppText><AppText style={styles.subtitle}>Pick one that feels like you.</AppText></View><DicebearAvatar choice={{ seed, style: current.style }} fallback={getInitials(displayName)} size={58} /></View>
+    <FixedHeaderScreen backgroundColor={colors.background} header={<View style={styles.header}><View><AppText style={styles.title}>Choose a character</AppText><AppText style={styles.subtitle}>Pick one that feels like you.</AppText></View><DicebearAvatar choice={{ seed, style: current.style }} fallback={getInitials(displayName)} size={58} /></View>} headerStyle={styles.fixedHeader} contentContainerStyle={styles.content}>
       {avatarGroups.map((group) => <View key={group.title} style={styles.group}><AppText style={styles.groupTitle}>{group.title}</AppText><View style={styles.grid}>{group.styles.map((style) => {
         const isCurrent = current.style === style && current.seed === seed;
         return <Pressable accessibilityLabel="Choose character" accessibilityRole="button" disabled={savingStyle !== null} key={style} onPress={() => void selectCharacter(style)} style={({ pressed }) => [styles.option, isCurrent && styles.optionCurrent, pressed && savingStyle === null && styles.pressed]}>
@@ -44,12 +43,12 @@ export default function ProfileCharacterRoute() {
         </Pressable>;
       })}</View></View>)}
       {groupedStyles.length === avatarStyles.length ? null : <AppText style={styles.error}>Some characters are unavailable right now.</AppText>}
-    </ScrollView>
+    </FixedHeaderScreen>
   );
 }
 
 function getInitials(name: string) { return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC'; }
 
 function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
-  page: { backgroundColor: colors.background }, content: { gap: 20, padding: 22, paddingBottom: 40 }, header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }, title: { color: colors.ink, fontSize: 27, fontWeight: '800', letterSpacing: -0.9 }, subtitle: { color: colors.muted, fontSize: 14, marginTop: 4 }, group: { gap: 10 }, groupTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 }, option: { alignItems: 'center', borderBottomWidth: 3, borderColor: colors.border, borderRadius: 16, borderWidth: 2, padding: 6, width: '23%' }, optionCurrent: { backgroundColor: colors.soft, borderColor: colors.accent, borderWidth: 2, padding: 6 }, avatarLoading: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 28, height: 56, justifyContent: 'center', width: 56 }, error: { color: colors.dangerContent, fontSize: 13 }, pressed: { borderBottomWidth: 1, opacity: 0.82, transform: [{ translateY: 2 }] },
+  fixedHeader: { paddingHorizontal: 22, paddingVertical: 12 }, content: { gap: 20, padding: 22, paddingTop: 8, paddingBottom: 40 }, header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }, title: { color: colors.ink, fontSize: 27, fontWeight: '800', letterSpacing: -0.9 }, subtitle: { color: colors.muted, fontSize: 14, marginTop: 4 }, group: { gap: 10 }, groupTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 }, option: { alignItems: 'center', borderBottomWidth: 3, borderColor: colors.border, borderRadius: 16, borderWidth: 2, padding: 6, width: '23%' }, optionCurrent: { backgroundColor: colors.soft, borderColor: colors.accent, borderWidth: 2, padding: 6 }, avatarLoading: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 28, height: 56, justifyContent: 'center', width: 56 }, error: { color: colors.dangerContent, fontSize: 13 }, pressed: { borderBottomWidth: 1, opacity: 0.82, transform: [{ translateY: 2 }] },
 }); }

@@ -2,6 +2,20 @@ import { describe, expect, it } from 'vitest';
 
 import { controlHeights, darkModePalette, darkSemanticColors, layout, palette, radii, semanticColors, spacing, touchTargets, typeScale } from '@/design-system/tokens';
 
+function contrastRatio(foreground: string, background: string) {
+  const luminance = (color: string) => {
+    const [red, green, blue] = color.match(/[\da-f]{2}/gi)!.map((channel) => parseInt(channel, 16) / 255).map((channel) => (
+      channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+    ));
+
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+
+  const foregroundLuminance = luminance(foreground);
+  const backgroundLuminance = luminance(background);
+  return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
+}
+
 describe('Stride Circle design tokens', () => {
   it('keeps brand surfaces and content colors distinct', () => {
     expect(palette.ink[950]).not.toBe(semanticColors.brandAction);
@@ -14,6 +28,31 @@ describe('Stride Circle design tokens', () => {
     expect(controlHeights.small).toBeGreaterThanOrEqual(touchTargets.minimum);
     expect(controlHeights.medium).toBeGreaterThanOrEqual(touchTargets.minimum);
     expect(controlHeights.large).toBeGreaterThanOrEqual(touchTargets.minimum);
+  });
+
+  it('keeps tertiary text at normal-text contrast on light content surfaces', () => {
+    const lightSurfaces = [
+      semanticColors.canvas,
+      semanticColors.card,
+      semanticColors.raised,
+      semanticColors.soft,
+      semanticColors.surfaceSubtle,
+      semanticColors.surfacePressed,
+      semanticColors.surfaceEdge,
+      semanticColors.infoSurface,
+      semanticColors.successSurface,
+      semanticColors.warningSurface,
+      semanticColors.dangerSurface,
+      semanticColors.streakSurface,
+      semanticColors.protectedSurface,
+      semanticColors.sheetSurface,
+    ];
+
+    for (const surface of lightSurfaces) {
+      expect(contrastRatio(semanticColors.contentTertiary, surface)).toBeGreaterThanOrEqual(4.5);
+    }
+
+    expect(darkSemanticColors.contentTertiary).toBe(darkModePalette.textMuted);
   });
 
   it('uses a consistent spacing and type scale', () => {

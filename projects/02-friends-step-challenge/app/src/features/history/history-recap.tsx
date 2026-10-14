@@ -40,11 +40,13 @@ export function HistoryRecap({ records, today, goal, goalReady, weeklyGoal, week
     {status === 'ready' && weeklyGoalReady && weeklyGoal ? <View style={styles.weeklyGoal}>
       <View style={styles.weeklyGoalHeading}><AppText variant="label">Weekly target</AppText>{onEditWeeklyGoal ? <Pressable accessibilityRole="button" accessibilityLabel="Change weekly step target" onPress={onEditWeeklyGoal} hitSlop={8}><AppText variant="caption" style={styles.changeGoal}>Change</AppText></Pressable> : null}</View>
       <AppText variant="titleSmall">{formatSteps(weeklySteps)} <AppText tone="secondary" variant="bodySmall">of {formatSteps(weeklyGoal)} steps</AppText></AppText>
-      <ProgressBar accessibilityLabel="Weekly step target progress" value={weeklySteps} max={weeklyGoal} fillColor={historyColors.blue} trackColor={historyColors.panel} />
+      <ProgressBar animated accessibilityLabel="Weekly step target progress" value={weeklySteps} max={weeklyGoal} fillColor={historyColors.blue} trackColor={historyColors.panel} />
       <AppText tone="secondary" variant="caption">Steps saved from your health data this week.</AppText>
     </View> : null}
     {status === 'error' ? <StateCard tone="error" title="Recap unavailable" description="We couldn’t load your saved steps." actionLabel="Try again" onAction={onRetry} /> : <View style={styles.chartSection}>
       <BarChart
+        animationDuration={220}
+        domainDuration={180}
         accessibilityLabel="Your saved steps from Monday through Sunday this week"
         accessibilityLabelForDatum={(datum) => `${String(datum.day)}: ${datum.future ? 'Future day' : datum.saved ? `${Number(datum.steps).toLocaleString()} steps` : 'No saved steps'}`}
         aspectRatio={1.7}

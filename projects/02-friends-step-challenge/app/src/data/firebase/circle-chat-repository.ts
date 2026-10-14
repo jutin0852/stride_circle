@@ -10,6 +10,7 @@ import {
   setDoc,
   startAfter,
   Timestamp,
+  where,
   type DocumentData,
   type QueryDocumentSnapshot,
   type Unsubscribe,
@@ -34,6 +35,7 @@ export type CircleMessagePage = {
 
 export type CircleChatRepository = {
   subscribeToLatest: (circleId: string, onChange: (page: CircleMessagePage) => void, onError: (error: unknown) => void) => Unsubscribe;
+  subscribeToUnread: (circleId: string, after: Date, onChange: (page: CircleMessagePage) => void, onError: (error: unknown) => void) => Unsubscribe;
   loadOlder: (circleId: string, cursor: CircleMessageCursor) => Promise<CircleMessagePage>;
   send: (input: { circleId: string; messageId: string; body: string; author: CircleChatAuthor }) => Promise<void>;
 };
@@ -47,6 +49,11 @@ function getMessageQuery(circleId: string, cursor?: CircleMessageCursor) {
   const messages = getMessagesReference(circleId);
   const constraints = [orderBy('createdAt', 'desc'), ...(cursor ? [startAfter(Timestamp.fromDate(new Date(cursor.createdAt)))] : []), limit(CIRCLE_CHAT_PAGE_SIZE)] as const;
   return query(messages, ...constraints);
+}
+
+function getUnreadMessageQuery(circleId: string, after: Date) {
+  const messages = getMessagesReference(circleId);
+  return query(messages, where('createdAt', '>', Timestamp.fromDate(after)), orderBy('createdAt', 'desc'), limit(CIRCLE_CHAT_PAGE_SIZE));
 }
 
 function toDate(value: unknown) {
@@ -110,6 +117,10 @@ function readPage(circleId: string, snapshots: readonly QueryDocumentSnapshot<Do
 export const firebaseCircleChatRepository: CircleChatRepository = {
   subscribeToLatest(circleId, onChange, onError) {
     return onSnapshot(getMessageQuery(circleId), (snapshot) => onChange(readPage(circleId, snapshot.docs)), onError);
+  },
+
+  subscribeToUnread(circleId, after, onChange, onError) {
+    return onSnapshot(getUnreadMessageQuery(circleId, after), (snapshot) => onChange(readPage(circleId, snapshot.docs)), onError);
   },
 
   async loadOlder(circleId, cursor) {

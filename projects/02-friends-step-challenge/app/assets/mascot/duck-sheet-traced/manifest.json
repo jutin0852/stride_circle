@@ -1,0 +1,566 @@
+[
+  {
+    "name": "head-base",
+    "source_box": [
+      307,
+      280,
+      450,
+      421
+    ],
+    "svg": "head-base.svg",
+    "filled_pixels": 14465,
+    "color_paths": 4
+  },
+  {
+    "name": "eye-dot-upper",
+    "source_box": [
+      454,
+      302,
+      481,
+      334
+    ],
+    "svg": "eye-dot-upper.svg",
+    "filled_pixels": 287,
+    "color_paths": 1
+  },
+  {
+    "name": "eye-closed-upper",
+    "source_box": [
+      489,
+      302,
+      527,
+      334
+    ],
+    "svg": "eye-closed-upper.svg",
+    "filled_pixels": 277,
+    "color_paths": 1
+  },
+  {
+    "name": "eye-happy-upper",
+    "source_box": [
+      533,
+      301,
+      567,
+      333
+    ],
+    "svg": "eye-happy-upper.svg",
+    "filled_pixels": 254,
+    "color_paths": 1
+  },
+  {
+    "name": "eye-dot-lower",
+    "source_box": [
+      454,
+      347,
+      482,
+      378
+    ],
+    "svg": "eye-dot-lower.svg",
+    "filled_pixels": 289,
+    "color_paths": 1
+  },
+  {
+    "name": "eye-closed-lower",
+    "source_box": [
+      489,
+      346,
+      528,
+      378
+    ],
+    "svg": "eye-closed-lower.svg",
+    "filled_pixels": 233,
+    "color_paths": 1
+  },
+  {
+    "name": "eye-wink",
+    "source_box": [
+      531,
+      341,
+      570,
+      378
+    ],
+    "svg": "eye-wink.svg",
+    "filled_pixels": 328,
+    "color_paths": 1
+  },
+  {
+    "name": "cheek-left",
+    "source_box": [
+      452,
+      382,
+      488,
+      409
+    ],
+    "svg": "cheek-left.svg",
+    "filled_pixels": 421,
+    "color_paths": 1
+  },
+  {
+    "name": "cheek-right",
+    "source_box": [
+      526,
+      379,
+      567,
+      409
+    ],
+    "svg": "cheek-right.svg",
+    "filled_pixels": 455,
+    "color_paths": 1
+  },
+  {
+    "name": "beak-default",
+    "source_box": [
+      597,
+      299,
+      674,
+      344
+    ],
+    "svg": "beak-default.svg",
+    "filled_pixels": 1538,
+    "color_paths": 4
+  },
+  {
+    "name": "beak-happy",
+    "source_box": [
+      674,
+      297,
+      749,
+      352
+    ],
+    "svg": "beak-happy.svg",
+    "filled_pixels": 1850,
+    "color_paths": 5
+  },
+  {
+    "name": "beak-small",
+    "source_box": [
+      753,
+      294,
+      830,
+      332
+    ],
+    "svg": "beak-small.svg",
+    "filled_pixels": 1457,
+    "color_paths": 4
+  },
+  {
+    "name": "beak-wide",
+    "source_box": [
+      597,
+      344,
+      676,
+      389
+    ],
+    "svg": "beak-wide.svg",
+    "filled_pixels": 1515,
+    "color_paths": 4
+  },
+  {
+    "name": "beak-oval",
+    "source_box": [
+      677,
+      347,
+      747,
+      389
+    ],
+    "svg": "beak-oval.svg",
+    "filled_pixels": 1394,
+    "color_paths": 4
+  },
+  {
+    "name": "beak-laugh",
+    "source_box": [
+      750,
+      343,
+      833,
+      408
+    ],
+    "svg": "beak-laugh.svg",
+    "filled_pixels": 2551,
+    "color_paths": 4
+  },
+  {
+    "name": "body-base",
+    "source_box": [
+      868,
+      281,
+      1003,
+      429
+    ],
+    "svg": "body-base.svg",
+    "filled_pixels": 12909,
+    "color_paths": 4
+  },
+  {
+    "name": "wing-left",
+    "source_box": [
+      1013,
+      293,
+      1086,
+      380
+    ],
+    "svg": "wing-left.svg",
+    "filled_pixels": 3586,
+    "color_paths": 4
+  },
+  {
+    "name": "wing-right",
+    "source_box": [
+      1099,
+      292,
+      1179,
+      384
+    ],
+    "svg": "wing-right.svg",
+    "filled_pixels": 3478,
+    "color_paths": 4
+  },
+  {
+    "name": "hand-left",
+    "source_box": [
+      995,
+      423,
+      1078,
+      484
+    ],
+    "svg": "hand-left.svg",
+    "filled_pixels": 2918,
+    "color_paths": 4
+  },
+  {
+    "name": "hand-right",
+    "source_box": [
+      1103,
+      408,
+      1174,
+      485
+    ],
+    "svg": "hand-right.svg",
+    "filled_pixels": 2713,
+    "color_paths": 4
+  },
+  {
+    "name": "leg-shoe-left",
+    "source_box": [
+      1244,
+      279,
+      1338,
+      382
+    ],
+    "svg": "leg-shoe-left.svg",
+    "filled_pixels": 4868,
+    "color_paths": 6
+  },
+  {
+    "name": "leg-shoe-right",
+    "source_box": [
+      1355,
+      283,
+      1443,
+      382
+    ],
+    "svg": "leg-shoe-right.svg",
+    "filled_pixels": 4133,
+    "color_paths": 6
+  },
+  {
+    "name": "shoe-walk",
+    "source_box": [
+      1210,
+      414,
+      1299,
+      486
+    ],
+    "svg": "shoe-walk.svg",
+    "filled_pixels": 3271,
+    "color_paths": 3
+  },
+  {
+    "name": "shoe-run",
+    "source_box": [
+      1312,
+      414,
+      1398,
+      487
+    ],
+    "svg": "shoe-run.svg",
+    "filled_pixels": 2974,
+    "color_paths": 3
+  },
+  {
+    "name": "shoe-jump-left",
+    "source_box": [
+      1404,
+      418,
+      1460,
+      487
+    ],
+    "svg": "shoe-jump-left.svg",
+    "filled_pixels": 1825,
+    "color_paths": 3
+  },
+  {
+    "name": "shoe-jump-right",
+    "source_box": [
+      1460,
+      410,
+      1523,
+      477
+    ],
+    "svg": "shoe-jump-right.svg",
+    "filled_pixels": 1828,
+    "color_paths": 3
+  },
+  {
+    "name": "hoodie",
+    "source_box": [
+      29,
+      508,
+      225,
+      651
+    ],
+    "svg": "hoodie.svg",
+    "filled_pixels": 17914,
+    "color_paths": 3
+  },
+  {
+    "name": "shorts",
+    "source_box": [
+      219,
+      532,
+      338,
+      625
+    ],
+    "svg": "shorts.svg",
+    "filled_pixels": 7536,
+    "color_paths": 4
+  },
+  {
+    "name": "headband",
+    "source_box": [
+      341,
+      535,
+      478,
+      589
+    ],
+    "svg": "headband.svg",
+    "filled_pixels": 2941,
+    "color_paths": 3
+  },
+  {
+    "name": "crossbody-bag",
+    "source_box": [
+      482,
+      507,
+      619,
+      630
+    ],
+    "svg": "crossbody-bag.svg",
+    "filled_pixels": 5635,
+    "color_paths": 2
+  },
+  {
+    "name": "headphones",
+    "source_box": [
+      627,
+      502,
+      811,
+      650
+    ],
+    "svg": "headphones.svg",
+    "filled_pixels": 9661,
+    "color_paths": 4
+  },
+  {
+    "name": "flag",
+    "source_box": [
+      882,
+      563,
+      963,
+      669
+    ],
+    "svg": "flag.svg",
+    "filled_pixels": 2691,
+    "color_paths": 7
+  },
+  {
+    "name": "heart",
+    "source_box": [
+      973,
+      587,
+      1044,
+      655
+    ],
+    "svg": "heart.svg",
+    "filled_pixels": 2321,
+    "color_paths": 4
+  },
+  {
+    "name": "sparkle-large",
+    "source_box": [
+      1046,
+      576,
+      1112,
+      650
+    ],
+    "svg": "sparkle-large.svg",
+    "filled_pixels": 1248,
+    "color_paths": 4
+  },
+  {
+    "name": "sparkle-small",
+    "source_box": [
+      1097,
+      618,
+      1130,
+      657
+    ],
+    "svg": "sparkle-small.svg",
+    "filled_pixels": 457,
+    "color_paths": 4
+  },
+  {
+    "name": "excitement-marks",
+    "source_box": [
+      1125,
+      572,
+      1212,
+      642
+    ],
+    "svg": "excitement-marks.svg",
+    "filled_pixels": 2254,
+    "color_paths": 4
+  },
+  {
+    "name": "sweat",
+    "source_box": [
+      1224,
+      570,
+      1284,
+      650
+    ],
+    "svg": "sweat.svg",
+    "filled_pixels": 742,
+    "color_paths": 2
+  },
+  {
+    "name": "rain-cloud",
+    "source_box": [
+      1308,
+      566,
+      1412,
+      651
+    ],
+    "svg": "rain-cloud.svg",
+    "filled_pixels": 3574,
+    "color_paths": 5
+  },
+  {
+    "name": "sleep-marks",
+    "source_box": [
+      1419,
+      565,
+      1508,
+      647
+    ],
+    "svg": "sleep-marks.svg",
+    "filled_pixels": 1097,
+    "color_paths": 1
+  },
+  {
+    "name": "face-default",
+    "source_box": [
+      323,
+      64,
+      468,
+      197
+    ],
+    "svg": "face-default.svg",
+    "filled_pixels": 13122,
+    "color_paths": 6
+  },
+  {
+    "name": "face-happy",
+    "source_box": [
+      469,
+      64,
+      614,
+      197
+    ],
+    "svg": "face-happy.svg",
+    "filled_pixels": 13553,
+    "color_paths": 7
+  },
+  {
+    "name": "face-smile",
+    "source_box": [
+      615,
+      64,
+      760,
+      197
+    ],
+    "svg": "face-smile.svg",
+    "filled_pixels": 12880,
+    "color_paths": 6
+  },
+  {
+    "name": "face-laugh",
+    "source_box": [
+      764,
+      64,
+      909,
+      197
+    ],
+    "svg": "face-laugh.svg",
+    "filled_pixels": 13710,
+    "color_paths": 6
+  },
+  {
+    "name": "face-excited",
+    "source_box": [
+      917,
+      64,
+      1062,
+      197
+    ],
+    "svg": "face-excited.svg",
+    "filled_pixels": 12463,
+    "color_paths": 7
+  },
+  {
+    "name": "face-surprised",
+    "source_box": [
+      1064,
+      64,
+      1209,
+      197
+    ],
+    "svg": "face-surprised.svg",
+    "filled_pixels": 12657,
+    "color_paths": 6
+  },
+  {
+    "name": "face-sleepy",
+    "source_box": [
+      1211,
+      64,
+      1356,
+      197
+    ],
+    "svg": "face-sleepy.svg",
+    "filled_pixels": 12813,
+    "color_paths": 6
+  },
+  {
+    "name": "face-sad",
+    "source_box": [
+      1358,
+      64,
+      1503,
+      197
+    ],
+    "svg": "face-sad.svg",
+    "filled_pixels": 12832,
+    "color_paths": 6
+  }
+]

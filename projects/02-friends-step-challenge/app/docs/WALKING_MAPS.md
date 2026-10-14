@@ -138,7 +138,10 @@ subtracting today's totals. This is a time-baseline equivalent that excludes ste
 outside the walk, handles midnight, and excludes manual pauses. UI refreshes every
 15 seconds while the recorder is mounted; completion reads the final closed ranges.
 No GPS-derived step estimate is used for actual walks. Missing/denied step data is
-shown as unavailable. Connect step data requests the existing provider's permission.
+shown as unavailable while GPS recording continues. On the first new walk, the app
+requests step access only if the selected provider reports that permission is not yet
+decided; later walks do not repeat the prompt. HealthKit's read-grant status remains
+intentionally opaque to the app.
 
 On iOS the existing default pedometer mode supports free-signed builds and historical
 interval queries. HealthKit remains explicitly selected only for entitled binaries.
@@ -202,7 +205,12 @@ again after successful sync when only title/notes/privacy change. Updates made
 during an upload remain pending. Retry happens on reopen/foreground, a one-minute
 timer while walk consumers are mounted, and the detail retry button.
 
-Home exposes Start Walk and Plan a Walk without changing its hero. History keeps its
+The Activity tab owns the location-centered map, Start a walk and Plan a walk actions.
+The map requests foreground location in context and avoids presenting a world-scale
+camera while location is unavailable. Route planning starts from the current position
+when available, supports one-shot place search and map-tapped waypoints, and retains
+the existing directions and saved-route flow. Home keeps its progress hero without
+separate walk actions. History keeps its
 calendar and daily totals; selecting a date exposes the walks for that date, merging
 local and cloud records without duplicates. Date-specific cloud queries do not rely
 on the previous 30-most-recent activity limit. Older formats open their legacy detail.

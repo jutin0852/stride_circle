@@ -182,6 +182,7 @@ export function useActivityTracking(userId?: string) {
     setCurrentLocation(null); setAccuracyMeters(null); setGpsSignal('idle'); setRoute([]); setPauseReason(null);
     changeStatus('idle');
   }, [changeStatus, stopWatching]);
+  const discard = useCallback(async () => { reset(); }, [reset]);
 
   useEffect(() => {
     if (status !== 'tracking') return;
@@ -211,5 +212,5 @@ export function useActivityTracking(userId?: string) {
 
   return { status, isPreparing, isRestoring: false, canResume: true, backgroundIssue: null as import('@/lib/background-activity').BackgroundIssue,
     steps: null as number | null, locationMode: 'foreground' as 'foreground' | 'background' | null, plannedRouteId: undefined as string | undefined, requestStepAccess: async () => {},
-    recordedActivityType: null as 'walk' | 'run' | null, retryStop: () => {}, pauseReason, elapsedMs, distanceMeters, currentPaceSecondsPerKm, route, currentLocation, accuracyMeters, gpsSignal, start, pause, resume, finish, reset };
+    recordedActivityType: null as 'walk' | 'run' | null, retryStop: () => {}, pauseReason, elapsedMs, distanceMeters, currentPaceSecondsPerKm, route, currentLocation, accuracyMeters, gpsSignal, start, pause, resume, finish, reset, discard };
 }

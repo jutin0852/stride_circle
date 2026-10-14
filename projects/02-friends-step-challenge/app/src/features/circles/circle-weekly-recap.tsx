@@ -57,14 +57,15 @@ export function CircleWeeklyRecap({ circle, members }: { circle: Circle; members
   if (!current.recap) return <Surface padding="lg" radius="lg" style={styles.empty}><AppText variant="label">Last week’s recap</AppText><AppText tone="secondary" variant="bodySmall">Your first recap will appear after a full competition week has finished.</AppText></Surface>;
 
   const recap = current.recap;
-  const winner = members.find((member) => member.userId === recap.winnerUserId)?.displayName ?? recap.topWalkers[0]?.displayName;
+  const visibleTopWalkers = recap.topWalkers.filter((walker) => members.some((member) => member.userId === walker.userId));
+  const winner = members.find((member) => member.userId === recap.winnerUserId)?.displayName ?? visibleTopWalkers[0]?.displayName;
   const weekLabel = formatWeek(recap.weekKey);
   return <Surface padding="lg" radius="lg" style={styles.card}>
     <View style={styles.heading}><View style={styles.headingCopy}><AppText variant="label">Last week’s recap</AppText><AppText tone="secondary" variant="caption">{weekLabel}</AppText></View><View style={styles.trophy}><AppText style={styles.trophyText}>★</AppText></View></View>
     <View style={styles.stats}><View style={styles.stat}><AppText variant="titleSmall">{formatSteps(recap.totalVerifiedSteps)}</AppText><AppText tone="secondary" variant="caption">circle steps</AppText></View><View style={styles.stat}><AppText variant="titleSmall">{recap.participationCount}</AppText><AppText tone="secondary" variant="caption">walkers</AppText></View></View>
-    {winner ? <AppText variant="bodySmall">Top walker · <AppText style={styles.winner}>{winner}</AppText></AppText> : <AppText tone="secondary" variant="bodySmall">Your circle is ready for its first steps.</AppText>}
-    {recap.topWalkers.slice(0, 3).map((walker) => <View key={walker.userId} style={styles.walker}><AppText variant="label" style={styles.rank}>#{walker.rank}</AppText><AppText numberOfLines={1} style={styles.walkerName}>{walker.displayName}</AppText><AppText variant="label">{formatSteps(walker.verifiedSteps)}</AppText></View>)}
-    {recap.topWalkers.length === 0 && recap.winnerUserId ? <AppText tone="secondary" variant="caption">Your weekly standings are saved.</AppText> : null}
+    {winner ? <AppText variant="bodySmall">Top walker · <AppText style={styles.winner}>{winner}</AppText></AppText> : recap.topWalkers.length ? <AppText tone="secondary" variant="bodySmall">Walker names are hidden by your safety settings.</AppText> : <AppText tone="secondary" variant="bodySmall">Your circle is ready for its first steps.</AppText>}
+    {visibleTopWalkers.slice(0, 3).map((walker) => <View key={walker.userId} style={styles.walker}><AppText variant="label" style={styles.rank}>#{walker.rank}</AppText><AppText numberOfLines={1} style={styles.walkerName}>{walker.displayName}</AppText><AppText variant="label">{formatSteps(walker.verifiedSteps)}</AppText></View>)}
+    {visibleTopWalkers.length === 0 && recap.winnerUserId && recap.topWalkers.length === 0 ? <AppText tone="secondary" variant="caption">Your weekly standings are saved.</AppText> : null}
   </Surface>;
 }
 

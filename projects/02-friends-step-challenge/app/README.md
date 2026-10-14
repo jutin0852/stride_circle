@@ -116,6 +116,8 @@ Maps use a platform-specific implementation: native builds use the real map expe
 6. Use `firebase emulators:start` for interactive local Auth/Firestore work, or publish the rules in [firebase/firestore.rules](firebase/firestore.rules) to the intended Firebase project.
 7. Run `npx expo start`.
 
+For app-level Auth and Firestore testing without live data, use the `demo-stride-circle` emulator project. Set `EXPO_PUBLIC_FIREBASE_PROJECT_ID=demo-stride-circle`, `EXPO_PUBLIC_FIREBASE_USE_EMULATORS=true`, and `EXPO_PUBLIC_FIREBASE_EMULATOR_HOST` before starting Expo. Use `127.0.0.1` for web/iOS Simulator and `10.0.2.2` for the Android emulator. The app refuses emulator mode with a non-demo project ID, and the switch is ignored in production builds. Keep the existing live `.env` untouched; set the emulator values only in the Expo process used for testing. Physical-device access needs an explicitly LAN-bound emulator and is not configured here.
+
 For GPS and pedometer testing, use a physical device and grant the relevant permissions.
 Before an EAS development, preview, or production build, configure registered `ios.bundleIdentifier` and `android.package` values in the app config. Native health modules do not run in Expo Go.
 

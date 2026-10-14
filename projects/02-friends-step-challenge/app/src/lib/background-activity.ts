@@ -268,6 +268,25 @@ export function resetBackgroundRecording(userId?: string) {
   });
 }
 
+export function discardBackgroundRecording(userId?: string) {
+  if (userId && activeUser !== userId) return Promise.resolve();
+  generation++;
+  publish({ isPreparing: false });
+  return exclusive(async () => {
+    const session = snapshot.session;
+    if (userId && session?.userId !== userId) return;
+    if (!await stopSafely()) throw new Error('Location could not be stopped, so this walk was kept. Retry discarding or finish and save it.');
+    try {
+      await commit(null);
+      publish({ issue: null });
+    } catch (error) {
+      // Keep the in-memory recording available if clearing its local copy fails.
+      publish({ session });
+      throw error;
+    }
+  });
+}
+
 export function retryBackgroundStop() {
   return exclusive(async () => {
     if (await stopSafely()) {

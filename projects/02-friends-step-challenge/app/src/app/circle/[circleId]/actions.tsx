@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ComponentProps } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 
-import { useAuth } from '@/auth/auth-provider';
+import { AppText, FixedHeaderScreen } from '@/components/ui';
 import { Skeleton } from '@/components/skeleton';
+import { radii, spacing } from '@/design-system/tokens';
+import { useAppColors } from '@/design-system/use-app-theme';
+import { useAuth } from '@/auth/auth-provider';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { deleteCircle, removeCircleMember } from '@/lib/circles';
-import { useAppColors } from '@/design-system/use-app-theme';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 export default function CircleActionsRoute() {
   const colors = useAppColors();
@@ -78,41 +83,147 @@ export default function CircleActionsRoute() {
   }
 
   if (status === 'loading') return <ActionsSkeleton />;
-  if (!details) return <View style={styles.loading}><Text style={styles.muted}>This circle is unavailable.</Text></View>;
+  if (!details) return <View style={styles.loading}><AppText tone="secondary" variant="bodySmall">This circle is unavailable.</AppText></View>;
 
+  const currentMember = details.members.find((member) => member.userId === user?.uid);
   const isCreator = details.circle.ownerId === user?.uid;
+  const canReviewReports = currentMember?.role === 'owner' || currentMember?.role === 'moderator';
 
   return (
-    <View style={styles.page}>
-      <View style={styles.grabber} />
-      <Text style={styles.title}>{details.circle.name}</Text>
-      <Text style={styles.subtitle}>Circle actions</Text>
-      <View style={styles.actions}>
-        <ActionRow label="Invite friends" caption="Share a private invite" onPress={() => void handleShare()} />
-        {details.circle.visibility === 'private' ? <ActionRow label={showCode ? 'Hide invite code' : 'View invite code'} caption="Only share it with people you trust" onPress={() => setShowCode((visible) => !visible)} /> : <ActionRow label="Public circle" caption="Anyone can find and join this circle" onPress={() => undefined} />}
-        {isCreator ? <>
-          <ActionRow label="Edit circle" caption="Change its name or description" onPress={() => router.push({ pathname: '/circle/[circleId]/edit', params: { circleId: details.circle.id } })} />
-          <ActionRow label="Manage members" caption="Remove people from this circle" onPress={() => router.push({ pathname: '/circle/[circleId]/members', params: { circleId: details.circle.id } })} />
-          <ActionRow destructive disabled={isDeleting} label={isDeleting ? 'Deleting circle…' : 'Delete circle'} caption="Remove it for everyone" onPress={confirmDelete} />
-        </> : null}
-        {!isCreator ? <ActionRow destructive disabled={isLeaving} label={isLeaving ? 'Leaving circle…' : 'Leave circle'} onPress={confirmLeave} /> : null}
+    <FixedHeaderScreen
+      backgroundColor={colors.background}
+      contentContainerStyle={styles.content}
+      header={<>
+        <View style={styles.nav}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+          <Ionicons color={colors.ink} name="arrow-back" size={20} />
+        </Pressable>
+        </View>
+        <View style={styles.header}>
+          <AppText accessibilityRole="header" style={styles.title} variant="titleSmall">{details.circle.name}</AppText>
+          <AppText tone="secondary" variant="bodySmall">Circle details and settings</AppText>
+        </View>
+      </>}
+      headerStyle={styles.fixedHeader}
+      scrollViewProps={{ contentInsetAdjustmentBehavior: 'never' }}
+    >
+
+      <View style={styles.aboutCard}>
+        <View style={styles.aboutHeading}>
+          <View style={styles.infoIcon}><Ionicons color={colors.accentPressed} name={details.circle.visibility === 'public' ? 'globe-outline' : 'lock-closed-outline'} size={19} /></View>
+          <View style={styles.infoCopy}>
+            <AppText variant="label">About this circle</AppText>
+            <AppText tone="secondary" variant="bodySmall">{details.circle.description.trim() || 'A group for sharing walking progress and planning walks together.'}</AppText>
+          </View>
+        </View>
+        {details.circle.visibility === 'public' && details.circle.discoverableArea ? <AppText tone="secondary" variant="caption">Around {details.circle.discoverableArea}</AppText> : null}
+        <View style={styles.aboutStats}>
+          <View style={styles.aboutStat}>
+            <AppText tone="tertiary" variant="eyebrow">VISIBILITY</AppText>
+            <AppText variant="label">{details.circle.visibility === 'public' ? 'Public' : 'Private'}</AppText>
+          </View>
+          <View style={styles.aboutStat}>
+            <AppText tone="tertiary" variant="eyebrow">WALKERS</AppText>
+            <AppText variant="label">{details.circle.memberCount}</AppText>
+          </View>
+        </View>
       </View>
-      {showCode && details.circle.inviteCode ? <View style={styles.codeCard}><Text style={styles.codeLabel}>PRIVATE INVITE CODE</Text><Text selectable style={styles.code}>{details.circle.inviteCode}</Text><Text style={styles.codeHint}>Only share this code with people you trust.</Text></View> : null}
-    </View>
+
+      <AppText variant="titleSmall">Circle settings</AppText>
+      <View style={styles.actions}>
+        <ActionRow caption={details.circle.visibility === 'private' ? 'Share an invite with people you trust' : 'Share this circle with a friend'} icon="person-add-outline" label="Invite friends" onPress={() => void handleShare()} />
+        {details.circle.visibility === 'private' ? <ActionRow caption={showCode ? 'Hide the code from view' : 'Show the code for in-person invites'} icon="key-outline" label={showCode ? 'Hide invite code' : 'View invite code'} onPress={() => setShowCode((visible) => !visible)} /> : null}
+        <ActionRow caption="Tell the circle’s owner and moderators about a safety concern" icon="flag-outline" label="Report this circle" onPress={() => router.push({ pathname: '/circle/[circleId]/report', params: { circleId: details.circle.id, targetId: details.circle.id, targetLabel: details.circle.name, targetType: 'circle' } })} />
+        <ActionRow caption="See who is in this circle and manage safety controls" icon="people-outline" label="Circle members" onPress={() => router.push({ pathname: '/circle/[circleId]/members', params: { circleId: details.circle.id } })} />
+        {canReviewReports ? <ActionRow caption="Review reports from circle members" icon="shield-checkmark-outline" label="Safety reports" onPress={() => router.push({ pathname: '/circle/[circleId]/reports', params: { circleId: details.circle.id } })} /> : null}
+        {isCreator ? <>
+          <ActionRow caption="Change its name or description" icon="create-outline" label="Edit circle" onPress={() => router.push({ pathname: '/circle/[circleId]/edit', params: { circleId: details.circle.id } })} />
+        </> : null}
+      </View>
+
+      {showCode && details.circle.inviteCode ? (
+        <View style={styles.codeCard}>
+          <AppText tone="tertiary" variant="eyebrow">PRIVATE INVITE CODE</AppText>
+          <AppText selectable style={styles.code} variant="title">{details.circle.inviteCode}</AppText>
+          <AppText tone="secondary" variant="caption">Only share this code with people you trust.</AppText>
+        </View>
+      ) : null}
+
+      <View style={styles.destructiveActions}>
+        {isCreator ? <ActionRow destructive disabled={isDeleting} icon="trash-outline" label={isDeleting ? 'Deleting circle…' : 'Delete circle'} caption="Remove it for every member" onPress={confirmDelete} /> : <ActionRow destructive disabled={isLeaving} icon="exit-outline" label={isLeaving ? 'Leaving circle…' : 'Leave circle'} caption="You’ll stop seeing shared scores and activity" onPress={confirmLeave} />}
+      </View>
+    </FixedHeaderScreen>
   );
 }
 
-function ActionRow({ caption, destructive = false, disabled = false, label, onPress }: { caption?: string; destructive?: boolean; disabled?: boolean; label: string; onPress: () => void }) {
-  const styles = useActionStyles();
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionRow, disabled && styles.disabled, pressed && !disabled && styles.pressed]}><View style={styles.actionText}><Text style={[styles.actionLabel, destructive && styles.destructive]}>{label}</Text>{caption ? <Text style={styles.actionCaption}>{caption}</Text> : null}</View><Text style={[styles.chevron, destructive && styles.destructive]}>›</Text></Pressable>;
+function ActionRow({ caption, destructive = false, disabled = false, icon, label, onPress }: {
+  caption?: string;
+  destructive?: boolean;
+  disabled?: boolean;
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+}) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return <Pressable
+    accessibilityRole="button"
+    accessibilityState={{ disabled }}
+    disabled={disabled}
+    onPress={onPress}
+    style={({ pressed }) => [styles.actionRow, disabled && styles.disabled, pressed && !disabled && styles.pressed]}
+  >
+    <View style={[styles.actionIcon, destructive && styles.destructiveIcon]}>
+      <Ionicons color={destructive ? colors.dangerContent : colors.accentPressed} name={icon} size={19} />
+    </View>
+    <View style={styles.actionText}>
+      <AppText style={destructive && styles.destructiveText} variant="label">{label}</AppText>
+      {caption ? <AppText tone="secondary" variant="caption">{caption}</AppText> : null}
+    </View>
+    <Ionicons color={destructive ? colors.dangerContent : colors.muted} name="chevron-forward" size={18} />
+  </Pressable>;
 }
 
-function ActionsSkeleton() { const styles = useActionStyles(); return <View style={styles.skeletonPage}><Skeleton style={{ alignSelf: 'center', height: 5, width: 42 }} /><Skeleton style={{ height: 28, marginTop: 25, width: '60%' }} /><Skeleton style={{ height: 14, marginTop: 9, width: 112 }} /><View style={styles.skeletonActions}>{[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow}><View><Skeleton style={{ height: 15, width: 132 }} /><Skeleton style={{ height: 12, marginTop: 8, width: 184 }} /></View><Skeleton style={{ height: 18, width: 18 }} /></View>)}</View></View>; }
+function ActionsSkeleton() {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return <View style={styles.skeletonPage}>
+    <Skeleton style={{ alignSelf: 'center', height: 28, marginTop: 12, width: '60%' }} />
+    <Skeleton style={{ alignSelf: 'center', height: 14, marginTop: 9, width: 132 }} />
+    <View style={styles.skeletonActions}>{[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow}><Skeleton style={{ height: 36, width: 36 }} /><View style={styles.skeletonCopy}><Skeleton style={{ height: 15, width: 132 }} /><Skeleton style={{ height: 12, marginTop: 8, width: 184 }} /></View></View>)}</View>
+  </View>;
+}
 
 function getMessage(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
 
-function useActionStyles() { const colors = useAppColors(); return useMemo(() => createStyles(colors), [colors]); }
 function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleSheet.create({
-  page: { backgroundColor: colors.background, flex: 1, gap: 15, padding: 24 }, loading: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center' }, skeletonPage: { backgroundColor: colors.background, flex: 1, padding: 24 }, skeletonActions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, marginTop: 24, overflow: 'hidden' }, skeletonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: 16 }, grabber: { alignSelf: 'center', backgroundColor: colors.border, borderRadius: 3, height: 5, width: 42 },
-  title: { color: colors.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.6, marginTop: 4 }, subtitle: { color: colors.muted, fontSize: 13, fontWeight: '600', marginTop: -10 }, actions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 20, borderWidth: 1, overflow: 'hidden' }, actionRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 68, paddingHorizontal: 16 }, actionText: { flex: 1, gap: 3 }, actionLabel: { color: colors.ink, fontSize: 15, fontWeight: '800' }, actionCaption: { color: colors.muted, fontSize: 12 }, chevron: { color: colors.muted, fontSize: 25 }, destructive: { color: colors.dangerContent }, codeCard: { backgroundColor: colors.soft, borderRadius: 18, gap: 5, padding: 17 }, codeLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }, code: { color: colors.ink, fontSize: 23, fontVariant: ['tabular-nums'], fontWeight: '800', letterSpacing: 2.5 }, codeHint: { color: colors.muted, fontSize: 12, lineHeight: 17 }, muted: { color: colors.muted, fontSize: 14 }, pressed: { opacity: 0.72 }, disabled: { opacity: 0.55 },
+  page: { backgroundColor: colors.background, flex: 1 },
+  fixedHeader: { gap: spacing.md, paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.md },
+  content: { gap: spacing.md, paddingBottom: spacing.xxxl, paddingHorizontal: spacing.xl, paddingTop: spacing.md },
+  loading: { alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center', padding: spacing.xxl },
+  nav: { flexDirection: 'row' },
+  backButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
+  header: { gap: spacing.xs, paddingBottom: spacing.sm },
+  title: { alignSelf: 'stretch', color: colors.ink, flexShrink: 1 },
+  aboutCard: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
+  aboutHeading: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
+  infoIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: radii.pill, height: 36, justifyContent: 'center', width: 36 },
+  infoCopy: { flex: 1, gap: spacing.xs },
+  aboutStats: { flexDirection: 'row', gap: spacing.sm },
+  aboutStat: { backgroundColor: colors.soft, borderRadius: radii.md, flex: 1, gap: spacing.xs, padding: spacing.md },
+  actions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, overflow: 'hidden' },
+  actionRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.md, minHeight: 72, paddingHorizontal: spacing.md },
+  actionIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: radii.pill, height: 38, justifyContent: 'center', width: 38 },
+  actionText: { flex: 1, gap: 3, minWidth: 0 },
+  destructiveActions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, overflow: 'hidden' },
+  destructiveIcon: { backgroundColor: colors.dangerSurface },
+  destructiveText: { color: colors.dangerContent },
+  pressed: { backgroundColor: colors.soft },
+  disabled: { opacity: 0.55 },
+  codeCard: { backgroundColor: colors.soft, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, gap: spacing.xs, padding: spacing.lg },
+  code: { color: colors.ink, fontVariant: ['tabular-nums'], letterSpacing: 2.5, marginVertical: spacing.xs },
+  skeletonPage: { backgroundColor: colors.background, flex: 1, gap: spacing.md, padding: spacing.xl },
+  skeletonActions: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.xl, borderWidth: 1, marginTop: spacing.md, overflow: 'hidden' },
+  skeletonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 72, paddingHorizontal: spacing.md },
+  skeletonCopy: { flex: 1, gap: spacing.xs, marginLeft: spacing.md },
 }); }
