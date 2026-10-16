@@ -6,6 +6,11 @@ import { getWeekStartKey, isDateKey } from './date-keys.js';
  */
 export const RECENT_DAY_WINDOW = 16;
 
+/** The global leaderboard is opt-in: only an explicit `true` lists someone. */
+export function isGlobalLeaderboardOptIn(profile: { globalLeaderboardVisible?: unknown } | undefined) {
+  return profile?.globalLeaderboardVisible === true;
+}
+
 export type LeaderboardTotals = {
   allTimeSteps: number;
   days: Record<string, number>;

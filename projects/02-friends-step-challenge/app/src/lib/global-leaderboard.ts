@@ -6,6 +6,8 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
+  setDoc,
   type Unsubscribe,
   where,
 } from 'firebase/firestore';
@@ -22,6 +24,20 @@ export type GlobalLeaderboardSnapshot = {
   entries: GlobalLeaderboardEntry[];
   generatedAt: Date | null;
 };
+
+/**
+ * Joining or leaving the global leaderboard. The hourly server job picks up
+ * the change through the visibility timestamp, so leaving removes the person
+ * within the hour even if they do not walk again.
+ */
+export async function setGlobalLeaderboardVisibility(input: { userId: string; visible: boolean }) {
+  const db = requireFirebase(database, 'Firestore');
+  await setDoc(doc(db, 'users', input.userId), {
+    globalLeaderboardVisibilityUpdatedAt: serverTimestamp(),
+    globalLeaderboardVisible: input.visible,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
 
 export function watchGlobalLeaderboard(input: {
   onChange: (snapshot: GlobalLeaderboardSnapshot) => void;

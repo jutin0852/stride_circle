@@ -8,6 +8,8 @@ import { database, requireFirebase } from '@/lib/firebase';
 type UserProfile = {
   avatar: AvatarChoice;
   displayName: string;
+  /** Opt-in: only an explicit `true` lists the user on the global leaderboard. */
+  globalLeaderboardVisible: boolean;
   status: 'loading' | 'ready' | 'error';
 };
 
@@ -16,6 +18,7 @@ function getFallbackProfile(user: User | null): UserProfile {
   return {
     avatar: getDefaultAvatarChoice(userId),
     displayName: user?.displayName?.trim() || 'Stride Circle member',
+    globalLeaderboardVisible: false,
     status: user ? 'loading' : 'ready',
   };
 }
@@ -46,6 +49,7 @@ export function useUserProfile(user: User | null): UserProfile {
             style: isAvatarStyle(data?.avatarStyle) ? data.avatarStyle : defaultAvatar.style,
           },
           displayName: getDisplayName(data?.displayName, user),
+          globalLeaderboardVisible: data?.globalLeaderboardVisible === true,
           status: 'ready',
         });
       },

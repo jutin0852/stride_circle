@@ -22,12 +22,16 @@ export type GlobalLeaderboardViewProps = {
   generatedAt: Date | null;
   onBack: () => void;
   onChangePeriod: (period: GlobalLeaderboardPeriod) => void;
+  /** Opt-in state; `false` shows the join prompt. Omit while unknown. */
+  joined?: boolean;
+  joining?: boolean;
+  onJoin?: () => void;
   onRetry: () => void;
   period: GlobalLeaderboardPeriod;
   status: 'loading' | 'ready' | 'error';
 };
 
-export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBack, onChangePeriod, onRetry, period, status }: GlobalLeaderboardViewProps) {
+export function GlobalLeaderboardView({ currentUser, entries, generatedAt, joined, joining, onBack, onChangePeriod, onJoin, onRetry, period, status }: GlobalLeaderboardViewProps) {
   const colors = useAppColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const friends = useMemo(() => buildFriends(entries, currentUser?.userId), [currentUser?.userId, entries]);
@@ -56,6 +60,19 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
         <AppText tone="secondary" variant="caption">Walking · synced steps</AppText>
         {generatedAt ? <AppText tone="tertiary" variant="caption">Updated {formatGeneratedAt(generatedAt)}</AppText> : null}
       </View>
+
+      {joined === false && onJoin ? (
+        <StateCard
+          actionLabel={joining ? 'Joining…' : 'Join the leaderboard'}
+          description="You’re not listed. Joining shows your name, character, and step totals to everyone on the app. You can leave any time in Profile."
+          icon={<Ionicons color={colors.accentPressed} name="earth-outline" size={22} />}
+          onAction={onJoin}
+          title="Join the global leaderboard?"
+        />
+      ) : null}
+      {joined === true && !currentUser && status === 'ready' ? (
+        <AppText tone="tertiary" variant="caption">You’ve joined. Your steps appear after the next hourly update.</AppText>
+      ) : null}
 
       {status === 'loading' ? <LoadingRows /> : null}
       {status === 'error' ? (

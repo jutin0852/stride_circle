@@ -3,7 +3,7 @@ import { FieldValue, getFirestore, Timestamp, type DocumentData } from 'firebase
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { getWeekStartKey, isDateKey } from './date-keys.js';
-import { applyDaySteps, getWeekSteps, readTotals, type LeaderboardTotals } from './leaderboard-totals.js';
+import { applyDaySteps, getWeekSteps, isGlobalLeaderboardOptIn, readTotals, type LeaderboardTotals } from './leaderboard-totals.js';
 import { rankScores } from './ranking.js';
 
 initializeApp();
@@ -152,7 +152,7 @@ function getGlobalLeaderboardBoardId(period: GlobalLeaderboardPeriod, weekKey?: 
 }
 
 function getGlobalProfile(userId: string, data: DocumentData | undefined) {
-  if (data?.globalLeaderboardVisible === false) return null;
+  if (!isGlobalLeaderboardOptIn(data)) return null;
 
   return {
     avatarSeed: getString(data ?? {}, 'avatarSeed') || userId,
@@ -299,7 +299,8 @@ export const generateGlobalLeaderboards = onSchedule({
   const todayKey = getDateKeyInTimeZone(runStartedAt, 'UTC');
   const weekKey = getWeekStartKey(todayKey);
   const stateReference = db.doc(GLOBAL_LEADERBOARD_STATE);
-  const processedThrough = (await stateReference.get()).data()?.processedThrough;
+  const state = (await stateReference.get()).data();
+  const processedThrough = state?.processedThrough;
   const cursor = processedThrough instanceof Timestamp ? processedThrough.toDate() : null;
 
   if (!cursor) {
@@ -321,9 +322,36 @@ export const generateGlobalLeaderboards = onSchedule({
       if (page.size < CHANGED_STEPS_PAGE_SIZE) break;
       last = page.docs[page.docs.length - 1];
     }
+
+    // People who joined or left the board since the last run are re-evaluated
+    // from their stored totals even if they have not walked since.
+    const visibilityChanges = await db.collection('users').where('globalLeaderboardVisibilityUpdatedAt', '>', since).get();
+    visibilityChanges.docs.forEach((profile) => {
+      if (!changesByUser.has(profile.id)) changesByUser.set(profile.id, {});
+    });
+
     await writeUserTotals({ changesByUser, todayKey, weekKey });
   }
 
+  if (state?.visibilityModel !== 'opt-in') await removeNonOptedInEntries();
+
   await writeBoardHeaders(weekKey);
-  await stateReference.set({ processedThrough: Timestamp.fromDate(runStartedAt), schemaVersion: 1 }, { merge: true });
+  await stateReference.set({ processedThrough: Timestamp.fromDate(runStartedAt), schemaVersion: 1, visibilityModel: 'opt-in' }, { merge: true });
 });
+
+/**
+ * One-time cleanup when the board became opt-in: boards built under the old
+ * opt-out model listed everyone, so drop every entry whose owner has not
+ * explicitly joined, across all weekly and all-time boards.
+ */
+async function removeNonOptedInEntries() {
+  const boards = await db.collection('globalLeaderboards').listDocuments();
+  for (const board of boards) {
+    const entries = await board.collection('entries').get();
+    const profiles = await getAllInChunks(entries.docs.map((entry) => db.doc(`users/${entry.id}`)));
+    const optedIn = new Set(profiles.filter((profile) => isGlobalLeaderboardOptIn(profile.data())).map((profile) => profile.id));
+    await commitGlobalLeaderboardOperations(entries.docs
+      .filter((entry) => !optedIn.has(entry.id))
+      .map((entry) => (batch: FirebaseFirestore.WriteBatch) => batch.delete(entry.ref)));
+  }
+}
