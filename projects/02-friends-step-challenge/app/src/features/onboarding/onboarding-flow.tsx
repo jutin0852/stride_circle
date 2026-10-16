@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, Button, ProgressBar, Surface } from '@/components/ui';
 import { motion, radii, spacing } from '@/design-system/tokens';
 import { useAppTheme } from '@/design-system/use-app-theme';
-import { WalkingCompanion } from '@/features/home/walking-companion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useStepTracking } from '@/hooks/use-step-tracking';
 import { DEFAULT_DAILY_STEP_GOAL, DAILY_STEP_GOAL_PRESETS, saveDailyStepGoal, saveWeeklyStepGoal } from '@/lib/movement-goals';
@@ -138,7 +137,6 @@ export function OnboardingFlow({ onComplete, userId }: OnboardingFlowProps) {
 
 function Welcome({ styles }: { styles: ReturnType<typeof createStyles> }) {
   return <View style={styles.welcome}>
-    <View style={styles.companion}><WalkingCompanion happy size={132} /></View>
     <AppText style={styles.eyebrow} tone="link" variant="label">WELCOME TO STRIDE CIRCLE</AppText>
     <AppText style={styles.heroTitle} variant="displaySmall">Walking feels better together.</AppText>
     <AppText style={styles.heroCopy} tone="secondary" variant="body">A quick setup, then you can move at your pace, see your progress, and share the momentum.</AppText>
@@ -193,7 +191,6 @@ function HealthStep({ health, styles }: { health: ReturnType<typeof useStepTrack
 function FinishStep({ dailyGoal, healthConnected, intent, styles }: { dailyGoal: number; healthConnected: boolean; intent: OnboardingIntent; styles: ReturnType<typeof createStyles> }) {
   const intentCopy = intentOptions.find(option => option.id === intent)?.label.toLowerCase() ?? 'walk more';
   return <View style={styles.welcome}>
-    <View style={styles.companion}><WalkingCompanion happy helpful size={126} /></View>
     <AppText style={styles.eyebrow} tone="link" variant="label">YOUR FIRST WIN</AppText>
     <AppText style={styles.heroTitle} variant="displaySmall">You’re ready to {intentCopy}.</AppText>
     <AppText style={styles.heroCopy} tone="secondary" variant="body">Your {dailyGoal.toLocaleString('en-US')}-step daily goal is set{healthConnected ? ', and your health data is connected' : ''}. Find a circle when you’re ready for a little shared momentum.</AppText>
@@ -209,7 +206,6 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     scrollContent: { flexGrow: 1, paddingHorizontal: spacing.xxl, paddingTop: spacing.xxl, paddingBottom: spacing.xl },
     footer: { backgroundColor: colors.canvas, borderTopColor: colors.borderSubtle, borderTopWidth: 1, gap: spacing.sm, paddingHorizontal: spacing.xxl, paddingTop: spacing.md },
     welcome: { alignItems: 'center', flex: 1, justifyContent: 'center', paddingBottom: spacing.xl },
-    companion: { alignItems: 'center', backgroundColor: colors.infoSurface, borderRadius: 999, height: 178, justifyContent: 'center', marginBottom: spacing.xxxl, width: 178 },
     eyebrow: { letterSpacing: 1.25, textAlign: 'center' },
     heroTitle: { marginTop: spacing.md, textAlign: 'center' },
     heroCopy: { marginTop: spacing.lg, maxWidth: 340, textAlign: 'center' },
