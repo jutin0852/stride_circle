@@ -1,83 +1,105 @@
-import { useEffect, useMemo } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Svg, { G, Path } from 'react-native-svg';
 
+import { darkModePalette, semanticColors } from '@/design-system/tokens';
 import { useAppTheme } from '@/design-system/use-app-theme';
+import { DESIGN_WIDTH, logoSettleScale, printNameForSlot, runnerFootPose, SPLASH_END, trailPrintPose, type PrintPose } from '@/components/waka-splash/splash-timeline';
+import { WAKA_PRINTS, type WakaPrintName } from '@/components/waka-splash/waka-prints';
 
 type AnimatedAppSplashProps = {
   onFinished: () => void;
   reducedMotion: boolean;
 };
 
+const AnimatedG = Animated.createAnimatedComponent(G);
+const TRAIL_SLOTS = [0, 1, 2, 3, 4, 5, 6, 7];
+const EXIT_MS = 260;
+const REDUCED_MOTION_MS = 180;
+
 /**
- * A short in-app handoff for the native splash screen.
+ * The Waka launch animation, shown over the app as the native splash hands off.
  *
- * The native Expo splash remains responsible for the first frame. This layer
- * only appears once the JS tree is ready, so the animation never delays the
- * platform launch screen or blocks the router from mounting underneath it.
+ * A runner circles the centre, leaving "WA" (left) and "KA" (right) shoe prints; the trail
+ * then sweeps around and gathers into the Waka logo. The native splash is a plain background
+ * in the same colour, so the hand-off is seamless. With Reduce Motion on, the finished logo
+ * shows briefly instead.
  */
 export function AnimatedAppSplash({ onFinished, reducedMotion }: AnimatedAppSplashProps) {
-  const { colors } = useAppTheme();
-  const intro = useMemo(() => new Animated.Value(0), []);
-  const exit = useMemo(() => new Animated.Value(1), []);
+  const { isDark } = useAppTheme();
+  const { width, height } = useWindowDimensions();
+  const time = useSharedValue(reducedMotion ? SPLASH_END : 0);
+  const exit = useSharedValue(1);
 
   useEffect(() => {
     if (reducedMotion) {
-      const timer = setTimeout(onFinished, 180);
+      time.value = SPLASH_END;
+      const timer = setTimeout(onFinished, REDUCED_MOTION_MS);
       return () => clearTimeout(timer);
     }
 
-    const entrance = Animated.parallel([
-      Animated.timing(intro, { duration: 620, toValue: 1, useNativeDriver: true }),
-    ]);
-    entrance.start();
-
-    const finishTimer = setTimeout(() => {
-      Animated.timing(exit, { duration: 360, toValue: 0, useNativeDriver: true }).start(({ finished }) => {
-        if (finished) onFinished();
-      });
-    }, 1280);
-
+    time.value = 0;
+    time.value = withTiming(SPLASH_END, { duration: SPLASH_END * 1000, easing: Easing.linear });
+    const exitTimer = setTimeout(() => { exit.value = withTiming(0, { duration: EXIT_MS }); }, SPLASH_END * 1000);
+    const finishTimer = setTimeout(onFinished, SPLASH_END * 1000 + EXIT_MS);
     return () => {
-      entrance.stop();
+      clearTimeout(exitTimer);
       clearTimeout(finishTimer);
     };
-  }, [exit, intro, onFinished, reducedMotion]);
+  }, [exit, onFinished, reducedMotion, time]);
 
-  const markScale = intro.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0.72, 1.06, 1] });
-  const markOpacity = intro.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 1] });
-  const copyTranslateY = intro.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
-  const copyOpacity = intro.interpolate({ inputRange: [0.35, 0.75], outputRange: [0, 1], extrapolate: 'clamp' });
-  const firstStepY = intro.interpolate({ inputRange: [0, 0.3, 1], outputRange: [18, 0, 0] });
-  const secondStepY = intro.interpolate({ inputRange: [0, 0.2, 0.52, 1], outputRange: [18, 18, 0, 0] });
-  const thirdStepY = intro.interpolate({ inputRange: [0, 0.35, 0.7, 1], outputRange: [18, 18, 0, 0] });
+  const background = isDark ? darkModePalette.background : semanticColors.canvas;
+  const ink = isDark ? darkModePalette.primary : semanticColors.brandAction;
+  const designScale = Math.min(width / DESIGN_WIDTH, 1.4);
+
+  const screenStyle = useAnimatedStyle(() => ({ opacity: exit.value }));
+  const markProps = useAnimatedProps(() => ({ scale: designScale * logoSettleScale(time.value) }));
 
   return (
-    <Animated.View accessibilityLabel="Stride Circle loading" accessible pointerEvents="none" style={[styles.screen, { backgroundColor: colors.inverse, opacity: exit }]}>
-      <View style={[styles.orbit, { borderColor: colors.brandActionSoft }]} />
-      <Animated.View style={[styles.content, { opacity: markOpacity, transform: [{ scale: markScale }] }]}>
-        <View style={[styles.mark, { backgroundColor: colors.brandActionSoft }]}>
-          <Animated.View style={[styles.step, styles.stepOne, { backgroundColor: colors.brandAction, transform: [{ translateY: firstStepY }, { rotate: '-10deg' }] }]} />
-          <Animated.View style={[styles.step, styles.stepTwo, { backgroundColor: colors.streakAccent, transform: [{ translateY: secondStepY }, { rotate: '-10deg' }] }]} />
-          <Animated.View style={[styles.step, styles.stepThree, { backgroundColor: colors.belowGoalBorder, transform: [{ translateY: thirdStepY }, { rotate: '-10deg' }] }]} />
-        </View>
-        <Animated.View style={{ opacity: copyOpacity, transform: [{ translateY: copyTranslateY }] }}>
-          <Text style={[styles.name, { color: colors.contentInverse }]}>Stride Circle</Text>
-          <Text style={[styles.tagline, { color: colors.contentSecondary }]}>Walk together. Go further.</Text>
-        </Animated.View>
-      </Animated.View>
+    <Animated.View accessibilityLabel="Waka loading" accessible pointerEvents="none" style={[styles.screen, { backgroundColor: background }, screenStyle]}>
+      <Svg width={width} height={height}>
+        <AnimatedG x={width / 2} y={height / 2} animatedProps={markProps}>
+          {TRAIL_SLOTS.map((slot) => (
+            <ShoePrint key={`trail-${slot}`} name={printNameForSlot(slot)} color={ink} time={time} pose={(t) => {
+              'worklet';
+              return trailPrintPose(t, slot);
+            }} />
+          ))}
+          <ShoePrint name="KA" color={ink} time={time} pose={(t) => {
+            'worklet';
+            return runnerFootPose(t, 1);
+          }} />
+          <ShoePrint name="WA" color={ink} time={time} pose={(t) => {
+            'worklet';
+            return runnerFootPose(t, -1);
+          }} />
+        </AnimatedG>
+      </Svg>
     </Animated.View>
   );
 }
 
+type ShoePrintProps = {
+  name: WakaPrintName;
+  color: string;
+  time: SharedValue<number>;
+  pose: (t: number) => PrintPose;
+};
+
+function ShoePrint({ name, color, time, pose }: ShoePrintProps) {
+  const animatedProps = useAnimatedProps(() => {
+    const p = pose(time.value);
+    return { translateX: p.x, translateY: p.y, rotation: p.rotation, scale: p.scale, opacity: p.opacity };
+  });
+
+  return (
+    <AnimatedG animatedProps={animatedProps}>
+      <Path d={WAKA_PRINTS[name].d} fill={color} fillRule="evenodd" />
+    </AnimatedG>
+  );
+}
+
 const styles = StyleSheet.create({
-  screen: { alignItems: 'center', bottom: 0, justifyContent: 'center', left: 0, position: 'absolute', right: 0, top: 0, zIndex: 100 },
-  orbit: { borderRadius: 120, borderWidth: 1, height: 240, opacity: 0.28, position: 'absolute', width: 240 },
-  content: { alignItems: 'center', gap: 22 },
-  mark: { borderRadius: 34, height: 108, justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 20, paddingHorizontal: 20, width: 108 },
-  step: { borderRadius: 8, height: 16, position: 'absolute', width: 68 },
-  stepOne: { bottom: 20, left: 20 },
-  stepTwo: { bottom: 42, left: 28 },
-  stepThree: { bottom: 64, left: 36 },
-  name: { fontSize: 29, fontWeight: '800', letterSpacing: -1, textAlign: 'center' },
-  tagline: { fontSize: 14, marginTop: 5, textAlign: 'center' },
+  screen: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 100 },
 });

@@ -5,7 +5,7 @@
     "scheme": "stride-circle",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/branding/waka-light.png",
     "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-router",
@@ -23,13 +23,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#2563EB",
-          "image": "./assets/stride-circle-splash.png",
-          "imageWidth": 280,
-          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF",
           "dark": {
-            "backgroundColor": "#111F29",
-            "image": "./assets/stride-circle-splash.png"
+            "backgroundColor": "#111F29"
           }
         }
       ],
@@ -61,6 +57,10 @@
       ]
     ],
     "ios": {
+      "icon": {
+        "light": "./assets/branding/waka-light.png",
+        "dark": "./assets/branding/waka-dark.png"
+      },
       "bundleIdentifier": "com.stridecircle.app",
       "buildNumber": "1",
       "supportsTablet": true,
@@ -71,10 +71,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/branding/waka-adaptive-foreground.png",
+        "monochromeImage": "./assets/branding/waka-adaptive-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -84,7 +83,7 @@
       "package": "com.iam_jutin.stridecircle"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/branding/waka-light.png"
     }
   }
 }
