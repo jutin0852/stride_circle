@@ -9,15 +9,13 @@ type OnboardingState = {
 };
 
 export function useOnboardingState(userId: string | undefined): OnboardingState {
-  const [state, setState] = useState<OnboardingState>({ needsOnboarding: false, status: userId ? 'loading' : 'ready', userId });
+  const [state, setState] = useState<OnboardingState | null>(null);
 
   useEffect(() => {
-    if (!userId) {
-      setState({ needsOnboarding: false, status: 'ready' });
-      return;
-    }
+    if (!userId) return;
 
-    setState({ needsOnboarding: false, status: 'loading', userId });
+    // State is only set from the subscription; signed-out and loading states
+    // are derived during render below.
     return watchOnboarding(
       userId,
       (needsOnboarding) => setState({ needsOnboarding, status: 'ready', userId }),
@@ -25,8 +23,9 @@ export function useOnboardingState(userId: string | undefined): OnboardingState 
     );
   }, [userId]);
 
-  // Auth updates before effects run. Keep protected tabs hidden during that
-  // single render rather than allowing a new account to flash the Home tab.
-  if (userId && state.userId !== userId) return { needsOnboarding: false, status: 'loading' };
+  if (!userId) return { needsOnboarding: false, status: 'ready' };
+  // Until this user's first snapshot arrives (including right after an account
+  // switch), keep protected tabs hidden rather than flashing the Home tab.
+  if (state?.userId !== userId) return { needsOnboarding: false, status: 'loading' };
   return state;
 }

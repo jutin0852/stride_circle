@@ -1,4 +1,4 @@
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAdditionalUserInfo, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { createProfileIfMissing } from '@/lib/auth';
 import { auth, requireFirebase } from '@/lib/firebase';
 
@@ -9,7 +9,7 @@ export async function signInWithGoogle(): Promise<'success' | 'cancelled'> {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     const result = await signInWithPopup(firebaseAuth, provider);
-    await createProfileIfMissing(result.user, { startOnboarding: result.additionalUserInfo?.isNewUser === true });
+    await createProfileIfMissing(result.user, { startOnboarding: getAdditionalUserInfo(result)?.isNewUser === true });
     return 'success';
   } catch (error) {
     const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';

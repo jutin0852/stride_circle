@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -77,9 +78,9 @@ export async function signInWithGoogleIdToken(idToken: string) {
   const firebaseAuth = requireFirebase(auth, 'Authentication');
   const credential = GoogleAuthProvider.credential(idToken);
   const result = await signInWithCredential(firebaseAuth, credential);
-  // Firebase exposes this flag on the credential result for both native and
-  // web Google flows. Existing members must never be sent through setup.
-  const isNewUser = result.additionalUserInfo?.isNewUser === true;
+  // Firebase v12 exposes the new-user flag through getAdditionalUserInfo.
+  // Existing members must never be sent through setup.
+  const isNewUser = getAdditionalUserInfo(result)?.isNewUser === true;
   await createProfileIfMissing(result.user, { startOnboarding: isNewUser });
 }
 

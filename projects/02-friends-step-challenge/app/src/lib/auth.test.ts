@@ -13,6 +13,7 @@ const mock = vi.hoisted(() => ({
 vi.mock('@/lib/firebase', () => ({ auth: {}, database: {}, requireFirebase: (service: unknown) => service }));
 vi.mock('@/services/notifications/walking-reminders', () => ({ walkingReminders: { activate: vi.fn() } }));
 vi.mock('firebase/auth', () => ({
+  getAdditionalUserInfo: (result: { additionalUserInfo?: unknown }) => result.additionalUserInfo ?? null,
   createUserWithEmailAndPassword: mock.createUserWithEmailAndPassword,
   GoogleAuthProvider: { credential: vi.fn(() => ({})) },
   signInWithCredential: vi.fn(async () => ({ user: mock.user })),

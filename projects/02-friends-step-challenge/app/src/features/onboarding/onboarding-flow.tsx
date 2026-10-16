@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -39,7 +39,8 @@ export function OnboardingFlow({ onComplete, userId }: OnboardingFlowProps) {
   const [savingGoals, setSavingGoals] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const reveal = useRef(new Animated.Value(1)).current;
+  // Held in state (created once) so render never reads a ref's current value.
+  const [reveal] = useState(() => new Animated.Value(1));
   const currentIndex = steps.indexOf(step);
   const styles = useMemo(() => createStyles(colors), [colors]);
 

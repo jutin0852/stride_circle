@@ -4,6 +4,7 @@ const mock = vi.hoisted(() => ({ popup: vi.fn(), profile: vi.fn(), parameters: v
 vi.mock('@/lib/auth', () => ({ createProfileIfMissing: mock.profile }));
 vi.mock('@/lib/firebase', () => ({ auth: {}, requireFirebase: (value: unknown) => value }));
 vi.mock('firebase/auth', () => ({
+  getAdditionalUserInfo: (result: { additionalUserInfo?: unknown }) => result.additionalUserInfo ?? null,
   GoogleAuthProvider: class { setCustomParameters = mock.parameters; },
   signInWithPopup: mock.popup,
 }));
