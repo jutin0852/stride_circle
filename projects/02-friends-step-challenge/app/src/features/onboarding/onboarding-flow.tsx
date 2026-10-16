@@ -3,11 +3,15 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText, Button, ProgressBar, Surface } from '@/components/ui';
 import { motion, radii, spacing } from '@/design-system/tokens';
 import { useAppTheme } from '@/design-system/use-app-theme';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useStepTracking } from '@/hooks/use-step-tracking';
+import { WakaLogo } from '@/components/waka-logo';
+import { ConfettiBurst, Hop, PopIn, PulseRings, Rise } from './onboarding-motion';
+import { WelcomeHero } from './welcome-hero';
 import { DEFAULT_DAILY_STEP_GOAL, DAILY_STEP_GOAL_PRESETS, saveDailyStepGoal, saveWeeklyStepGoal } from '@/lib/movement-goals';
 import { type OnboardingIntent } from '@/lib/onboarding';
 
@@ -85,16 +89,14 @@ export function OnboardingFlow({ onComplete, userId }: OnboardingFlowProps) {
 
   const renderStep = () => {
     switch (visibleStep) {
-      case 'welcome':
-        return <Welcome styles={styles} />;
       case 'intent':
-        return <IntentStep intent={intent} onChange={setIntent} styles={styles} />;
+        return <IntentStep intent={intent} onChange={setIntent} reducedMotion={reducedMotion} styles={styles} />;
       case 'goal':
-        return <GoalStep dailyGoal={dailyGoal} onChange={setDailyGoal} styles={styles} />;
+        return <GoalStep dailyGoal={dailyGoal} onChange={setDailyGoal} reducedMotion={reducedMotion} styles={styles} />;
       case 'health':
-        return <HealthStep health={health} styles={styles} />;
+        return <HealthStep health={health} reducedMotion={reducedMotion} styles={styles} />;
       case 'finish':
-        return <FinishStep intent={intent} dailyGoal={dailyGoal} healthConnected={health.status === 'tracking'} styles={styles} />;
+        return <FinishStep intent={intent} dailyGoal={dailyGoal} healthConnected={health.status === 'tracking'} reducedMotion={reducedMotion} styles={styles} />;
     }
   };
 
@@ -105,6 +107,11 @@ export function OnboardingFlow({ onComplete, userId }: OnboardingFlowProps) {
     else if (step === 'health') transitionTo('finish');
   };
   const primaryLabel = step === 'welcome' ? 'Let’s make a plan' : step === 'intent' ? 'Continue' : step === 'goal' ? 'Save my walking plan' : step === 'health' ? health.status === 'tracking' ? 'Continue' : 'Continue without connecting' : 'Find a circle';
+
+  if (visibleStep === 'welcome') {
+    // The welcome step carries on from the blue launch splash, so it has its own full-bleed layout.
+    return <WelcomeHero reducedMotion={reducedMotion}><Button onPress={next}>{primaryLabel}</Button></WelcomeHero>;
+  }
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -135,65 +142,90 @@ export function OnboardingFlow({ onComplete, userId }: OnboardingFlowProps) {
   );
 }
 
-function Welcome({ styles }: { styles: ReturnType<typeof createStyles> }) {
-  return <View style={styles.welcome}>
-    <AppText style={styles.eyebrow} tone="link" variant="label">WELCOME TO STRIDE CIRCLE</AppText>
-    <AppText style={styles.heroTitle} variant="displaySmall">Walking feels better together.</AppText>
-    <AppText style={styles.heroCopy} tone="secondary" variant="body">A quick setup, then you can move at your pace, see your progress, and share the momentum.</AppText>
-  </View>;
-}
+type StepStyles = ReturnType<typeof createStyles>;
 
-function IntentStep({ intent, onChange, styles }: { intent: OnboardingIntent; onChange: (intent: OnboardingIntent) => void; styles: ReturnType<typeof createStyles> }) {
+function IntentStep({ intent, onChange, reducedMotion, styles }: { intent: OnboardingIntent; onChange: (intent: OnboardingIntent) => void; reducedMotion: boolean; styles: StepStyles }) {
   const { colors } = useAppTheme();
   return <View style={styles.content}>
-    <AppText style={styles.eyebrow} tone="link" variant="label">MAKE IT YOURS</AppText>
-    <AppText style={styles.title} variant="headline">What would feel like a win?</AppText>
-    <AppText style={styles.description} tone="secondary" variant="body">Choose the reason you want to make more room for walking. You can always change your rhythm later.</AppText>
-    <View style={styles.options}>{intentOptions.map(option => {
+    <Rise reducedMotion={reducedMotion}>
+      <AppText style={styles.eyebrow} tone="link" variant="label">MAKE IT YOURS</AppText>
+      <AppText style={styles.title} variant="headline">What would feel like a win?</AppText>
+    </Rise>
+    <Rise delay={80} reducedMotion={reducedMotion}><AppText style={styles.description} tone="secondary" variant="body">Choose the reason you want to make more room for walking. You can always change your rhythm later.</AppText></Rise>
+    <View style={styles.options}>{intentOptions.map((option, index) => {
       const selected = intent === option.id;
-      return <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={option.id} onPress={() => onChange(option.id)} style={({ pressed }) => [styles.option, selected && styles.optionSelected, pressed && styles.optionPressed]}>
-        <View style={[styles.optionIcon, selected && { backgroundColor: colors.brandActionSoft }]}><Ionicons color={selected ? colors.contentLink : colors.contentSecondary} name={option.icon} size={21} /></View>
-        <View style={styles.optionCopy}><AppText variant="bodyStrong">{option.label}</AppText><AppText tone="secondary" variant="bodySmall">{option.supporting}</AppText></View>
-        <Ionicons color={selected ? colors.contentLink : colors.contentTertiary} name={selected ? 'radio-button-on' : 'radio-button-off'} size={22} />
-      </Pressable>;
+      return <Rise delay={140 + index * 70} key={option.id} reducedMotion={reducedMotion}>
+        <PressableScale accessibilityRole="radio" accessibilityState={{ selected }} onPress={() => onChange(option.id)} style={[styles.option, selected && styles.optionSelected]}>
+          <View style={[styles.optionIcon, selected && { backgroundColor: colors.brandActionSoft }]}><Ionicons color={selected ? colors.contentLink : colors.contentSecondary} name={option.icon} size={21} /></View>
+          <View style={styles.optionCopy}><AppText variant="bodyStrong">{option.label}</AppText><AppText tone="secondary" variant="bodySmall">{option.supporting}</AppText></View>
+          {selected
+            ? <PopIn key="on" reducedMotion={reducedMotion}><Ionicons color={colors.contentLink} name="checkmark-circle" size={24} /></PopIn>
+            : <Ionicons color={colors.contentTertiary} name="radio-button-off" size={22} />}
+        </PressableScale>
+      </Rise>;
     })}</View>
   </View>;
 }
 
-function GoalStep({ dailyGoal, onChange, styles }: { dailyGoal: number; onChange: (goal: number) => void; styles: ReturnType<typeof createStyles> }) {
+function GoalStep({ dailyGoal, onChange, reducedMotion, styles }: { dailyGoal: number; onChange: (goal: number) => void; reducedMotion: boolean; styles: StepStyles }) {
   return <View style={styles.content}>
-    <AppText style={styles.eyebrow} tone="link" variant="label">YOUR WALKING PLAN</AppText>
-    <AppText style={styles.title} variant="headline">Pick a kind daily goal.</AppText>
-    <AppText style={styles.description} tone="secondary" variant="body">A goal is a gentle nudge, not a test. Start where today-you can succeed.</AppText>
-    <Surface style={styles.goalHighlight} variant="soft"><AppText tone="secondary" variant="label">DAILY TARGET</AppText><AppText style={styles.goalNumber} variant="displaySmall">{dailyGoal.toLocaleString('en-US')}</AppText><AppText tone="secondary" variant="bodySmall">steps a day · {Math.round(dailyGoal * 7 / 1000)}k steps a week</AppText></Surface>
-    <View style={styles.goalChoices}>{DAILY_STEP_GOAL_PRESETS.map(goal => <Pressable accessibilityRole="radio" accessibilityState={{ selected: goal === dailyGoal }} key={goal} onPress={() => onChange(goal)} style={({ pressed }) => [styles.goalChoice, goal === dailyGoal && styles.goalChoiceSelected, pressed && styles.optionPressed]}><AppText tone={goal === dailyGoal ? 'link' : 'primary'} variant="titleSmall">{goal.toLocaleString('en-US')}</AppText><AppText tone="secondary" variant="caption">steps</AppText></Pressable>)}</View>
+    <Rise reducedMotion={reducedMotion}>
+      <AppText style={styles.eyebrow} tone="link" variant="label">YOUR WALKING PLAN</AppText>
+      <AppText style={styles.title} variant="headline">Pick a kind daily goal.</AppText>
+    </Rise>
+    <Rise delay={80} reducedMotion={reducedMotion}><AppText style={styles.description} tone="secondary" variant="body">A goal is a gentle nudge, not a test. Start where today-you can succeed.</AppText></Rise>
+    <PopIn delay={140} reducedMotion={reducedMotion}>
+      <Surface style={styles.goalHighlight} variant="soft">
+        <AppText tone="secondary" variant="label">DAILY TARGET</AppText>
+        {/* Keyed on the goal so the number pops each time it changes. */}
+        <PopIn key={dailyGoal} reducedMotion={reducedMotion}><AppText style={styles.goalNumber} variant="displaySmall">{dailyGoal.toLocaleString('en-US')}</AppText></PopIn>
+        <AppText tone="secondary" variant="bodySmall">steps a day · {Math.round(dailyGoal * 7 / 1000)}k steps a week</AppText>
+      </Surface>
+    </PopIn>
+    <View style={styles.goalChoices}>{DAILY_STEP_GOAL_PRESETS.map((goal, index) => <Rise delay={220 + index * 50} key={goal} reducedMotion={reducedMotion} style={styles.goalChoiceCell}>
+      <PressableScale accessibilityRole="radio" accessibilityState={{ selected: goal === dailyGoal }} onPress={() => onChange(goal)} style={[styles.goalChoice, goal === dailyGoal && styles.goalChoiceSelected]}><AppText tone={goal === dailyGoal ? 'link' : 'primary'} variant="titleSmall">{goal.toLocaleString('en-US')}</AppText><AppText tone="secondary" variant="caption">steps</AppText></PressableScale>
+    </Rise>)}</View>
   </View>;
 }
 
-function HealthStep({ health, styles }: { health: ReturnType<typeof useStepTracking>; styles: ReturnType<typeof createStyles> }) {
+function HealthStep({ health, reducedMotion, styles }: { health: ReturnType<typeof useStepTracking>; reducedMotion: boolean; styles: StepStyles }) {
   const { colors } = useAppTheme();
   const connected = health.status === 'tracking';
   const busy = health.status === 'checking' || health.status === 'requesting';
   const unavailable = health.status === 'unavailable';
   return <View style={styles.content}>
-    <AppText style={styles.eyebrow} tone="link" variant="label">OPTIONAL, BUT HELPFUL</AppText>
-    <AppText style={styles.title} variant="headline">Bring your steps with you.</AppText>
-    <AppText style={styles.description} tone="secondary" variant="body">Stride Circle reads your daily step total from your phone’s health service. It never needs your location to count your walking day.</AppText>
-    <Surface style={styles.healthCard} variant={connected ? 'soft' : 'outline'}>
-      <View style={styles.healthIcon}><Ionicons color={connected ? colors.successContent : colors.contentLink} name={connected ? 'checkmark-circle' : 'walk'} size={30} /></View>
-      <View style={styles.healthCopy}><AppText variant="titleSmall">{connected ? 'Steps connected' : unavailable ? 'Health data is unavailable here' : 'Your daily total, privately'}</AppText><AppText tone="secondary" variant="bodySmall">{connected ? 'Your walking progress can now update from your health data.' : unavailable ? 'You can still explore the app and connect from a supported phone later.' : 'You stay in control of what you share through your device settings.'}</AppText></View>
-      {busy ? <ActivityIndicator color={colors.contentLink} /> : null}
-    </Surface>
-    <View style={styles.trustNote}><Ionicons color={colors.contentSecondary} name="shield-checkmark-outline" size={18} /><AppText style={styles.trustCopy} tone="secondary" variant="bodySmall">You can change this any time in your phone’s health permissions.</AppText></View>
+    <Rise reducedMotion={reducedMotion}>
+      <AppText style={styles.eyebrow} tone="link" variant="label">OPTIONAL, BUT HELPFUL</AppText>
+      <AppText style={styles.title} variant="headline">Bring your steps with you.</AppText>
+    </Rise>
+    <Rise delay={80} reducedMotion={reducedMotion}><AppText style={styles.description} tone="secondary" variant="body">Wakà reads your daily step total from your phone’s health service. It never needs your location to count your walking day.</AppText></Rise>
+    <Rise delay={160} reducedMotion={reducedMotion}>
+      <Surface style={styles.healthCard} variant={connected ? 'soft' : 'outline'}>
+        <View style={styles.healthIcon}>
+          {!connected ? <PulseRings color={colors.borderStrong} reducedMotion={reducedMotion} size={52} /> : null}
+          <PopIn key={connected ? 'connected' : 'waiting'} reducedMotion={reducedMotion}><Ionicons color={connected ? colors.successContent : colors.contentLink} name={connected ? 'checkmark-circle' : 'walk'} size={30} /></PopIn>
+        </View>
+        <View style={styles.healthCopy}><AppText variant="titleSmall">{connected ? 'Steps connected' : unavailable ? 'Health data is unavailable here' : 'Your daily total, privately'}</AppText><AppText tone="secondary" variant="bodySmall">{connected ? 'Your walking progress can now update from your health data.' : unavailable ? 'You can still explore the app and connect from a supported phone later.' : 'You stay in control of what you share through your device settings.'}</AppText></View>
+        {busy ? <ActivityIndicator color={colors.contentLink} /> : null}
+      </Surface>
+    </Rise>
+    <Rise delay={240} reducedMotion={reducedMotion}><View style={styles.trustNote}><Ionicons color={colors.contentSecondary} name="shield-checkmark-outline" size={18} /><AppText style={styles.trustCopy} tone="secondary" variant="bodySmall">You can change this any time in your phone’s health permissions.</AppText></View></Rise>
   </View>;
 }
 
-function FinishStep({ dailyGoal, healthConnected, intent, styles }: { dailyGoal: number; healthConnected: boolean; intent: OnboardingIntent; styles: ReturnType<typeof createStyles> }) {
+function FinishStep({ dailyGoal, healthConnected, intent, reducedMotion, styles }: { dailyGoal: number; healthConnected: boolean; intent: OnboardingIntent; reducedMotion: boolean; styles: StepStyles }) {
+  const { colors } = useAppTheme();
   const intentCopy = intentOptions.find(option => option.id === intent)?.label.toLowerCase() ?? 'walk more';
   return <View style={styles.welcome}>
-    <AppText style={styles.eyebrow} tone="link" variant="label">YOUR FIRST WIN</AppText>
-    <AppText style={styles.heroTitle} variant="displaySmall">You’re ready to {intentCopy}.</AppText>
-    <AppText style={styles.heroCopy} tone="secondary" variant="body">Your {dailyGoal.toLocaleString('en-US')}-step daily goal is set{healthConnected ? ', and your health data is connected' : ''}. Find a circle when you’re ready for a little shared momentum.</AppText>
+    <View style={styles.finishStage}>
+      <ConfettiBurst reducedMotion={reducedMotion} />
+      <PopIn reducedMotion={reducedMotion}><Hop reducedMotion={reducedMotion}>
+        <View style={[styles.finishBadge, { backgroundColor: colors.brandAction, borderColor: colors.canvas, shadowColor: colors.brandActionPressed }]}><WakaLogo color="#FFFFFF" width={88} /></View>
+      </Hop></PopIn>
+    </View>
+    <Rise delay={200} reducedMotion={reducedMotion}><AppText style={styles.eyebrow} tone="link" variant="label">YOUR FIRST WIN</AppText></Rise>
+    <Rise delay={260} reducedMotion={reducedMotion}><AppText style={styles.heroTitle} variant="displaySmall">You’re ready to {intentCopy}.</AppText></Rise>
+    <Rise delay={340} reducedMotion={reducedMotion}><AppText style={styles.heroCopy} tone="secondary" variant="body">Your {dailyGoal.toLocaleString('en-US')}-step daily goal is set{healthConnected ? ', and your health data is connected' : ''}. Find a circle when you’re ready for a little shared momentum.</AppText></Rise>
   </View>;
 }
 
@@ -215,15 +247,18 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     options: { gap: spacing.sm },
     option: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.md, borderWidth: 1, flexDirection: 'row', gap: spacing.md, minHeight: 80, padding: spacing.md },
     optionSelected: { backgroundColor: colors.infoSurface, borderColor: colors.borderSelected, borderWidth: 2, padding: 11 },
-    optionPressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
+    
     optionIcon: { alignItems: 'center', backgroundColor: colors.surfaceSubtle, borderRadius: radii.sm, height: 40, justifyContent: 'center', width: 40 },
     optionCopy: { flex: 1, gap: 2 },
     goalHighlight: { alignItems: 'center', gap: spacing.xs, marginVertical: spacing.md },
     goalNumber: { color: colors.contentLink },
     goalChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    goalChoice: { alignItems: 'center', borderColor: colors.border, borderRadius: radii.md, borderWidth: 1, gap: 2, paddingVertical: spacing.md, width: '30.8%' },
+    goalChoiceCell: { width: '30.8%' },
+    goalChoice: { alignItems: 'center', borderColor: colors.border, borderRadius: radii.md, borderWidth: 1, gap: 2, paddingVertical: spacing.md },
     goalChoiceSelected: { backgroundColor: colors.infoSurface, borderColor: colors.borderSelected, borderWidth: 2, paddingVertical: 11 },
     healthCard: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
+    finishStage: { alignItems: 'center', height: 200, justifyContent: 'center', marginBottom: spacing.xl, width: '100%' },
+    finishBadge: { alignItems: 'center', borderRadius: radii.pill, borderWidth: 6, elevation: 6, height: 140, justifyContent: 'center', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 0, width: 140 },
     healthIcon: { alignItems: 'center', backgroundColor: colors.infoSurface, borderRadius: radii.pill, height: 52, justifyContent: 'center', width: 52 },
     healthCopy: { flex: 1, gap: 4 },
     trustNote: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },

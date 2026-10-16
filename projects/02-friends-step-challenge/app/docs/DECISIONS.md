@@ -86,3 +86,9 @@ Reason: these features help circles meet and let people reflect on progress with
 Decision: do not expose a per-day walking journal in History. Existing private journal notes remain stored and are not deleted by this presentation change.
 
 Reason: the History experience should focus on walking progress, recaps, and saved walks; journal entry was not requested.
+
+## D-015 — Usernames, Find people, and invitations
+
+Decision: people choose a unique lowercase username (3–20 characters: letters, numbers, `_`, `.`; claimed through a `usernames/{handle}` document written in the same batch as a `publicProfiles/{uid}` projection). Search is prefix-based, bounded to 20 results, and reveals only display name, username, and character. People are discoverable by default and can opt out in Profile; an exact username always resolves. Circle owners and moderators invite by username; the invitee accepts through the existing Rules-guarded join (20-member cap, `removedMembers`). Friends are mutual: the recipient creates both sides in one Rules-checked batch. Cloud Functions were not used because the Firebase project is not on the Blaze plan; moving accept flows into functions remains the D-010 direction.
+
+Reason: sharing a code is awkward and cannot support finding people. Consent (accept step), blocks in both directions, and server-side cap checks keep invitations from becoming silent adds or harassment.

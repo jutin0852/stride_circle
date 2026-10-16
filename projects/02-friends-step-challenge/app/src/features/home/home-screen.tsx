@@ -15,6 +15,8 @@ import { getCircleDeadline, getHomeHealth, getStandingPreview } from './home-mod
 import { HomeView, type HomeCircle } from './home-view';
 import { useHomeGoalEvent } from './use-home-motion';
 import { useHomeCheer } from './use-home-cheer';
+import { useStreakMilestone } from './use-streak-milestone';
+import { CelebrationSheet } from '@/components/celebration-sheet';
 
 export function HomeScreen() {
   const { user } = useAuth();
@@ -35,6 +37,8 @@ export function HomeScreen() {
   const dailyGoal = useDailyStepGoal(user?.uid);
   const goal = dailyGoal.status === 'ready' ? dailyGoal.goal : null;
   const streak = usePersonalStreak({ goal: dailyGoal.goal, todaySteps: personal.state === 'confirmed' ? personal.steps ?? 0 : 0, userId: user?.uid });
+  const currentStreak = streak.status === 'ready' && dailyGoal.status === 'ready' ? streak.summary.currentStreak : null;
+  const milestone = useStreakMilestone(user?.uid, currentStreak);
   const goalEvent = useHomeGoalEvent(user?.uid, today, personal.steps, goal, personal.state === 'confirmed');
   const scores = useCircleDailySteps(details?.circle.id, circleDate, details?.circle.competitionTimeZone);
   const other = (details?.members ?? []).find((member) => member.userId !== user?.uid && (scores.steps[member.userId] ?? 0) > 0);
@@ -50,10 +54,11 @@ export function HomeScreen() {
       standings: preview.filter((entry) => entry.userId === user?.uid || (!cheer.blockedIds.includes('*') && !cheer.blockedIds.includes(entry.userId))).map((entry) => ({ userId: entry.userId, name: details.members.find((member) => member.userId === entry.userId)?.displayName ?? 'Walker', steps: entry.verifiedSteps, rank: entry.rank, self: entry.userId === user?.uid })),
     };
   }, [cheer.blockedIds, details, now, scores.status, scores.steps, user?.uid]);
-  return <HomeView key={user?.uid}
-    greeting={profile.displayName === 'Stride Circle member' ? 'walker' : profile.displayName.split(' ')[0] || 'walker'}
+  return <>
+  <HomeView key={user?.uid}
+    greeting={['Stride Circle member', 'Wakà member'].includes(profile.displayName) ? 'walker' : profile.displayName.split(' ')[0] || 'walker'}
     profileAvatar={profile.avatar} profileName={profile.displayName}
-    streak={streak.status === 'ready' && dailyGoal.status === 'ready' ? streak.summary.currentStreak : null}
+    streak={currentStreak}
     steps={personal.steps} goal={goal} health={personal.state} goalEvent={goalEvent}
     circle={viewCircle} circles={circle.circles}
     circleStatus={circle.status === 'error' ? 'error' : circle.status === 'loading' || (circle.selectedCircleId && !details) ? 'loading' : 'ready'}
@@ -65,5 +70,9 @@ export function HomeScreen() {
     onCircles={() => router.push('/circle')} onCircle={() => { if (details) router.push({ pathname: '/circle/[circleId]', params: { circleId: details.circle.id } }); }}
     onSelectCircle={circle.selectCircle} onConnect={health.requestStepAccess} onHealthSettings={health.openHealthSettings} onRetryCircle={circle.refresh}
     social={other && scores.status === 'ready' && !cheer.blockedIds.includes('*') && !cheer.blockedIds.includes(other.userId) ? { name: other.displayName, steps: scores.steps[other.userId], status: cheer.status, onCheer: cheer.send } : null}
-  />;
+  />
+  <CelebrationSheet visible={milestone.milestone !== null} onDismiss={milestone.dismiss} primaryLabel="Keep going"
+    title={`${milestone.milestone ?? 0}-day streak!`}
+    body={`You’ve reached your goal ${milestone.milestone ?? 0} days in a row. Small walks, adding up.`} />
+  </>;
 }

@@ -14,7 +14,7 @@ it('animates button feedback while preserving caller events and immediate action
   const screen = await render(<Button onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>Save</Button>);
   const button = screen.getByRole('button', { name: 'Save' });
   await fireEvent(button, 'pressIn', {});
-  expect(spring).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: 0.97 }));
+  expect(spring).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: 0.96 }));
   expect(onPressIn).toHaveBeenCalledTimes(1);
   await fireEvent.press(button);
   expect(onPress).toHaveBeenCalledTimes(1);
@@ -42,5 +42,5 @@ it('gives enabled icons spring feedback', async () => {
   const spring = jest.spyOn(Animated, 'spring');
   const screen = await render(<IconButton accessibilityLabel="Back"><Text>Back</Text></IconButton>);
   await fireEvent(screen.getByRole('button', { name: 'Back' }), 'pressIn', {});
-  expect(spring).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ toValue: 0.97 }));
+  expect(spring).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ toValue: 0.96 }));
 });

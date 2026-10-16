@@ -9,13 +9,13 @@ type BrandLockupProps = {
 
 export function BrandLockup({ compact = false }: BrandLockupProps) {
   return (
-    <View accessibilityLabel="Stride Circle" accessible style={styles.row}>
+    <View accessibilityLabel="Wakà" accessible style={styles.row}>
       <View style={[styles.mark, compact && styles.markCompact]}>
         <View style={styles.leaf} />
         <View style={styles.fruit} />
         <View style={styles.stem} />
       </View>
-      <AppText style={compact ? styles.compactName : styles.name} variant="titleSmall">STRIDE{compact ? ' ' : '\n'}CIRCLE</AppText>
+      <AppText style={compact ? styles.compactName : styles.name} variant="titleSmall">Wakà</AppText>
     </View>
   );
 }

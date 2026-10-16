@@ -1,9 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { opacity } from '@/design-system/tokens';
 import { useMemo } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/ui/Button';
 import { useAppColors } from '@/design-system/use-app-theme';
+
 
 type ActivitySummarySheetProps = {
   distanceMeters: number;
@@ -48,9 +51,7 @@ export function ActivitySummarySheet({ distanceMeters, durationMs, isSaving, onD
             <Metric colors={colors} styles={styles} icon="speedometer-outline" label="AVG. PACE" value={`${formatPace(distanceMeters, durationMs)} /km`} />
           </View>
           {!canSave ? <Text style={styles.warning}>This activity needs at least a few metres of GPS movement before it can be saved.</Text> : saveError ? <Text style={styles.error}>We could not save this yet. Check your connection and try again.</Text> : null}
-          <Pressable accessibilityRole="button" disabled={!canSave || isSaving} onPress={onSave} style={({ pressed }) => [styles.saveButton, (!canSave || isSaving) && styles.disabled, pressed && canSave && !isSaving && styles.pressed]}>
-            {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <><Text style={styles.saveText}>{saveError ? 'Try saving again' : 'Save to History'}</Text><Ionicons color={colors.onAccent} name="bookmark-outline" size={19} /></>}
-          </Pressable>
+          <Button disabled={!canSave} loading={isSaving} onPress={onSave} style={{ marginTop: 22 }} trailing={<Ionicons color={colors.onAccent} name="bookmark-outline" size={19} />}>{saveError ? 'Try saving again' : 'Save to History'}</Button>
           <Pressable accessibilityRole="button" disabled={isSaving} onPress={onDiscard} style={({ pressed }) => [styles.discardButton, pressed && !isSaving && styles.discardPressed]}><Text style={styles.discardText}>Discard activity</Text></Pressable>
         </View>
       </View>
@@ -78,11 +79,7 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   metricLabel: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
   warning: { color: colors.warningContent, fontSize: 12, lineHeight: 17, marginTop: 15, textAlign: 'center' },
   error: { color: colors.dangerContent, fontSize: 12, lineHeight: 17, marginTop: 15, textAlign: 'center' },
-  saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 15, flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 22, minHeight: 56 },
-  saveText: { color: colors.onAccent, fontSize: 16, fontWeight: '900' },
   discardButton: { alignItems: 'center', justifyContent: 'center', marginTop: 8, minHeight: 46 },
   discardText: { color: colors.muted, fontSize: 14, fontWeight: '800' },
-  disabled: { opacity: 0.5 },
-  pressed: { backgroundColor: colors.accentPressed, transform: [{ scale: 0.98 }] },
-  discardPressed: { opacity: 0.65 },
+  discardPressed: { opacity: opacity.pressed },
 }); }

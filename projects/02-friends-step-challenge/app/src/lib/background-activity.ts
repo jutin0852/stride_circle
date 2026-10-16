@@ -202,8 +202,8 @@ export async function beginBackgroundRecording(input: {
           ...WALK_LOCATION_OPTIONS,
           activityType: Location.ActivityType.Fitness, pausesUpdatesAutomatically: false,
           showsBackgroundLocationIndicator: true,
-          foregroundService: { notificationTitle: 'Stride Circle is recording',
-            notificationBody: 'Your route records with the phone locked. Open Stride Circle to pause or finish.', killServiceOnDestroy: true },
+          foregroundService: { notificationTitle: 'Wakà is recording',
+            notificationBody: 'Your route records with the phone locked. Open Wakà to pause or finish.', killServiceOnDestroy: true },
         });
         if (!valid()) await stopSafely();
       } catch {

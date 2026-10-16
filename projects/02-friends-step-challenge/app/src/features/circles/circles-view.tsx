@@ -1,12 +1,14 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
+import { PressableScale } from '@/components/ui/PressableScale';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
-import { AppSheet, AppText, FixedHeaderScreen, SegmentedControl, Surface, type AppSheetFocusRef } from '@/components/ui';
+import { AppSheet, AppText, Button, FixedHeaderScreen, SegmentedControl, Surface, type AppSheetFocusRef } from '@/components/ui';
 import { MAX_CIRCLE_MEMBERS, type CircleVisibility } from '@/domain/circles';
 import type { CircleHubPreview, CircleMember, CircleSummary, PublicCircleSummary } from '@/lib/circles';
 import { useAppColors } from '@/design-system/use-app-theme';
+import { useConnectivity } from '@/hooks/use-connectivity';
 import { spacing } from '@/design-system/tokens';
 import { DiscoverSearch } from './discover-search';
 
@@ -22,6 +24,8 @@ const MARKERS = [
 type CreateCircleInput = { name: string; discoverableArea: string; visibility: CircleVisibility };
 
 export type CirclesViewProps = {
+  /** Shown above the joined circles, e.g. invitations and the Find people entry. */
+  headerExtra?: ReactNode;
   circles: CircleSummary[];
   previews: Record<string, CircleHubPreview>;
   circleStatus: 'loading' | 'ready' | 'error';
@@ -40,6 +44,9 @@ export type CirclesViewProps = {
 
 export function CirclesView(props: CirclesViewProps) {
   const colors = useAppColors();
+  // Offline, an empty list only means nothing has loaded yet, not that the
+  // walker has no circles, so the empty-state prompts are not shown.
+  const { offline } = useConnectivity();
   const styles = useCircleStyles();
   const { fontScale, width } = useWindowDimensions();
   const compact = width < 360 || fontScale > 1.3;
@@ -87,6 +94,7 @@ export function CirclesView(props: CirclesViewProps) {
       keyExtractor={(circle) => circle.id}
       ListHeaderComponent={(
         <View style={styles.joinedSection}>
+          {props.headerExtra}
           <View style={styles.sectionHeader}>
             <AppText accessibilityRole="header" style={styles.sectionTitle}>Your walking circles</AppText>
             <AppText style={styles.countLabel}>{props.circles.length} joined</AppText>
@@ -96,16 +104,17 @@ export function CirclesView(props: CirclesViewProps) {
           {props.circleStatus === 'error' ? (
             <InlineNotice title="Your circles didn’t load" action="Try again" onPress={props.onRetryCircles} />
           ) : null}
-          {props.circleStatus === 'ready' && props.circles.length === 0 ? (
+          {props.circleStatus === 'ready' && props.circles.length === 0 && offline ? (
+            <InlineNotice title="Your circles will load when you’re back online" action="Try again" onPress={props.onRetryCircles} />
+          ) : null}
+          {props.circleStatus === 'ready' && props.circles.length === 0 && !offline ? (
             <Surface padding="none" radius="md" style={styles.emptyJoined} variant="soft">
               <View style={styles.emptyIcon}><Ionicons color={colors.accentPressed} name="people-outline" size={23} /></View>
               <View style={styles.emptyCopy}>
                 <AppText style={styles.emptyTitle}>Your walking crew starts here</AppText>
                 <AppText style={styles.emptyBody}>Create a circle, join with an invite code, or find a public crew in Discover.</AppText>
               </View>
-              <Pressable accessibilityRole="button" onPress={() => setShowSetup(true)} style={styles.emptyAction}>
-                <AppText style={styles.emptyActionText}>Get started</AppText>
-              </Pressable>
+              <Button onPress={() => setShowSetup(true)} size="small">Get started</Button>
             </Surface>
           ) : null}
         </View>
@@ -126,20 +135,20 @@ export function CirclesView(props: CirclesViewProps) {
             <View style={styles.headingLine}><AppText style={styles.title}>Circles</AppText></View>
             <View style={styles.headerActions}>
               {page === 'discover' ? (
-                <Pressable
+                <PressableScale
                   accessibilityLabel={searchOpen ? 'Close circle search' : 'Search public Circles'}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: searchOpen }}
                   onPress={toggleSearch}
-                  style={({ pressed }) => [styles.searchToggle, pressed && styles.pressed]}
+                  style={[styles.searchToggle]}
                 >
                   <Ionicons color={colors.ink} name={searchOpen ? 'close' : 'search'} size={20} />
-                </Pressable>
+                </PressableScale>
               ) : (
-                <Pressable accessibilityLabel="Create a Circle" accessibilityRole="button" onPress={() => setShowSetup(true)} ref={createButtonRef} style={({ pressed }) => [styles.createButton, pressed && styles.pressed]}>
+                <PressableScale accessibilityLabel="Create a Circle" accessibilityRole="button" onPress={() => setShowSetup(true)} ref={createButtonRef} style={[styles.createButton]}>
                   <Ionicons color={colors.accentPressed} name="add" size={18} />
                   <AppText style={styles.createButtonText}>Create</AppText>
-                </Pressable>
+                </PressableScale>
               )}
             </View>
           </View>
@@ -161,11 +170,11 @@ export function CirclesView(props: CirclesViewProps) {
             </View>
             <AppText style={styles.discoverIntro}>Find your kind of walk.</AppText>
 
-            <Pressable
+            <PressableScale
               accessibilityLabel="Open global leaderboard"
               accessibilityRole="button"
               onPress={props.onOpenGlobalLeaderboard}
-              style={({ pressed }) => [styles.globalLeaderboardCard, pressed && styles.pressed]}
+              style={[styles.globalLeaderboardCard]}
             >
               <View style={styles.globalLeaderboardIcon}>
                 <Ionicons color={colors.accentPressed} name="trophy-outline" size={20} />
@@ -175,13 +184,16 @@ export function CirclesView(props: CirclesViewProps) {
                 <AppText tone="secondary" variant="caption">See where walkers rank worldwide</AppText>
               </View>
               <Ionicons color={colors.muted} name="chevron-forward" size={19} />
-            </Pressable>
+            </PressableScale>
 
             {props.publicStatus === 'loading' ? <CircleSkeleton compact /> : null}
             {props.publicStatus === 'error' ? (
               <InlineNotice title="Public circles are unavailable right now" action="Try again" onPress={props.onRetryPublic} />
             ) : null}
-            {props.publicStatus === 'ready' && availableCircles.length === 0 ? (
+            {props.publicStatus === 'ready' && availableCircles.length === 0 && offline && !search ? (
+              <InlineNotice title="Public circles will load when you’re back online" action="Try again" onPress={props.onRetryPublic} />
+            ) : null}
+            {props.publicStatus === 'ready' && availableCircles.length === 0 && (!offline || Boolean(search)) ? (
               <View style={styles.noResults}>
                 <Ionicons color={colors.muted} name={search ? 'search-outline' : 'walk-outline'} size={22} />
                 <AppText style={styles.noResultsText}>
@@ -268,7 +280,7 @@ function AvatarStack({ members }: { members: CircleMember[] }) {
     <View accessibilityLabel={`${members.length} circle member avatars`} style={styles.avatarStack}>
       {members.slice(0, 3).map((member, index) => (
         <View key={member.userId} style={[styles.avatarFrame, index > 0 && styles.avatarOverlap]}>
-          <DicebearAvatar choice={{ seed: member.avatarSeed, style: member.avatarStyle }} fallback={getInitials(member.displayName)} size={23} />
+          <DicebearAvatar choice={{ seed: member.avatarSeed, style: member.avatarStyle, photoURL: member.photoURL }} fallback={getInitials(member.displayName)} size={23} />
         </View>
       ))}
     </View>
@@ -439,9 +451,7 @@ function CircleSetupModal({ visible, onClose, onCreate, onJoinInvite, returnFocu
           <AppText style={styles.helper}>Ask the circle creator to share their private code with you.</AppText>
         </>}
         {error ? <AppText accessibilityLiveRegion="polite" style={styles.formError}>{error}</AppText> : null}
-        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => void submit()} style={[styles.submitButton, busy && styles.submitDisabled]}>
-          {busy ? <ActivityIndicator color={colors.onAccent} /> : <AppText style={styles.submitText}>{mode === 'create' ? 'Create walking circle' : 'Join circle'}</AppText>}
-        </Pressable>
+        <Button loading={busy} onPress={() => void submit()} style={{ marginTop: 3 }}>{mode === 'create' ? 'Create walking circle' : 'Join circle'}</Button>
       </ScrollView>
     </AppSheet>
   );
@@ -518,8 +528,6 @@ function createCircleStyles(colors: CircleThemeColors) { return StyleSheet.creat
   emptyCopy: { flex: 1 },
   emptyTitle: { color: colors.ink, fontSize: 13, fontWeight: '800' },
   emptyBody: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 2 },
-  emptyAction: { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 8 },
-  emptyActionText: { color: colors.onAccent, fontSize: 11, fontWeight: '800' },
   skeletonList: { marginTop: 4 },
   skeletonRow: { alignItems: 'center', flexDirection: 'row', height: ROW_HEIGHT, paddingHorizontal: 3 },
   skeletonCompact: { height: 71 },
@@ -543,8 +551,5 @@ function createCircleStyles(colors: CircleThemeColors) { return StyleSheet.creat
   codeInput: { fontVariant: ['tabular-nums'], fontWeight: '800', letterSpacing: 2, textAlign: 'center' },
   helper: { color: colors.muted, fontSize: 11, lineHeight: 17 },
   formError: { backgroundColor: colors.dangerSurface, borderRadius: 10, color: colors.dangerContent, fontSize: 12, lineHeight: 18, padding: 10 },
-  submitButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 13, justifyContent: 'center', marginTop: 3, minHeight: 50 },
-  submitText: { color: colors.onAccent, fontSize: 14, fontWeight: '800' },
-  submitDisabled: { opacity: 0.65 },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
+  
 }); }

@@ -10,6 +10,7 @@ export type { ButtonSize, ButtonVariant } from '@/components/ui/Button';
 export { Divider } from '@/components/ui/Divider';
 export { FixedHeaderScreen } from '@/components/ui/FixedHeaderScreen';
 export { IconButton } from '@/components/ui/IconButton';
+export { PressableScale } from '@/components/ui/PressableScale';
 export { ProgressBar } from '@/components/ui/ProgressBar';
 export { SectionHeader } from '@/components/ui/SectionHeader';
 export { SegmentedControl } from '@/components/ui/SegmentedControl';

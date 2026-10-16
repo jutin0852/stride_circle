@@ -1,9 +1,9 @@
-import { ActivityIndicator, Animated, Pressable, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type PressableProps, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
 import { controlHeights, opacity, radii, spacing } from '@/design-system/tokens';
 import { useAppTheme } from '@/design-system/use-app-theme';
-import { usePressMotion } from '@/hooks/use-press-motion';
+import { PressableScale } from '@/components/ui/PressableScale';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
 export type ButtonSize = 'small' | 'medium' | 'large';
@@ -19,46 +19,45 @@ type ButtonProps = Omit<PressableProps, 'children'> & {
 export function Button({ children, disabled, loading = false, onPress, size = 'large', style, trailing, variant = 'primary', ...props }: ButtonProps) {
   const { colors } = useAppTheme();
   const isDisabled = Boolean(disabled || loading);
-  const feedback = usePressMotion(isDisabled);
   const variantStyles: Record<ButtonVariant, ViewStyle> = {
-    primary: { backgroundColor: colors.brandAction, borderBottomWidth: 4, borderColor: colors.brandActionPressed, borderWidth: 2 },
+    // Home's “View circle” action is the visual reference for primary actions.
+    primary: { backgroundColor: colors.brandAction, borderBottomWidth: 5, borderColor: colors.brandActionPressed, borderWidth: 2, borderRadius: 12, padding: 10 },
     secondary: { backgroundColor: colors.brandDark },
     tertiary: { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 1 },
     danger: { backgroundColor: colors.dangerSurface, borderColor: colors.dangerContent, borderWidth: 1 },
   };
 
   return (
-    <Pressable
+    <PressableScale
       {...props}
       accessibilityLabel={props.accessibilityLabel ?? children}
       accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled: isDisabled }}
+      accessibilityState={{ ...props.accessibilityState, busy: loading, disabled: isDisabled }}
       disabled={isDisabled}
       onPress={onPress}
-      onPressIn={event => { feedback.pressIn(); props.onPressIn?.(event); }}
-      onPressOut={event => { feedback.pressOut(); props.onPressOut?.(event); }}
       style={({ pressed }) => [
         styles.base,
         variantStyles[variant],
-        { minHeight: controlHeights[size], paddingHorizontal: size === 'small' ? spacing.lg : spacing.xl },
-        isDisabled && styles.disabled,
-        pressed && !isDisabled && styles.pressed,
+        { minHeight: variant === 'primary' ? 48 : controlHeights[size], paddingHorizontal: variant === 'primary' ? 10 : size === 'small' ? spacing.lg : spacing.xl },
+        isDisabled && (variant === 'primary' ? styles.primaryDisabled : styles.disabled),
         typeof style === 'function' ? style({ pressed }) : style,
       ]}
     >
-      <Animated.View pointerEvents="none" style={[styles.content, { transform: [{ scale: feedback.scale }] }]}>
+      <View pointerEvents="none" style={styles.content}>
       {loading ? <ActivityIndicator color={variant === 'primary' || variant === 'secondary' ? colors.contentOnBrand : colors.contentPrimary} /> : <>
-        <AppText tone={variant === 'primary' ? 'onBrand' : variant === 'danger' ? 'danger' : variant === 'secondary' ? 'inverse' : 'primary'} variant="button">{children}</AppText>
+        <AppText style={variant === 'primary' ? styles.primaryLabel : styles.label} tone={variant === 'primary' ? 'onBrand' : variant === 'danger' ? 'danger' : variant === 'secondary' ? 'inverse' : 'primary'} variant="button">{children}</AppText>
         {trailing}
       </>}
-      </Animated.View>
-    </Pressable>
+      </View>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', borderRadius: radii.md, flexDirection: 'row', gap: spacing.sm, justifyContent: 'center' },
   disabled: { opacity: opacity.disabled },
+  primaryDisabled: { opacity: 0.55 },
+  primaryLabel: { fontSize: 16, lineHeight: 23, letterSpacing: 0, fontWeight: '800', textAlign: 'center', flexShrink: 1 },
+  label: { textAlign: 'center', flexShrink: 1 },
   content: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'center', flexShrink: 1 },
-  pressed: { opacity: opacity.pressed },
 });

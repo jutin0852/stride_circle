@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Animated, Easing, findNodeHandle, Modal, Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,12 +8,14 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { StreakBanner } from '@/components/streak-banner';
-import { AppText } from '@/components/ui';
+import { AppText, Button } from '@/components/ui';
 import type { AvatarChoice } from '@/lib/avatar';
 import { getPersonalProgress, type HomeHealthState } from './home-model';
+import { GoalBadge } from './goal-badge';
 import { homeMotion, homeTheme } from './tokens';
 import { useReducedHomeMotion } from './use-home-motion';
 import { usePressMotion } from '@/hooks/use-press-motion';
+import { useConnectivity } from '@/hooks/use-connectivity';
 
 export type HomeStanding = { userId: string; name: string; steps: number | null; rank: number | null; self: boolean };
 export type HomeCircle = { id: string; name: string; memberCount: number; rank: number | null; deadline: string; timeZone: string; standings: HomeStanding[]; scoreStatus: 'loading' | 'ready' | 'error' };
@@ -35,6 +38,7 @@ function Action({ children, onPress, label, disabled, busy, colors, secondary = 
   children: React.ReactNode; onPress: () => void; label?: string; disabled?: boolean; busy?: boolean; colors: HomeTheme; secondary?: boolean;
 }) {
   const feedback = usePressMotion(Boolean(disabled || busy));
+  if (!secondary && typeof children === 'string') return <Button accessibilityLabel={label} disabled={disabled} loading={busy} onPress={onPress}>{children}</Button>;
   return <Pressable accessibilityRole="button" accessibilityLabel={label ?? (typeof children === 'string' ? children : undefined)} accessibilityState={{ disabled: !!disabled || !!busy, busy: !!busy }} disabled={disabled || busy} onPress={onPress}
     onPressIn={feedback.pressIn} onPressOut={feedback.pressOut}
     style={({ pressed }) => [styles.action, { backgroundColor: secondary ? colors.canvas : colors.blue, borderColor: secondary ? colors.line : colors.edge, borderBottomWidth: 5, opacity: disabled ? 0.55 : pressed ? 0.82 : 1 }]}>
@@ -92,6 +96,8 @@ export function HomeView(props: HomeViewProps) {
   const insets = useSafeAreaInsets();
   const narrow = width < 350 || fontScale > 1.3;
   const reduced = useReducedHomeMotion();
+  // Offline, "no circle" only means nothing has loaded yet.
+  const { offline } = useConnectivity();
   const [sheet, setSheet] = useState<'health' | 'circles' | null>(null);
   const [sheetClosing, setSheetClosing] = useState(false);
   const [selecting, setSelecting] = useState<string | null>(null);
@@ -110,6 +116,7 @@ export function HomeView(props: HomeViewProps) {
   useEffect(() => {
     const sentNow = previousCheer.current === 'sending' && props.social?.status === 'sent';
     previousCheer.current = props.social?.status;
+    if (sentNow) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     if (!sentNow || reduced) return;
     const animation = Animated.sequence([Animated.timing(cheerScale, { toValue: 1.07, duration: 140, useNativeDriver: true }), Animated.timing(cheerScale, { toValue: 1, duration: 280, useNativeDriver: true })]);
     animation.start();
@@ -201,6 +208,9 @@ export function HomeView(props: HomeViewProps) {
         <View style={styles.progressCopy}>
           <Progress steps={props.steps} goal={props.goal} health={props.health} colors={colors} reduced={reduced} onGoal={props.onGoal} />
         </View>
+        <View pointerEvents="none" style={styles.goalBadge}>
+          <GoalBadge colors={colors} goalEvent={props.goalEvent} met={props.health === 'confirmed' && getPersonalProgress(props.steps, props.goal ?? 0).goalMet} reduced={reduced} size={narrow ? 52 : 58} />
+        </View>
       </View>
       {props.health === 'unavailable' || props.health === 'stale' ? <View style={[styles.notice, { backgroundColor: colors.panelEdge, borderColor: colors.line }]}>
         <Copy colors={colors} style={styles.remaining}>{props.health === 'stale' ? 'Today’s total may be incomplete' : 'Health access needs attention'}</Copy>
@@ -226,7 +236,10 @@ export function HomeView(props: HomeViewProps) {
               <Copy colors={colors} style={styles.standingSteps}>{standing.steps === null ? '—' : standing.steps.toLocaleString()}</Copy>
             </View>)}</View> : <Copy colors={colors} style={{ color: colors.muted }}>The first steps of the day are on their way.</Copy>}
             <Action colors={colors} onPress={props.onCircle}>View circle</Action>
-          </> : <View style={styles.empty}>
+          </> : offline ? <View style={styles.empty}>
+            <Copy colors={colors} accessibilityRole="header" style={styles.circleTitle}>Your circle will load when you’re back online</Copy>
+            <Copy colors={colors} style={{ color: colors.muted }}>Your personal progress is still here.</Copy>
+          </View> : <View style={styles.empty}>
             <Copy colors={colors} accessibilityRole="header" style={styles.circleTitle}>Your steps are better together</Copy>
             <Copy colors={colors} style={{ color: colors.muted }}>Walk with friends in a private circle, or discover a public one.</Copy>
             <Action colors={colors} onPress={props.onCircles}>Find your circle</Action>
@@ -254,7 +267,7 @@ export function HomeView(props: HomeViewProps) {
             {sheet === 'circles' ? props.circles.map((circle) => <Action key={circle.id} secondary colors={colors} busy={selecting === circle.id} disabled={selecting !== null} onPress={() => {
               setSelecting(circle.id); setSheetError(null);
               void props.onSelectCircle(circle.id).then(() => closeSheet()).catch(() => setSheetError('That circle couldn’t be selected. Try again.')).finally(() => setSelecting(null));
-            }}>{circle.name}{props.circle?.id === circle.id ? ' · Selected' : ''}</Action>) : <>
+            }}>{props.circle?.id === circle.id ? `${circle.name} · Selected` : circle.name}</Action>) : <>
               <Action secondary colors={colors} onPress={() => closeSheet(props.onProfile)}>View your profile</Action>
               {props.onReminders ? <Action secondary colors={colors} onPress={() => closeSheet(props.onReminders)}>Walking reminders</Action> : null}
               <Copy colors={colors} accessibilityRole="header" style={styles.circleTitle}>Health connection</Copy>
@@ -277,6 +290,7 @@ const styles = StyleSheet.create({
   page: { flex: 1 }, fixedHeader: { paddingBottom: 14 }, scroll: { flex: 1 }, content: { gap: 20, paddingBottom: 28 }, copy: { fontSize: 16, lineHeight: 23, includeFontPadding: false }, fill: { flex: 1, minWidth: 0 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 }, profile: { borderWidth: 2, borderBottomWidth: 2, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   greeting: { fontWeight: '800', fontSize: 14 }, title: { fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.8 },
+  goalBadge: { position: 'absolute', top: 20, right: 14 },
   hero: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 22, position: 'relative' }, progressCopy: { width: '100%' }, label: { fontSize: 16, fontWeight: '800', paddingRight: 68 }, count: { fontSize: 48, lineHeight: 55, fontWeight: '800', letterSpacing: -1.5, fontVariant: ['tabular-nums'], paddingRight: 68 },
   goalLink: { minHeight: 44, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }, ring: { height: 64, width: 64, alignItems: 'center', justifyContent: 'center' }, ringLabel: { position: 'absolute', fontSize: 13, fontWeight: '800' }, remaining: { fontSize: 14, lineHeight: 21, fontWeight: '700' },
   circleCard: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 20, gap: 12 }, eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1 }, circleHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 }, circleTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 }, switcher: { minHeight: 48, minWidth: 48, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, circleSummary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }, deadline: { gap: 2 }, standings: { gap: 6 }, standing: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, minHeight: 44, borderWidth: 1, borderRadius: 12 }, rank: { width: 24, textAlign: 'center', fontSize: 13, fontWeight: '800' }, standingName: { fontSize: 15, fontWeight: '700' }, standingSteps: { fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 },

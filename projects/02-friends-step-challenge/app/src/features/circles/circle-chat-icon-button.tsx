@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Animated, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { radii } from '@/design-system/tokens';
+import { radii, opacity } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
 import { usePressMotion } from '@/hooks/use-press-motion';
+
 
 export function CircleChatIconButton({ onPress, unreadCount = 0, moreMayBeUnread = false, style }: {
   onPress: () => void;
@@ -35,7 +36,7 @@ export function CircleChatIconButton({ onPress, unreadCount = 0, moreMayBeUnread
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({
     button: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
-    pressed: { opacity: 0.75 },
+    pressed: { opacity: opacity.pressed },
     badge: { alignItems: 'center', backgroundColor: colors.dangerContent, borderColor: colors.background, borderRadius: 10, borderWidth: 1.5, height: 19, justifyContent: 'center', minWidth: 19, paddingHorizontal: 4, position: 'absolute', right: -7, top: -7 },
     badgeText: { color: colors.background, fontSize: 10, fontVariant: ['tabular-nums'], fontWeight: '800', lineHeight: 13 },
   });

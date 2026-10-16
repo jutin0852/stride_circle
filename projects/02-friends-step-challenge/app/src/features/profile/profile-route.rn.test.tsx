@@ -5,8 +5,10 @@ import ProfileRoute from '@/app/(tabs)/profile';
 
 const mockPush = jest.fn();
 const mockSignOut = jest.fn();
+let mockPublicProfile: { username: string } | null = null;
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+jest.mock('@/hooks/use-people', () => ({ usePublicProfile: () => ({ status: 'ready', value: mockPublicProfile }) }));
 jest.mock('expo-router', () => ({ router: { push: (...args: unknown[]) => mockPush(...args) } }));
 jest.mock('@/auth/auth-provider', () => ({ useAuth: () => ({ user: { uid: 'walker-1' } }) }));
 jest.mock('@/hooks/use-user-profile', () => ({
@@ -35,6 +37,7 @@ async function renderProfile() {
 describe('profile route', () => {
   beforeEach(() => {
     mockPush.mockReset();
+    mockPublicProfile = null;
     mockSignOut.mockReset().mockResolvedValue(undefined);
   });
 
@@ -49,6 +52,25 @@ describe('profile route', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Blocked people' }));
 
     expect(mockPush.mock.calls).toEqual([['/edit-profile'], ['/walking-reminders'], ['/blocked-people']]);
+  });
+
+  it('invites people without a username to pick one', async () => {
+    const screen = await renderProfile();
+    await fireEvent.press(screen.getByRole('button', { name: 'Username' }));
+    expect(screen.getByText('Pick a username')).toBeTruthy();
+    expect(mockPush).toHaveBeenCalledWith('/username');
+  });
+
+  it('shows an existing username', async () => {
+    mockPublicProfile = { username: 'walker.one' };
+    const screen = await renderProfile();
+    expect(screen.getByText('@walker.one')).toBeTruthy();
+  });
+
+  it('opens Find people from the profile', async () => {
+    const screen = await renderProfile();
+    await fireEvent.press(screen.getByRole('button', { name: 'Find people' }));
+    expect(mockPush).toHaveBeenCalledWith('/people');
   });
 
   it('signs out through the shared auth service', async () => {

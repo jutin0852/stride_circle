@@ -3,8 +3,9 @@ import { ActivityIndicator, Animated, Easing, Platform, Pressable, StyleSheet } 
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@/components/ui';
 import { useAppColors } from '@/design-system/use-app-theme';
-import { controlHeights, radii, spacing } from '@/design-system/tokens';
+import { controlHeights, radii, spacing, opacity } from '@/design-system/tokens';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
+
 
 type WalkControlProps = {
   label: string;
@@ -71,5 +72,5 @@ const styles = StyleSheet.create({
   circular: { width: 56, height: 56, minHeight: 56, borderRadius: 28, paddingHorizontal: 0 },
   content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   disabled: { opacity: 0.55 },
-  pressed: { opacity: 0.82 },
+  pressed: { opacity: opacity.pressed },
 });

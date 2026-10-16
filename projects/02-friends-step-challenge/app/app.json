@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Stride Circle",
+    "name": "Wakà",
     "slug": "stride-circle",
     "scheme": "stride-circle",
     "version": "1.0.0",
@@ -15,7 +15,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Choose a photo to use in your walk share.",
+          "photosPermission": "Choose a profile picture or a photo for your walk share.",
           "cameraPermission": false,
           "microphonePermission": false
         }
@@ -32,14 +32,14 @@
       [
         "expo-sensors",
         {
-          "motionPermission": "Stride Circle uses your motion activity to show your steps to you and your circle."
+          "motionPermission": "Wakà uses your motion activity to show your steps to you and your circle."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Stride Circle uses your location to center the Activity map and record your route, distance, and pace when you start a walk.",
-          "locationAlwaysAndWhenInUsePermission": "Stride Circle uses your location during an active walk so recording continues when your phone is locked. Recording stops when you pause or finish.",
+          "locationWhenInUsePermission": "Wakà uses your location to center the Activity map and record your route, distance, and pace when you start a walk.",
+          "locationAlwaysAndWhenInUsePermission": "Wakà uses your location during an active walk so recording continues when your phone is locked. Recording stops when you pause or finish.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
@@ -48,7 +48,7 @@
       [
         "@appeeky/expo-healthkit",
         {
-          "healthSharePermission": "Stride Circle reads your step count to show your progress and circle standings.",
+          "healthSharePermission": "Wakà reads your step count to show your progress and circle standings.",
           "healthUpdatePermission": false,
           "isBackgroundDeliveryEnabled": true,
           "isHealthConnectBackgroundReadEnabled": true,

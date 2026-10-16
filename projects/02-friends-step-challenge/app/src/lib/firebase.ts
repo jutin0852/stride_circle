@@ -21,7 +21,8 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-export const firebaseIsConfigured = Object.values(firebaseConfig).every(Boolean);
+export const firebaseIsConfigured = Object.entries(firebaseConfig)
+  .filter(([key]) => key !== 'storageBucket').every(([, value]) => Boolean(value));
 
 type ReactNativeAuthModule = typeof FirebaseAuth & {
   getReactNativePersistence: (storage: typeof AsyncStorage) => Persistence;

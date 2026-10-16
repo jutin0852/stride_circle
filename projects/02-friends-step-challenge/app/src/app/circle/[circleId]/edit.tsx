@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { Skeleton } from '@/components/skeleton';
-import { FixedHeaderScreen } from '@/components/ui';
+import { Button, FixedHeaderScreen } from '@/components/ui';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { updateCircle } from '@/lib/circles';
 import { useAppColors } from '@/design-system/use-app-theme';
@@ -66,9 +66,7 @@ export default function EditCircleRoute() {
         </View>
       </View>
 
-      <Pressable accessibilityRole="button" disabled={isSaving || !form.name.trim()} onPress={() => void save()} style={({ pressed }) => [styles.saveButton, (isSaving || !form.name.trim()) && styles.disabled, pressed && !isSaving && styles.pressed]}>
-        {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.saveText}>Save changes</Text>}
-      </Pressable>
+      <Button disabled={!form.name.trim()} loading={isSaving} onPress={() => void save()} style={{ marginTop: 5 }}>Save changes</Button>
     </FixedHeaderScreen>
   );
 }
@@ -90,12 +88,9 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   input: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 52, paddingHorizontal: 14 },
   descriptionInput: { minHeight: 104, paddingTop: 13 },
   hint: { alignSelf: 'flex-end', color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'], fontWeight: '600' },
-  saveButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 15, justifyContent: 'center', marginTop: 5, minHeight: 52, paddingHorizontal: 18 },
-  saveText: { color: colors.onAccent, fontSize: 15, fontWeight: '800' },
   unavailable: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: 16, justifyContent: 'center', padding: 24 },
   unavailableTitle: { color: colors.ink, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   cancelButton: { backgroundColor: colors.soft, borderRadius: 13, paddingHorizontal: 16, paddingVertical: 11 },
   cancelText: { color: colors.accentPressed, fontWeight: '800' },
-  disabled: { opacity: 0.55 },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
+  
 }); }

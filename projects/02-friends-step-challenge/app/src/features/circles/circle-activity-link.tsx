@@ -3,8 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { AppText } from '@/components/ui';
-import { spacing, touchTargets } from '@/design-system/tokens';
+import { spacing, touchTargets, opacity } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
+
 
 export function CircleActivityLink({ onPress }: { onPress: () => void }) {
   const colors = useAppColors();
@@ -18,6 +19,6 @@ export function CircleActivityLink({ onPress }: { onPress: () => void }) {
 function createStyles(colors: ReturnType<typeof useAppColors>) {
   return StyleSheet.create({
     link: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, minHeight: touchTargets.minimum, paddingHorizontal: spacing.xs },
-    pressed: { opacity: 0.72 },
+    pressed: { opacity: opacity.pressed },
   });
 }

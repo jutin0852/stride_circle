@@ -18,7 +18,7 @@ import type { User } from 'firebase/auth';
 
 import { database, requireFirebase } from '@/lib/firebase';
 import { getDateKeyInTimeZone } from '@/domain/dates';
-import { getAvatarChoiceFromUrl, getDefaultAvatarChoice, isAvatarStyle, type AvatarStyle } from '@/lib/avatar';
+import { getAvatarChoiceFromUrl, getDefaultAvatarChoice, getProfilePhotoURL, isAvatarStyle, type AvatarStyle } from '@/lib/avatar';
 import {
   getDefaultJoinPolicy,
   isCircleJoinPolicy,
@@ -54,6 +54,7 @@ export type CircleSummary = Pick<Circle, 'activityType' | 'id' | 'name'>;
 export type PublicCircleSummary = Pick<Circle, 'activityType' | 'competitionTimeZone' | 'discoverableArea' | 'id' | 'joinPolicy' | 'memberCount' | 'name' | 'visibility'>;
 
 export type CircleMember = {
+  photoURL?: string;
   avatarSeed: string;
   avatarStyle: AvatarStyle;
   displayName: string;
@@ -76,9 +77,10 @@ export type CircleDailySteps = Record<string, number>;
 function getMemberData(user: User, role: CircleRole = 'member') {
   const avatar = getAvatarChoiceFromUrl(user.photoURL) ?? getDefaultAvatarChoice(user.uid);
   return {
+    ...(getProfilePhotoURL(user.photoURL) ? { photoURL: user.photoURL } : {}),
     avatarSeed: avatar.seed,
     avatarStyle: avatar.style,
-    displayName: user.displayName?.trim() || 'Stride Circle member',
+    displayName: user.displayName?.trim() || 'Wakà member',
     joinedAt: serverTimestamp(),
     role,
     userId: user.uid,
@@ -139,6 +141,7 @@ function readCircleMember(data: Record<string, unknown>): CircleMember | null {
   return {
     avatarSeed: typeof data.avatarSeed === 'string' ? data.avatarSeed : fallbackAvatar.seed,
     avatarStyle: isAvatarStyle(data.avatarStyle) ? data.avatarStyle : fallbackAvatar.style,
+    photoURL: getProfilePhotoURL(data.photoURL),
     displayName: data.displayName,
     role: data.role === 'owner' || data.role === 'moderator' ? data.role : 'member',
     userId: data.userId,

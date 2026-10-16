@@ -13,14 +13,15 @@ import { AnimatedAppSplash } from '@/components/animated-app-splash';
 import { useSplashMode } from '@/components/waka-splash/splash-mode';
 import { installTypographyDefaults } from '@/design-system/typography';
 import { WalkingReminderLifecycle } from '@/features/notifications/walking-reminder-lifecycle';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { useReducedMotionSetting } from '@/hooks/use-reduced-motion';
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ NunitoSans_400Regular, NunitoSans_600SemiBold, NunitoSans_700Bold, NunitoSans_800ExtraBold });
   const isDark = useColorScheme() === 'dark';
-  const reducedMotion = useReducedMotion();
+  const reducedMotionSetting = useReducedMotionSetting();
+  const reducedMotion = reducedMotionSetting ?? true;
   const splashMode = useSplashMode();
   const [animatedSplashVisible, setAnimatedSplashVisible] = useState(true);
   const finishAnimatedSplash = useCallback(() => setAnimatedSplashVisible(false), []);
@@ -41,6 +42,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, ...(reducedMotion ? { animation: 'none' as const } : {}) }}>
             <Stack.Screen name="sign-in" />
             <Stack.Screen name="onboarding" />
+            <Stack.Screen name="splash-preview" options={{ animation: 'none' }} />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="global-leaderboard" />
             <Stack.Screen name="daily-goal" />
@@ -52,12 +54,14 @@ export default function RootLayout() {
             <Stack.Screen name="circle/[circleId]/report" options={{ presentation: 'card' }} />
             <Stack.Screen name="circle/[circleId]/reports" options={{ presentation: 'card' }} />
             <Stack.Screen name="blocked-people" options={{ presentation: 'card' }} />
+            <Stack.Screen name="people" options={{ presentation: 'card' }} />
+            <Stack.Screen name="username" options={{ presentation: 'card' }} />
             <Stack.Screen name="circle/[circleId]/walks" />
             <Stack.Screen name="circle/[circleId]/weekly-goal" />
             <Stack.Screen name="circle/[circleId]/activity" />
             <Stack.Screen name="circle/[circleId]/recap" />
           </Stack>
-          {animatedSplashVisible ? <AnimatedAppSplash mode={splashMode} onFinished={finishAnimatedSplash} reducedMotion={reducedMotion} /> : null}
+          {animatedSplashVisible ? <AnimatedAppSplash mode={splashMode} onFinished={finishAnimatedSplash} reducedMotion={reducedMotionSetting} /> : null}
         </AuthProvider>
       </SafeAreaProvider>
     </PanelUIProvider>

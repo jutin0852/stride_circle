@@ -13,6 +13,7 @@ import {
   type PublicCircleSummary,
 } from '@/lib/circles';
 import { CirclesView } from '@/features/circles/circles-view';
+import { PeopleShortcuts } from '@/features/people/people-shortcuts';
 import type { CircleVisibility } from '@/domain/circles';
 
 export default function CirclesRoute() {
@@ -105,6 +106,7 @@ export default function CirclesRoute() {
       busyCircleId={busyCircleId}
       circleStatus={status}
       circles={circles}
+      headerExtra={<PeopleShortcuts onJoined={refresh} />}
       onCreate={handleCreate}
       onJoinInvite={handleJoinInvite}
       onJoinPublic={handleJoinPublic}

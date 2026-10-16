@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/ui/Button';
 import { useAppColors } from '@/design-system/use-app-theme';
 
 type CelebrationSheetProps = {
@@ -32,10 +33,7 @@ export function CelebrationSheet({ body, onDismiss, primaryLabel, title, visible
           </View>
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.body}>{body}</Text>
-          <Pressable accessibilityRole="button" onPress={onDismiss} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-            <Text style={styles.actionText}>{primaryLabel}</Text>
-            <Ionicons color={colors.onAccent} name="arrow-forward" size={19} />
-          </Pressable>
+          <Button onPress={onDismiss} style={{ marginTop: 28, width: '100%' }} trailing={<Ionicons color={colors.onAccent} name="arrow-forward" size={19} />}>{primaryLabel}</Button>
         </View>
       </View>
     </Modal>
@@ -53,7 +51,4 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   iconWrap: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 37, height: 74, justifyContent: 'center', width: 74 },
   title: { color: colors.ink, fontSize: 27, fontWeight: '900', letterSpacing: -0.8, marginTop: 20, textAlign: 'center' },
   body: { color: colors.muted, fontSize: 15, lineHeight: 22, marginTop: 9, maxWidth: 290, textAlign: 'center' },
-  action: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 15, flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 28, minHeight: 56, width: '100%' },
-  actionText: { color: colors.onAccent, fontSize: 16, fontWeight: '900' },
-  pressed: { backgroundColor: colors.accentPressed, transform: [{ scale: 0.98 }] },
 }); }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { opacity } from '@/design-system/tokens';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -11,6 +12,7 @@ import { useAppColors } from '@/design-system/use-app-theme';
 import { useCircleDetails } from '@/hooks/use-circle-details';
 import { useCircleWalks } from '@/hooks/use-circle-walks';
 import { cancelCircleWalkPlan, createCircleWalkPlan, setCircleWalkRsvp, watchCircleWalkRsvps, type CircleWalkPlan } from '@/data/firebase/circle-walk-repository';
+
 
 export function CircleWalksScreen() {
   const colors = useAppColors();
@@ -137,7 +139,7 @@ function CircleWalkCard({ circleId, plan, userId, memberIds, displayName, canCan
     <View style={styles.walkHeader}><View style={styles.walkIcon}><Ionicons color={colors.accentPressed} name="walk-outline" size={20} /></View><View style={styles.walkTitleCopy}><AppText variant="label">{plan.title}</AppText><AppText tone="secondary" variant="caption">{formatCircleWalkTime(plan.startsAt, plan.timeZone)} · planned by {plan.createdByName}</AppText></View>{canCancel ? <IconButton accessibilityLabel={`Cancel ${plan.title}`} onPress={cancel}><Ionicons color={colors.muted} name="ellipsis-horizontal" size={20} /></IconButton> : null}</View>
     {plan.meetupLabel ? <AppText variant="bodySmall">Meet at {plan.meetupLabel}</AppText> : null}
     {plan.details ? <AppText tone="secondary" variant="bodySmall">{plan.details}</AppText> : null}
-    <View style={styles.rsvpRow}><AppText tone="secondary" variant="caption">{rsvpStatus === 'error' ? 'RSVP status unavailable' : `${goingCount} ${goingCount === 1 ? 'walker' : 'walkers'} going${going ? ' · you’re in' : ''}`}</AppText>{rsvpStatus === 'error' ? <Pressable accessibilityRole="button" onPress={() => setRetry((value) => value + 1)}><AppText style={styles.retry}>Retry</AppText></Pressable> : <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || rsvpStatus !== 'ready', selected: going }} disabled={busy || rsvpStatus !== 'ready'} onPress={() => void toggleRsvp()} style={({ pressed }) => [styles.rsvpButton, going && styles.rsvpActive, (busy || rsvpStatus !== 'ready') && styles.disabled, pressed && styles.pressed]}><AppText variant="label" style={[styles.rsvpText, going && styles.rsvpActiveText]}>{rsvpStatus === 'loading' ? 'Loading…' : going ? 'Cancel RSVP' : 'I’m in'}</AppText></Pressable>}</View>
+    <View style={styles.rsvpRow}><AppText tone="secondary" variant="caption">{rsvpStatus === 'error' ? 'RSVP status unavailable' : `${goingCount} ${goingCount === 1 ? 'walker' : 'walkers'} going${going ? ' · you’re in' : ''}`}</AppText>{rsvpStatus === 'error' ? <Pressable accessibilityRole="button" onPress={() => setRetry((value) => value + 1)}><AppText style={styles.retry}>Retry</AppText></Pressable> : <Button accessibilityState={{ selected: going }} disabled={rsvpStatus !== 'ready'} loading={busy} onPress={() => void toggleRsvp()} size="small" style={{ minWidth: 106 }} variant={going ? 'tertiary' : 'primary'}>{rsvpStatus === 'loading' ? 'Loading…' : going ? 'Cancel RSVP' : 'I’m in'}</Button>}</View>
   </Surface>;
 }
 
@@ -168,12 +170,8 @@ function createStyles(colors: ReturnType<typeof useAppColors>) {
     walkIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 20, height: 40, justifyContent: 'center', width: 40 },
     walkTitleCopy: { flex: 1, gap: 3 },
     rsvpRow: { alignItems: 'center', borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 10 },
-    rsvpButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 11, justifyContent: 'center', minHeight: 40, minWidth: 106, paddingHorizontal: 14 },
-    rsvpActive: { backgroundColor: colors.soft, borderColor: colors.accent, borderWidth: 1 },
-    rsvpText: { color: colors.onAccent },
-    rsvpActiveText: { color: colors.accentPressed },
     retry: { color: colors.accentPressed, fontWeight: '800' },
     disabled: { opacity: 0.5 },
-    pressed: { opacity: 0.75 },
+    pressed: { opacity: opacity.pressed },
   });
 }

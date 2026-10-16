@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 
+import { ConnectivityContext } from '@/hooks/use-connectivity';
 import { CirclesView, type CirclesViewProps } from './circles-view';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null, MaterialCommunityIcons: () => null }));
@@ -18,7 +19,7 @@ const publicCircle = {
   visibility: 'public' as const,
 };
 
-async function setup(overrides: Partial<CirclesViewProps> = {}) {
+async function setup(overrides: Partial<CirclesViewProps> = {}, offline = false) {
   const props: CirclesViewProps = {
     circles: [joined],
     previews: {
@@ -45,10 +46,29 @@ async function setup(overrides: Partial<CirclesViewProps> = {}) {
     ...overrides,
   };
 
-  return { props, screen: await render(<CirclesView {...props} />) };
+  return { props, screen: await render(<ConnectivityContext.Provider value={{ offline }}><CirclesView {...props} /></ConnectivityContext.Provider>) };
 }
 
 describe('Circles hub', () => {
+  it('does not claim the walker has no circles while offline', async () => {
+    const { props, screen } = await setup({ circles: [], publicCircles: [] }, true);
+    const user = userEvent.setup();
+
+    expect(screen.queryByText('Your walking crew starts here')).toBeNull();
+    expect(screen.getByText('Your circles will load when you’re back online')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Retry Your circles will load when you’re back online' }));
+    expect(props.onRetryCircles).toHaveBeenCalledTimes(1);
+
+    await user.press(screen.getByRole('tab', { name: 'Discover' }));
+    expect(screen.queryByText('No public Circles are available yet.')).toBeNull();
+    expect(screen.getByText('Public circles will load when you’re back online')).toBeTruthy();
+  });
+
+  it('still shows the get-started prompt online when there are no circles', async () => {
+    const { screen } = await setup({ circles: [] });
+    expect(screen.getByText('Your walking crew starts here')).toBeTruthy();
+  });
+
   it('shows joined circle activity from its preview and public discovery metadata', async () => {
     const { props, screen } = await setup();
     const user = userEvent.setup();

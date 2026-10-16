@@ -244,6 +244,183 @@ service cloud.firestore {
         );
     }
 
+    // ---- Usernames, public profiles, invites and friends ----
+
+    // Kept in sync with src/domain/usernames.ts.
+    function isValidUsername(handle) {
+      return handle is string
+        && handle.matches('^[a-z][a-z0-9_.]{2,19}$')
+        && !handle.matches('.*[.][.].*')
+        && !handle.matches('.*[.]$')
+        && !(handle in ['admin', 'administrator', 'help', 'moderator', 'official', 'root', 'stride', 'stridecircle', 'support', 'system', 'waka']);
+    }
+
+    // Blocks are private to their owner, so only rules can check them both ways.
+    function isBlockedEitherWay(a, b) {
+      return exists(/databases/$(database)/documents/users/$(a)/blocks/$(b))
+        || exists(/databases/$(database)/documents/users/$(b)/blocks/$(a));
+    }
+
+    function isUsernameCooldownOver() {
+      return resource.data.get('usernameChangedAt', null) == null
+        || resource.data.usernameChangedAt <= request.time - duration.value(30, 'd');
+    }
+
+    // The searchable projection of a profile. Its name must match the private
+    // profile, and its handle must be claimed by this user in the same write.
+    function isValidPublicProfile(userId) {
+      return request.resource.data.keys().hasOnly(['avatarSeed', 'avatarStyle', 'discoverable', 'displayName', 'displayNameLower', 'schemaVersion', 'updatedAt', 'userId', 'username', 'usernameChangedAt'])
+        && request.resource.data.keys().hasAll(['avatarSeed', 'avatarStyle', 'discoverable', 'displayName', 'displayNameLower', 'schemaVersion', 'updatedAt', 'userId', 'username'])
+        && request.resource.data.userId == userId
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.discoverable is bool
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.displayNameLower is string
+        && request.resource.data.displayNameLower.size() <= 100
+        && request.resource.data.avatarSeed is string
+        && request.resource.data.avatarSeed.size() <= 100
+        && request.resource.data.avatarStyle is string
+        && request.resource.data.avatarStyle.size() <= 40
+        && request.resource.data.updatedAt == request.time
+        && isValidUsername(request.resource.data.username)
+        && request.resource.data.displayName == getAfter(/databases/$(database)/documents/users/$(userId)).data.displayName
+        && existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == userId;
+    }
+
+    // One document per handle makes the handle unique: creating an existing
+    // document is an update, which is denied.
+    match /usernames/{handle} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && isValidUsername(handle)
+        && request.resource.data.keys().hasOnly(['createdAt', 'uid'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/publicProfiles/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/publicProfiles/$(request.auth.uid)).data.username == handle;
+      allow update: if false;
+      // Only the owner can release a handle, and only once their profile has moved on.
+      allow delete: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && (
+          !existsAfter(/databases/$(database)/documents/publicProfiles/$(request.auth.uid))
+          || getAfter(/databases/$(database)/documents/publicProfiles/$(request.auth.uid)).data.username != handle
+        );
+    }
+
+    match /publicProfiles/{userId} {
+      allow get: if signedIn();
+      // Search only sees people who are discoverable, in small pages.
+      allow list: if signedIn()
+        && resource.data.discoverable == true
+        && request.query.limit <= 20;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && isValidPublicProfile(userId)
+        && request.resource.data.get('usernameChangedAt', null) == null;
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && isValidPublicProfile(userId)
+        && (
+          (
+            request.resource.data.username == resource.data.username
+            && request.resource.data.get('usernameChangedAt', null) == resource.data.get('usernameChangedAt', null)
+          )
+          || (
+            request.resource.data.username != resource.data.username
+            && isUsernameCooldownOver()
+            && request.resource.data.usernameChangedAt == request.time
+            && !existsAfter(/databases/$(database)/documents/usernames/$(resource.data.username))
+          )
+        );
+      allow delete: if false;
+    }
+
+    // Owners and moderators invite by username; the person accepts through the
+    // acceptCircleInvite function, which re-checks every rule with admin access.
+    match /circleInvites/{inviteId} {
+      allow get, list: if signedIn()
+        && (
+          resource.data.inviteeId == request.auth.uid
+          || resource.data.inviterId == request.auth.uid
+          || isCircleModerator(resource.data.circleId)
+        );
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['circleId', 'circleName', 'createdAt', 'expiresAt', 'inviteeId', 'inviterDisplayName', 'inviterId', 'schemaVersion'])
+        && inviteId == request.resource.data.circleId + '_' + request.resource.data.inviteeId
+        && request.resource.data.inviterId == request.auth.uid
+        && request.resource.data.inviteeId is string
+        && request.resource.data.inviteeId != request.auth.uid
+        && request.resource.data.inviterDisplayName is string
+        && request.resource.data.inviterDisplayName.size() > 0
+        && request.resource.data.inviterDisplayName.size() <= 100
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt >= request.time + duration.value(13, 'd')
+        && request.resource.data.expiresAt <= request.time + duration.value(15, 'd')
+        && isCircleModerator(request.resource.data.circleId)
+        && request.resource.data.circleName == get(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.name
+        && get(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.memberCount < maxCircleMembers()
+        && !exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId)/members/$(request.resource.data.inviteeId))
+        && !exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId)/removedMembers/$(request.resource.data.inviteeId))
+        && !isBlockedEitherWay(request.auth.uid, request.resource.data.inviteeId)
+        && exists(/databases/$(database)/documents/publicProfiles/$(request.resource.data.inviteeId));
+      allow update: if false;
+      allow delete: if signedIn()
+        && (
+          resource.data.inviteeId == request.auth.uid
+          || resource.data.inviterId == request.auth.uid
+          || isCircleModerator(resource.data.circleId)
+        );
+    }
+
+    match /friendRequests/{requestId} {
+      allow get, list: if signedIn()
+        && (resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['createdAt', 'fromDisplayName', 'fromId', 'schemaVersion', 'toId'])
+        && requestId == request.resource.data.fromId + '_' + request.resource.data.toId
+        && request.resource.data.fromId == request.auth.uid
+        && request.resource.data.toId is string
+        && request.resource.data.toId != request.auth.uid
+        && request.resource.data.fromDisplayName is string
+        && request.resource.data.fromDisplayName.size() > 0
+        && request.resource.data.fromDisplayName.size() <= 100
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(request.resource.data.toId))
+        && !isBlockedEitherWay(request.auth.uid, request.resource.data.toId)
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(request.resource.data.toId));
+      allow update: if false;
+      allow delete: if signedIn()
+        && (resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+    }
+
+    // The recipient of a friend request creates both sides of the friendship in
+    // one batch that also deletes the request. Either person can end one by
+    // deleting both sides in a batch.
+    match /users/{userId}/friends/{friendId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && (request.auth.uid == userId || request.auth.uid == friendId)
+        && userId != friendId
+        && request.resource.data.keys().hasOnly(['createdAt', 'friendId', 'schemaVersion'])
+        && request.resource.data.friendId == friendId
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.createdAt == request.time
+        // The request runs from the other person to the signed-in user.
+        && exists(/databases/$(database)/documents/friendRequests/$((request.auth.uid == userId ? friendId : userId) + '_' + request.auth.uid))
+        && !existsAfter(/databases/$(database)/documents/friendRequests/$((request.auth.uid == userId ? friendId : userId) + '_' + request.auth.uid))
+        && !isBlockedEitherWay(userId, friendId);
+      allow update: if false;
+      allow delete: if signedIn() && (request.auth.uid == userId || request.auth.uid == friendId);
+    }
+
     match /globalLeaderboards/{boardId} {
       allow get: if signedIn();
       allow list, create, update, delete: if false;

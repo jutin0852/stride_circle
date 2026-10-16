@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { opacity } from '@/design-system/tokens';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText, Surface } from '@/components/ui';
 import { dateFromKey } from '@/domain/walking-history';
 import { useAppColors } from '@/design-system/use-app-theme';
 import { saveWalkingJournalEntry, watchWalkingJournalEntry } from '@/lib/walking-journal';
+
 
 type JournalStatus = 'loading' | 'ready' | 'error';
 
@@ -93,6 +95,6 @@ function createStyles(colors: ReturnType<typeof useAppColors>) {
     save: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 12, justifyContent: 'center', minHeight: 42, minWidth: 104, paddingHorizontal: 14 },
     saveText: { color: colors.onAccent },
     disabled: { opacity: 0.45 },
-    pressed: { opacity: 0.78 },
+    pressed: { opacity: opacity.pressed },
   });
 }

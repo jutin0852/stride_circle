@@ -2,7 +2,7 @@ import type { useAppColors } from '@/design-system/use-app-theme';
 
 /** Mapbox Streets vector schema; no Studio style publication required. */
 export function walkingMapStyle(colors: ReturnType<typeof useAppColors>, dark: boolean) {
-  return JSON.stringify({ version: 8, name: 'Stride Circle walking',
+  return JSON.stringify({ version: 8, name: 'Wakà walking',
     sources: { streets: { type: 'vector', url: 'mapbox://mapbox.mapbox-streets-v8' } },
     glyphs: 'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
     layers: [

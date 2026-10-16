@@ -12,6 +12,7 @@ import {
 
 import {
   getDefaultAvatarChoice,
+  getProfilePhotoURL,
   isAvatarStyle,
 } from '@/lib/avatar';
 import { database, requireFirebase } from '@/lib/firebase';
@@ -92,10 +93,11 @@ function readEntry(userId: string, data: Record<string, unknown> | undefined): O
   const fallback = getDefaultAvatarChoice(userId);
   return {
     avatar: {
+      photoURL: getProfilePhotoURL(data.photoURL),
       seed: typeof data.avatarSeed === 'string' && data.avatarSeed ? data.avatarSeed : fallback.seed,
       style: isAvatarStyle(data.avatarStyle) ? data.avatarStyle : fallback.style,
     },
-    displayName: typeof data.displayName === 'string' && data.displayName.trim() ? data.displayName.trim() : 'Stride Circle member',
+    displayName: typeof data.displayName === 'string' && data.displayName.trim() ? data.displayName.trim() : 'Wakà member',
     userId,
     verifiedSteps: Math.floor(data.verifiedSteps),
   };

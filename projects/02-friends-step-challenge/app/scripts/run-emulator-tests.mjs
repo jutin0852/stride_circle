@@ -37,7 +37,7 @@ const argumentsForCommand = [
   'demo-stride-circle',
   '--only',
   'auth,firestore',
-  `${quoteForShell(process.execPath)} ${quoteForShell(join(projectRoot, 'scripts', 'run-rn-tests.mjs'))} --config jest.rules.config.js`,
+  `${quoteForShell(process.execPath)} ${quoteForShell(join(projectRoot, 'scripts', 'run-rn-tests.mjs'))} --config jest.rules.config.js --runInBand`,
 ];
 
 const child = spawn(

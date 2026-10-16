@@ -29,6 +29,7 @@ import {
   type ReportTargetType,
 } from '@/domain/moderation';
 import { database, requireFirebase } from '@/lib/firebase';
+import { clearRelationshipWithBlockedPerson } from '@/lib/people';
 import type { CircleRole } from '@/domain/circles';
 
 const REPORT_PAGE_SIZE = 30;
@@ -189,7 +190,7 @@ export function watchBlockedPeople(
     (snapshot) => onChange(snapshot.docs.map((record) => ({
       displayName: typeof record.data().displayName === 'string' && record.data().displayName.trim()
         ? record.data().displayName.trim()
-        : 'Stride Circle member',
+        : 'Wakà member',
       userId: record.id,
     }))),
     onError,
@@ -208,10 +209,12 @@ export async function blockPerson(input: { displayName: string; blockedUserId: s
     transaction.set(blockReference, {
       blockedUserId: input.blockedUserId,
       createdAt: serverTimestamp(),
-      displayName: input.displayName.trim().slice(0, MAX_REPORT_LABEL) || 'Stride Circle member',
+      displayName: input.displayName.trim().slice(0, MAX_REPORT_LABEL) || 'Wakà member',
       schemaVersion: 1,
     });
   });
+  // A block also ends any friendship and pending friend requests. The block already succeeded, so this is best effort.
+  await clearRelationshipWithBlockedPerson({ blockedUserId: input.blockedUserId, userId: input.userId }).catch(() => undefined);
 }
 
 export async function unblockPerson(input: { blockedUserId: string; userId: string }) {

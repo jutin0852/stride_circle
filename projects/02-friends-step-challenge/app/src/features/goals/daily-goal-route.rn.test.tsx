@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import DailyGoalRoute from '@/app/daily-goal';
@@ -39,6 +39,15 @@ describe('daily and weekly goal route', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it('uses the Home button treatment for daily and weekly saves', async () => {
+    const screen = await renderDailyGoal();
+    for (const name of ['Save daily goal', 'Save weekly target']) {
+      expect(StyleSheet.flatten(screen.getByRole('button', { name }).props.style)).toEqual(expect.objectContaining({
+        minHeight: 48, borderRadius: 12, borderWidth: 2, borderBottomWidth: 5,
+      }));
+    }
+  });
 
   it('saves a selected daily preset for the signed-in user', async () => {
     const screen = await renderDailyGoal();

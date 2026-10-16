@@ -4,6 +4,7 @@ import { BlurTargetView, BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WalkSavedToast } from './walk-saved-toast';
 import { useAuth } from '@/auth/auth-provider';
 import { ActivityMap } from '@/components/activity-map';
 import { AppSheet, AppText, Button, FixedHeaderScreen, IconButton } from '@/components/ui';
@@ -44,7 +45,7 @@ function goBack() {
 }
 
 export function WalkDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, justSaved } = useLocalSearchParams<{ id: string; justSaved?: string }>();
   const { user } = useAuth();
   const colors = useAppColors(); const { isDark } = useAppTheme(); const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
@@ -276,6 +277,7 @@ export function WalkDetail() {
             <Button loading={shareBusy} disabled={busy || shareBusy || photoBusy || (photoUri ? !photoReady : !mapReady)} onPress={() => void share()}>Share</Button>
           </ScrollView>
     </AppSheet>
+    {justSaved === '1' ? <WalkSavedToast steps={activity.steps} top={insets.top + 64} /> : null}
   </>;
 }
 

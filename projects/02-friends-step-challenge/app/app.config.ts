@@ -9,7 +9,7 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
     : null;
   return {
     ...config,
-    name: config.name ?? 'Stride Circle',
+    name: config.name ?? 'Wakà',
     slug: config.slug ?? 'stride-circle',
     plugins: [...(config.plugins ?? []), ['@rnmapbox/maps', { RNMapboxMapsVersion: '11.23.1' }], 'expo-sharing', ['expo-notifications', { color: '#13B5E8', enableBackgroundRemoteNotifications: false }], './plugins/with-local-notifications',
       ...(iosUrlScheme ? [['@react-native-google-signin/google-signin', { iosUrlScheme }] as [string, { iosUrlScheme: string }]] : []),

@@ -13,7 +13,7 @@ export function usePressMotion(disabled = false) {
   function feedback(pressed: boolean) {
     scale.stopAnimation();
     if (disabled || reduced) { scale.setValue(1); return; }
-    Animated.spring(scale, { toValue: pressed ? 0.97 : 1, damping: 30, stiffness: 420, mass: 0.7, overshootClamping: true, useNativeDriver: Platform.OS !== 'web', isInteraction: false }).start();
+    Animated.spring(scale, { toValue: pressed ? 0.96 : 1, damping: 30, stiffness: 420, mass: 0.7, overshootClamping: true, useNativeDriver: Platform.OS !== 'web', isInteraction: false }).start();
   }
   return { scale, pressIn: () => feedback(true), pressOut: () => feedback(false) };
 }

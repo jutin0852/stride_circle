@@ -1,0 +1,12 @@
+{
+  "name": "waka-media",
+  "main": "entry.mjs",
+  "compatibility_date": "2026-10-16",
+  "workers_dev": true,
+  "vars": {
+    "FIREBASE_PROJECT_ID": "stride-eecc8",
+    "IMAGEKIT_URL_ENDPOINT": "https://ik.imagekit.io/wakawalks",
+    "MEDIA_ALLOWED_ORIGINS": ""
+  },
+  "observability": { "enabled": false }
+}

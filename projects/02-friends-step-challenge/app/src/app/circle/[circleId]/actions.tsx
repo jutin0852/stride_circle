@@ -28,8 +28,8 @@ export default function CircleActionsRoute() {
     if (!details) return;
     try {
       const message = details.circle.visibility === 'private' && details.circle.inviteCode
-        ? `Join my Stride Circle “${details.circle.name}” with invite code ${details.circle.inviteCode}.`
-        : `Find my public Stride Circle “${details.circle.name}” in the Circles tab.`;
+        ? `Join my Wakà circle “${details.circle.name}” with invite code ${details.circle.inviteCode}.`
+        : `Find my public Wakà circle “${details.circle.name}” in the Circles tab.`;
       await Share.share({ message });
     } catch {
       Alert.alert('Could not open sharing', 'Try again in a moment.');

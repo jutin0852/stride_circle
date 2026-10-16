@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppColors } from '@/design-system/use-app-theme';
-import { spacing } from '@/design-system/tokens';
+import { spacing, opacity } from '@/design-system/tokens';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
+
 
 export function DiscoverSearch({ visible, value, onChange }: { visible: boolean; value: string; onChange: (value: string) => void }) {
   const colors = useAppColors();
@@ -47,5 +48,5 @@ const styles = StyleSheet.create({
   box: { alignItems: 'center', borderRadius: 15, borderWidth: 1, flexDirection: 'row', gap: 9, height: 48, marginTop: spacing.sm, paddingHorizontal: 14 },
   input: { flex: 1, fontSize: 14, minHeight: 44, paddingVertical: 0 },
   clear: { alignItems: 'center', justifyContent: 'center', minHeight: 44, width: 44, marginRight: -10 },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: opacity.pressed },
 });

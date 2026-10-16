@@ -6,7 +6,7 @@ import { formatWalkTime } from '@/domain/walk';
 export async function shareWalkImage(ref: RefObject<View | null>, walk: SharedWalk, story: boolean, signal?: AbortSignal) {
   if (signal?.aborted) return;
   if (Platform.OS === 'web') {
-    await Share.share({ message: `${walk.title} · ${(walk.distanceMeters / 1000).toFixed(2)} km · ${formatWalkTime(walk.durationSeconds)} · Stride Circle` });
+    await Share.share({ message: `${walk.title} · ${(walk.distanceMeters / 1000).toFixed(2)} km · ${formatWalkTime(walk.durationSeconds)} · Wakà` });
     return;
   }
   const { captureRef, releaseCapture } = await import('react-native-view-shot');

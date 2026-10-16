@@ -136,7 +136,7 @@ it('offers a clear finish choice and saves only after confirmation', async () =>
   expect(screen.getByText('Finish this walk?')).toBeTruthy();
   expect(saveLocalWalk).not.toHaveBeenCalled();
   await fireEvent.press(screen.getByRole('button', { name: 'Finish & save' }));
-  await waitFor(() => expect(router.replace).toHaveBeenCalledWith({ pathname: '/walk/[id]', params: { id: 'walk' } }));
+  await waitFor(() => expect(router.replace).toHaveBeenCalledWith({ pathname: '/walk/[id]', params: { id: 'walk', justSaved: '1' } }));
   expect(saveLocalWalk).toHaveBeenCalledWith(expect.objectContaining({ steps: 120, rawCoordinates: [] }));
 });
 it('snaps a saved route automatically in the background without blocking the detail screen', async () => {
@@ -155,7 +155,7 @@ it('snaps a saved route automatically in the background without blocking the det
   const screen = await render(<WalkRecorder />);
   await fireEvent.press(screen.getByRole('button', { name: 'Finish' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Finish & save' }));
-  await waitFor(() => expect(router.replace).toHaveBeenCalledWith({ pathname: '/walk/[id]', params: { id: 'walk' } }));
+  await waitFor(() => expect(router.replace).toHaveBeenCalledWith({ pathname: '/walk/[id]', params: { id: 'walk', justSaved: '1' } }));
   await waitFor(() => expect(matchWalkingRoute).toHaveBeenCalledWith(route));
   await waitFor(() => expect(saveLocalWalk).toHaveBeenCalledWith(expect.objectContaining({ displayCoordinates: matchedRoute })));
 });
@@ -164,7 +164,7 @@ it('pushes the saved walk over Activity so Back returns to the tab', async () =>
   const screen = await render(<WalkRecorder embedded />);
   await fireEvent.press(screen.getByRole('button', { name: 'Finish' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Finish & save' }));
-  await waitFor(() => expect(router.push).toHaveBeenCalledWith({ pathname: '/walk/[id]', params: { id: 'walk' } }));
+  await waitFor(() => expect(router.push).toHaveBeenCalledWith({ pathname: '/walk/[id]', params: { id: 'walk', justSaved: '1' } }));
   expect(router.replace).not.toHaveBeenCalled();
 });
 it('lets a walker discard an accidental session without saving it', async () => {

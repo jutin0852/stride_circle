@@ -7,8 +7,9 @@ import { AppText, Button, FixedHeaderScreen, IconButton, StateCard, Surface } fr
 import { REPORT_REASONS, isReportTargetType, type ReportReason } from '@/domain/moderation';
 import { createCircleReport } from '@/lib/circle-safety';
 import { useAuth } from '@/auth/auth-provider';
-import { spacing } from '@/design-system/tokens';
+import { spacing, opacity } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
+
 
 const REASON_LABELS: Record<ReportReason, string> = {
   spam: 'Spam or misleading',
@@ -155,5 +156,5 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   input: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.ink, fontSize: 15, lineHeight: 21, minHeight: 112, padding: spacing.md },
   confirmation: { alignItems: 'flex-start', gap: spacing.md },
   confirmationIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 22, height: 44, justifyContent: 'center', width: 44 },
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: opacity.pressed },
 }); }

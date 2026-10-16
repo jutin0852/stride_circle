@@ -16,6 +16,7 @@ import {
   getAvatarChoiceFromUrl,
   getAvatarUrl,
   getDefaultAvatarChoice,
+  getProfilePhotoURL,
   isAvatarStyle,
   type AvatarChoice,
 } from '@/lib/avatar';
@@ -41,7 +42,7 @@ export async function createProfileIfMissing(user: User, options: { startOnboard
 
   await setDoc(profileReference, {
     // Matches the member-record name so Firestore Rules accept circle joins.
-    displayName: user.displayName?.trim() || 'Stride Circle member',
+    displayName: user.displayName?.trim() || 'Wakà member',
     email: user.email,
     avatarSeed: avatar.seed,
     avatarStyle: avatar.style,
@@ -52,6 +53,8 @@ export async function createProfileIfMissing(user: User, options: { startOnboard
 }
 
 function getRemotePhotoURL(value: unknown): string | null {
+  const photo = getProfilePhotoURL(value);
+  if (photo) return photo;
   if (typeof value !== 'string' || !value.trim()) return null;
   try {
     const url = new URL(value);
@@ -90,24 +93,30 @@ export async function updateUserDisplayName(input: { displayName: string; user: 
 
   await updateProfile(input.user, { displayName });
   const db = requireFirebase(database, 'Firestore');
-  await setDoc(
-    doc(db, 'users', input.user.uid),
-    { displayName, updatedAt: serverTimestamp() },
-    { merge: true },
-  );
+  const publicReference = doc(db, 'publicProfiles', input.user.uid);
+  const hasPublicProfile = (await getDoc(publicReference)).exists();
+  // The searchable name must change in the same write as the private one.
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'users', input.user.uid), { displayName, updatedAt: serverTimestamp() }, { merge: true });
+  if (hasPublicProfile) batch.update(publicReference, { displayName, displayNameLower: displayName.toLowerCase(), updatedAt: serverTimestamp() });
+  await batch.commit();
 }
 
 export async function updateUserAvatar(input: { avatar: AvatarChoice; user: User }) {
   const photoURL = getAvatarUrl(input.avatar);
-  await updateProfile(input.user, { photoURL });
 
   const db = requireFirebase(database, 'Firestore');
   const batch = writeBatch(db);
   batch.set(
     doc(db, 'users', input.user.uid),
-    { avatarSeed: input.avatar.seed, avatarStyle: input.avatar.style, photoURL, updatedAt: serverTimestamp() },
+    { avatarSeed: input.avatar.seed, avatarStyle: input.avatar.style, photoURL, photoAsset: input.avatar.photoAsset ?? null, updatedAt: serverTimestamp() },
     { merge: true },
   );
+
+  const publicReference = doc(db, 'publicProfiles', input.user.uid);
+  if ((await getDoc(publicReference)).exists()) {
+    batch.update(publicReference, { avatarSeed: input.avatar.seed, avatarStyle: input.avatar.style, updatedAt: serverTimestamp() });
+  }
 
   const memberships = await getDocs(collection(db, 'users', input.user.uid, 'circleMemberships'));
   memberships.forEach((membership) => {
@@ -118,6 +127,8 @@ export async function updateUserAvatar(input: { avatar: AvatarChoice; user: User
     );
   });
   await batch.commit();
+  // Firestore is authoritative. An Auth refresh failure must not undo a saved photo.
+  await updateProfile(input.user, { photoURL }).catch(() => {});
 }
 
 export async function signOutCurrentUser() {

@@ -146,6 +146,21 @@ schemaVersion
 
 Circle walk plans store a title, start timestamp, creator display snapshot, optional details, optional general meetup label, and scheduled/cancelled status. Each member's RSVP is a separate document keyed by their user id. Plans contain no GPS coordinates or route geometry.
 
+## Usernames, people, invitations, and friends
+
+```text
+usernames/{handle}                         { uid, createdAt }
+publicProfiles/{userId}                    { username, displayName, displayNameLower, avatarSeed, avatarStyle, discoverable, usernameChangedAt?, updatedAt, schemaVersion, userId }
+circleInvites/{circleId}_{inviteeId}       { circleId, circleName, inviterId, inviterDisplayName, inviteeId, createdAt, expiresAt, schemaVersion }
+friendRequests/{fromId}_{toId}             { fromId, toId, fromDisplayName, createdAt, schemaVersion }
+users/{userId}/friends/{friendId}          { friendId, createdAt, schemaVersion }
+```
+
+- A handle is unique because creating an existing `usernames/{handle}` document is denied. The claim, the profile projection, and (when changing) the deletion of the old claim are one batch; Rules read the batch with `getAfter`. Handles match `^[a-z][a-z0-9_.]{2,19}$`, with no `..`, no trailing dot, and a reserved list (kept in sync between `src/domain/usernames.ts` and the Rules). A handle can change once every 30 days.
+- `publicProfiles` is the only profile data other users can read: display name, username, and character. Its display name must equal the private `users/{uid}` name. `list` is allowed only for `discoverable == true` documents with `limit <= 20`; `get` works for any signed-in user (exact username lookup). Existing users have no document until they pick a username.
+- Invitations are created by circle owners/moderators only, for people who are not members, are not in `removedMembers`, are not blocked in either direction (Rules read both block lists), and only while the circle has room. They expire after about 14 days. Accepting is the invitee's own join through the existing member/count Rules (20-member cap, `removedMembers`, name matching), followed by deleting the invitation; the client also refuses an expired invitation or one from someone the invitee blocked. An invitation is consent UX, not a security boundary: the circle id is the invite code. Declining or cancelling deletes the document.
+- Friend requests are refused when either person blocked the other. The recipient accepts by creating both `friends` documents and deleting the request in one batch; Rules require the request to exist, to be deleted in that batch, and neither person to block the other. The 100-friend limit is a client query limit, not a Rules check. Either person can end a friendship by deleting both sides. Blocking someone removes any friendship and requests with them (best effort, client-side).
+
 ## Safety data
 
 ```text

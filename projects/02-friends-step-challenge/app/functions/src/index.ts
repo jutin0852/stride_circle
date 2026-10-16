@@ -119,7 +119,7 @@ export const generateWeeklyRecaps = onSchedule({
       const memberSnapshot = await circleSnapshot.ref.collection('members').doc(score.userId).get();
       const displayName = memberSnapshot.data()?.displayName;
       return {
-        displayName: typeof displayName === 'string' && displayName.trim() ? displayName : 'Stride Circle member',
+        displayName: typeof displayName === 'string' && displayName.trim() ? displayName : 'Wakà member',
         rank: score.rank,
         userId: score.userId,
         verifiedSteps: score.verifiedSteps,
@@ -157,7 +157,8 @@ function getGlobalProfile(userId: string, data: DocumentData | undefined) {
   return {
     avatarSeed: getString(data ?? {}, 'avatarSeed') || userId,
     avatarStyle: getString(data ?? {}, 'avatarStyle') || 'sprouts',
-    displayName: getString(data ?? {}, 'displayName') || 'Stride Circle member',
+    photoURL: getString(data ?? {}, 'photoURL') || null,
+    displayName: getString(data ?? {}, 'displayName') || 'Wakà member',
   };
 }
 
@@ -215,6 +216,7 @@ function queueEntryWrites(input: {
       activityType: 'walk',
       avatarSeed: profile.avatarSeed,
       avatarStyle: profile.avatarStyle,
+      photoURL: profile.photoURL,
       displayName: profile.displayName,
       periodKey: board.periodKey,
       schemaVersion: 2,

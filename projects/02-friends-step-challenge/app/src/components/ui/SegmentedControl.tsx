@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, I18nManager, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
-import { radii, spacing, touchTargets } from '@/design-system/tokens';
+import { radii, spacing, touchTargets, opacity } from '@/design-system/tokens';
 import { useAppTheme } from '@/design-system/use-app-theme';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
+
 
 export type SegmentItem<T extends string> = { label: string; value: T };
 
@@ -89,5 +90,5 @@ const styles = StyleSheet.create({
   container: { borderRadius: radii.pill, flexDirection: 'row', gap: spacing.xs, padding: spacing.xs },
   highlight: { borderRadius: radii.pill, bottom: spacing.xs, left: spacing.xs, position: 'absolute', top: spacing.xs },
   segment: { alignItems: 'center', borderRadius: radii.pill, flex: 1, justifyContent: 'center', minHeight: touchTargets.minimum, paddingHorizontal: spacing.md },
-  pressed: { opacity: 0.78 },
+  pressed: { opacity: opacity.pressed },
 });

@@ -46,7 +46,9 @@ export function WalkRecorder({ embedded = false }: { embedded?: boolean }) {
   const insets = useSafeAreaInsets();
   const tracking = useActivityTracking(user?.uid);
   const isFocused = useIsFocused();
-  const location = useForegroundLocation(isFocused);
+  // Refresh only while this tab is focused; leaving or returning to it must
+  // not restart location and flash the "finding your location" notice.
+  const location = useForegroundLocation(true, isFocused);
   const { routeId } = useLocalSearchParams<{ routeId?: string }>();
   const walks = useWalks(user?.uid);
   const plan = walks.routes.find(r => r.id === (tracking.plannedRouteId ?? routeId));
@@ -76,8 +78,8 @@ export function WalkRecorder({ embedded = false }: { embedded?: boolean }) {
       void snapSavedWalkRoute(activity);
       tracking.reset();
       void syncPendingWalks(user.uid).catch(() => {});
-      if (embedded) router.push({ pathname: '/walk/[id]', params: { id: session.id } });
-      else router.replace({ pathname: '/walk/[id]', params: { id: session.id } });
+      if (embedded) router.push({ pathname: '/walk/[id]', params: { id: session.id, justSaved: '1' } });
+      else router.replace({ pathname: '/walk/[id]', params: { id: session.id, justSaved: '1' } });
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Save failed. Your walk is preserved; try again.'); }
     finally { lock.current = false; setSaving(false); }
   }
@@ -170,4 +172,4 @@ export function WalkRecorder({ embedded = false }: { embedded?: boolean }) {
 export function Stat({ label, value }: { label: string; value: string }) {
   return <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}`}><AppText variant="stat" style={{ fontSize: 22, lineHeight: 28 }}>{value}</AppText><AppText variant="caption">{label}</AppText></View>;
 }
-const styles = StyleSheet.create({ page: { flex: 1 }, map: { flex: 1, minHeight: 180 }, heading: { position: 'absolute', left: 16, right: 16, padding: 8, flexDirection: 'row', gap: 8, alignItems: 'center', borderWidth: 2, borderBottomWidth: 4, borderRadius: 8 }, fill: { flex: 1, minWidth: 0 }, panel: { flexGrow: 0, maxHeight: '48%', borderTopWidth: 2 }, stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, stat: { width: '46%', minWidth: 120, gap: 3 }, locationNotice: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 8 }, actionDock: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 }, controls: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 12 }, startAction: { alignItems: 'center', gap: 3 }, walkButton: { width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderBottomWidth: 4, alignItems: 'center', justifyContent: 'center' }, walkPressed: { opacity: 0.78, transform: [{ scale: 0.97 }] }, walkDisabled: { opacity: 0.55 }, finishSheet: { gap: 12, paddingBottom: 8 } });
+const styles = StyleSheet.create({ page: { flex: 1 }, map: { flex: 1, minHeight: 180 }, heading: { position: 'absolute', left: 16, right: 16, padding: 8, flexDirection: 'row', gap: 8, alignItems: 'center', borderWidth: 2, borderBottomWidth: 4, borderRadius: 8 }, fill: { flex: 1, minWidth: 0 }, panel: { flexGrow: 0, maxHeight: '48%', borderTopWidth: 2 }, stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, stat: { width: '46%', minWidth: 120, gap: 3 }, locationNotice: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 8 }, actionDock: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 }, controls: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 12 }, startAction: { alignItems: 'center', gap: 3 }, walkButton: { width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderBottomWidth: 4, alignItems: 'center', justifyContent: 'center' },  walkDisabled: { opacity: 0.55 }, finishSheet: { gap: 12, paddingBottom: 8 } });

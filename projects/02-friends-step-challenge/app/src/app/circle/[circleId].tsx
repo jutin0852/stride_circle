@@ -4,9 +4,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PressableScale } from '@/components/ui/PressableScale';
 import { useAuth } from '@/auth/auth-provider';
 import { Leaderboard } from '@/components/leaderboard';
-import { AppText, SectionHeader, SegmentedControl, StateCard } from '@/components/ui';
+import { AppText, Button, SectionHeader, SegmentedControl, StateCard } from '@/components/ui';
 import { type Friend } from '@/data/circle';
 import { getDateKeyDaysBefore, getDateKeyInTimeZone, getWeekDateKeys } from '@/domain/dates';
 import { aggregateCircleSteps, getRankMovement } from '@/features/circles/leaderboard-model';
@@ -17,8 +18,9 @@ import { useCirclePeriodSteps } from '@/hooks/use-circle-period-steps';
 import { useCircleChatUnreadCount } from '@/hooks/use-circle-chat-unread-count';
 import { useBlockedPeople } from '@/hooks/use-blocked-people';
 import { type CircleMember } from '@/lib/circles';
-import { radii, spacing } from '@/design-system/tokens';
+import { radii, spacing, opacity } from '@/design-system/tokens';
 import { useAppColors } from '@/design-system/use-app-theme';
+
 
 const AVATAR_COLORS = ['#13B5E8', '#087CA5', '#317F1B', '#62C9EB', '#86B51B', '#F77768'];
 
@@ -81,7 +83,7 @@ export default function CircleDetailRoute() {
   if (status === 'loading') return <LoadingState />;
 
   if (status === 'error' || !details) {
-    return <View style={styles.error}><AppText variant="titleSmall">This circle is unavailable</AppText><AppText tone="secondary" variant="bodySmall">It may have been removed, or you may no longer be a member.</AppText><Pressable onPress={() => router.back()} style={styles.backAction}><AppText tone="onBrand" variant="button">Back to circles</AppText></Pressable></View>;
+    return <View style={styles.error}><AppText variant="titleSmall">This circle is unavailable</AppText><AppText tone="secondary" variant="bodySmall">It may have been removed, or you may no longer be a member.</AppText><Button onPress={() => router.back()} style={{ marginTop: spacing.sm }}>Back to circles</Button></View>;
   }
 
   return (
@@ -91,9 +93,9 @@ export default function CircleDetailRoute() {
           <View style={styles.navSide}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.roundButton}><Text style={styles.back}>‹</Text></Pressable></View>
           <AppText accessibilityRole="header" numberOfLines={2} style={styles.circleTitle} variant="titleSmall">{details.circle.name}</AppText>
           <View style={styles.navActions}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Open circle options" onPress={() => router.push({ pathname: '/circle/[circleId]/actions', params: { circleId: details.circle.id } })} style={({ pressed }) => [styles.roundButton, styles.optionsButton, pressed && styles.buttonPressed]}>
+            <PressableScale accessibilityRole="button" accessibilityLabel="Open circle options" onPress={() => router.push({ pathname: '/circle/[circleId]/actions', params: { circleId: details.circle.id } })} style={[styles.roundButton, styles.optionsButton]}>
               <Ionicons color={colors.ink} name="ellipsis-horizontal" size={23} />
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
         <SegmentedControl
@@ -144,7 +146,7 @@ export default function CircleDetailRoute() {
 
 function buildFriends(members: CircleMember[], steps: Record<string, number>, userId?: string): Friend[] {
   return members.map((member, index): Friend => ({
-    avatar: { seed: member.avatarSeed, style: member.avatarStyle },
+    avatar: { seed: member.avatarSeed, style: member.avatarStyle, photoURL: member.photoURL },
     color: AVATAR_COLORS[index % AVATAR_COLORS.length],
     id: member.userId,
     initials: getInitials(member.displayName),
@@ -202,7 +204,7 @@ function createStyles(colors: ReturnType<typeof useAppColors>) {
     navActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'flex-end', width: 44 },
     roundButton: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: radii.lg, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
     back: { color: colors.ink, fontSize: 32, fontWeight: '300', lineHeight: 34 },
-    buttonPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
+    
     optionsButton: { padding: 0 },
     circleTitle: { flex: 1, minWidth: 0, paddingHorizontal: spacing.md, textAlign: 'center' },
     chatFloating: { elevation: 8, position: 'absolute', right: spacing.xl, shadowColor: colors.ink, shadowOffset: { height: 3, width: 0 }, shadowOpacity: 0.2, shadowRadius: 8, zIndex: 8 },
@@ -213,8 +215,7 @@ function createStyles(colors: ReturnType<typeof useAppColors>) {
     dayActive: { backgroundColor: colors.accent, borderColor: colors.accent },
     dayDate: { color: colors.ink, fontVariant: ['tabular-nums'], fontWeight: '800', marginTop: 2 },
     dayTextActive: { color: colors.accentPressed },
-    dayPressed: { opacity: 0.75 },
+    dayPressed: { opacity: opacity.pressed },
     error: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
-    backAction: { backgroundColor: colors.accent, borderRadius: radii.md, marginTop: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   });
 }

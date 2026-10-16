@@ -22,6 +22,7 @@ jest.mock('@/lib/auth', () => ({
   signInWithGoogleIdToken: jest.fn(),
 }));
 jest.mock('@/design-system/use-app-theme', () => ({
+  ...jest.requireActual('@/design-system/use-app-theme'),
   useAppColors: () => ({
     accent: '#13B5E8',
     accentPressed: '#087CA5',
@@ -91,7 +92,7 @@ describe('sign-in route', () => {
     const screen = await renderSignInRoute();
 
     expect(screen.getByText('Welcome back')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'New to Stride Circle? Create an account' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'New to Wakà? Create an account' }));
 
     expect(screen.getByText('Create your account')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('Your name'), 'Walker One');

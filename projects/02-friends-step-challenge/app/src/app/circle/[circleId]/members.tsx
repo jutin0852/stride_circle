@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-nat
 
 import { useAuth } from '@/auth/auth-provider';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
-import { AppText, FixedHeaderScreen, IconButton, StateCard } from '@/components/ui';
+import { AppText, Button, FixedHeaderScreen, IconButton, StateCard } from '@/components/ui';
 import { Skeleton } from '@/components/skeleton';
 import { useBlockedPeople } from '@/hooks/use-blocked-people';
 import { useCircleDetails } from '@/hooks/use-circle-details';
@@ -141,6 +141,7 @@ export default function CircleMembersRoute() {
   >
     {status === 'error' || !details || !currentMember ? <StateCard description="This circle is unavailable, or you are no longer a member." title="Members unavailable" tone="error" /> : <>
       {blocked.status === 'error' ? <StateCard actionLabel="Retry" description="Your blocked-people list could not load, so block status is temporarily unavailable." onAction={blocked.retry} title="Safety list unavailable" tone="error" /> : null}
+      {currentMember.role === 'owner' || currentMember.role === 'moderator' ? <Button onPress={() => router.push({ pathname: '/people', params: { circleId: details.circle.id } })} variant="tertiary">Invite by username</Button> : null}
       <View style={styles.members}>
         {details.members.map((member) => <View key={member.userId} style={styles.member}>
           <Avatar member={member} />
@@ -167,7 +168,7 @@ export default function CircleMembersRoute() {
 
 function Avatar({ member }: { member: CircleMember }) {
   const initials = member.displayName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
-  return <DicebearAvatar choice={{ seed: member.avatarSeed, style: member.avatarStyle }} fallback={initials || 'SC'} size={44} />;
+  return <DicebearAvatar choice={{ seed: member.avatarSeed, style: member.avatarStyle, photoURL: member.photoURL }} fallback={initials || 'SC'} size={44} />;
 }
 
 function MembersSkeleton() {

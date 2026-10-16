@@ -1,3 +1,5 @@
+import type { MediaAsset } from '@/domain/media-storage';
+
 /** Character choices are generated from an opaque seed, never an email address. */
 export const avatarStyles = [
   { id: 'cameo', label: 'Cameo' },
@@ -26,6 +28,8 @@ export const avatarStyles = [
 export type AvatarStyle = (typeof avatarStyles)[number]['id'];
 
 export type AvatarChoice = {
+  photoAsset?: MediaAsset;
+  photoURL?: string;
   seed: string;
   style: AvatarStyle;
 };
@@ -55,7 +59,23 @@ export function createAvatarSeed() {
 }
 
 export function getAvatarUrl(choice: AvatarChoice, format: 'svg' | 'png' = 'svg') {
+  const photo = getProfilePhotoURL(choice.photoURL);
+  if (photo) return photo;
   return `https://api.dicebear.com/10.x/${choice.style}/${format}?seed=${encodeURIComponent(choice.seed)}&size=128`;
+}
+
+/** Generated characters stay SVGs; uploaded and Google photos use the image renderer. */
+export function getProfilePhotoURL(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  try {
+    const url = new URL(value);
+    const emulatorPhoto = process.env.NODE_ENV === 'development'
+      && process.env.EXPO_PUBLIC_FIREBASE_USE_EMULATORS === 'true'
+      && url.protocol === 'http:' && url.hostname === process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST?.trim()
+      && url.port === '9199';
+    if ((url.protocol !== 'https:' && !emulatorPhoto) || url.username || url.password || url.hostname === 'api.dicebear.com') return undefined;
+    return value;
+  } catch { return undefined; }
 }
 
 export function getAvatarChoiceFromUrl(url: string | null | undefined): AvatarChoice | null {

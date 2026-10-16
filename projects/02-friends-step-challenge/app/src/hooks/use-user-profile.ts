@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-import { getDefaultAvatarChoice, isAvatarStyle, type AvatarChoice } from '@/lib/avatar';
+import { getDefaultAvatarChoice, getProfilePhotoURL, isAvatarStyle, type AvatarChoice } from '@/lib/avatar';
 import { database, requireFirebase } from '@/lib/firebase';
+import { readMediaAsset } from '@/domain/media-storage';
 
 type UserProfile = {
   avatar: AvatarChoice;
@@ -14,8 +15,8 @@ type UserProfile = {
 function getFallbackProfile(user: User | null): UserProfile {
   const userId = user?.uid ?? 'visitor';
   return {
-    avatar: getDefaultAvatarChoice(userId),
-    displayName: user?.displayName?.trim() || 'Stride Circle member',
+    avatar: { ...getDefaultAvatarChoice(userId), photoURL: getProfilePhotoURL(user?.photoURL) },
+    displayName: user?.displayName?.trim() || 'Wakà member',
     status: user ? 'loading' : 'ready',
   };
 }
@@ -23,8 +24,10 @@ function getFallbackProfile(user: User | null): UserProfile {
 function getDisplayName(profileValue: unknown, user: User) {
   const storedName = typeof profileValue === 'string' ? profileValue.trim() : '';
   const authName = user.displayName?.trim() ?? '';
-  if (storedName && storedName !== 'Stride Circle member') return storedName;
-  return authName || storedName || 'Stride Circle member';
+  const legacyName = 'Stride Circle member';
+  if (storedName && storedName !== legacyName && storedName !== 'Wakà member') return storedName;
+  if (authName && authName !== legacyName) return authName;
+  return 'Wakà member';
 }
 
 export function useUserProfile(user: User | null): UserProfile {
@@ -42,6 +45,8 @@ export function useUserProfile(user: User | null): UserProfile {
         const defaultAvatar = getDefaultAvatarChoice(user.uid);
         setProfile({
           avatar: {
+            photoAsset: readMediaAsset(data?.photoAsset, user.uid),
+            photoURL: getProfilePhotoURL(data?.photoURL ?? user.photoURL),
             seed: typeof data?.avatarSeed === 'string' ? data.avatarSeed : defaultAvatar.seed,
             style: isAvatarStyle(data?.avatarStyle) ? data.avatarStyle : defaultAvatar.style,
           },

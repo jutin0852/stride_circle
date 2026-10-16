@@ -3,9 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
+import { PressableScale } from '@/components/ui/PressableScale';
 import { useAuth } from '@/auth/auth-provider';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { AppText, FixedHeaderScreen } from '@/components/ui';
+import { usePublicProfile } from '@/hooks/use-people';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, signOutCurrentUser } from '@/lib/auth';
 import { restartOnboardingForTesting } from '@/lib/onboarding';
@@ -16,6 +18,7 @@ export default function ProfileRoute() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const profile = useUserProfile(user);
+  const publicProfile = usePublicProfile(user?.uid);
   const displayName = profile.displayName;
   const avatar = profile.avatar;
 
@@ -44,6 +47,14 @@ export default function ProfileRoute() {
     );
   }
 
+  function handleReplaySplash() {
+    Alert.alert('Replay splash screen', 'Choose the launch animation to preview. Your normal launch schedule stays the same.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Full animation', onPress: () => router.push({ pathname: '/splash-preview', params: { mode: 'full' } }) },
+      { text: 'Quick animation', onPress: () => router.push({ pathname: '/splash-preview', params: { mode: 'short' } }) },
+    ]);
+  }
+
   return (
     <FixedHeaderScreen
       backgroundColor={colors.background}
@@ -52,11 +63,11 @@ export default function ProfileRoute() {
       headerStyle={styles.headerContainer}
       scrollViewProps={{ contentInsetAdjustmentBehavior: 'never' }}
     >
-      <Pressable
+      <PressableScale
         accessibilityHint="Opens profile editing"
         accessibilityRole="button"
         onPress={() => router.push('/edit-profile')}
-        style={({ pressed }) => [styles.profileCard, pressed && styles.pressed]}
+        style={[styles.profileCard]}
       >
         <DicebearAvatar choice={avatar} fallback={getInitials(displayName)} size={78} />
         <View style={styles.profileText}>
@@ -64,29 +75,47 @@ export default function ProfileRoute() {
           <AppText style={styles.profileCaption}>Tap to edit your profile</AppText>
         </View>
         <View style={styles.editIcon}><Ionicons color={colors.accentPressed} name="pencil" size={17} /></View>
-      </Pressable>
+      </PressableScale>
 
-      <Pressable accessibilityRole="button" accessibilityLabel="Walking reminders" onPress={() => router.push('/walking-reminders')} style={({ pressed }) => [styles.reminderCard, pressed && styles.pressed]}>
+      <PressableScale accessibilityRole="button" accessibilityLabel="Username" onPress={() => router.push('/username')} style={[styles.reminderCard]}>
+        <Ionicons color={colors.accentPressed} name="at-outline" size={24} />
+        <View style={styles.profileText}><AppText style={styles.profileTitle}>{publicProfile.value ? '@' + publicProfile.value.username : 'Pick a username'}</AppText><AppText style={styles.profileCaption}>{publicProfile.value ? 'Friends find you with this. Change it or hide from search.' : 'So friends can find you and add you to circles.'}</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+      </PressableScale>
+
+      <PressableScale accessibilityRole="button" accessibilityLabel="Find people" onPress={() => router.push('/people')} style={[styles.reminderCard]}>
+        <Ionicons color={colors.accentPressed} name="people-outline" size={24} />
+        <View style={styles.profileText}><AppText style={styles.profileTitle}>Find people</AppText><AppText style={styles.profileCaption}>Search for friends and invite them to your circles.</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+      </PressableScale>
+
+      <PressableScale accessibilityRole="button" accessibilityLabel="Walking reminders" onPress={() => router.push('/walking-reminders')} style={[styles.reminderCard]}>
         <Ionicons color={colors.accentPressed} name="notifications-outline" size={24} />
         <View style={styles.profileText}><AppText style={styles.profileTitle}>Walking reminders</AppText><AppText style={styles.profileCaption}>Choose a daily nudge at your own pace.</AppText></View>
         <Ionicons color={colors.muted} name="chevron-forward" size={20} />
-      </Pressable>
+      </PressableScale>
 
-      <Pressable accessibilityRole="button" accessibilityLabel="Blocked people" onPress={() => router.push('/blocked-people')} style={({ pressed }) => [styles.reminderCard, pressed && styles.pressed]}>
+      <PressableScale accessibilityRole="button" accessibilityLabel="Blocked people" onPress={() => router.push('/blocked-people')} style={[styles.reminderCard]}>
         <Ionicons color={colors.accentPressed} name="shield-checkmark-outline" size={24} />
         <View style={styles.profileText}><AppText style={styles.profileTitle}>Blocked people</AppText><AppText style={styles.profileCaption}>Manage who can appear in your circle chat and standings.</AppText></View>
         <Ionicons color={colors.muted} name="chevron-forward" size={20} />
-      </Pressable>
+      </PressableScale>
 
-      {__DEV__ && user ? <Pressable accessibilityRole="button" accessibilityLabel="Replay onboarding" onPress={handleReplayOnboarding} style={({ pressed }) => [styles.testingCard, pressed && styles.pressed]}>
+      {__DEV__ && user ? <PressableScale accessibilityRole="button" accessibilityLabel="Replay onboarding" onPress={handleReplayOnboarding} style={[styles.testingCard]}>
         <Ionicons color={colors.accentPressed} name="play-circle-outline" size={24} />
         <View style={styles.profileText}><AppText style={styles.profileTitle}>Replay onboarding</AppText><AppText style={styles.profileCaption}>Development only · keeps your account data.</AppText></View>
         <Ionicons color={colors.muted} name="chevron-forward" size={20} />
-      </Pressable> : null}
+      </PressableScale> : null}
 
-      <Pressable accessibilityRole="button" onPress={() => void handleSignOut()} style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
+      {__DEV__ && user ? <PressableScale accessibilityRole="button" accessibilityLabel="Replay splash screen" onPress={handleReplaySplash} style={[styles.testingCard]}>
+        <Ionicons color={colors.accentPressed} name="play-circle-outline" size={24} />
+        <View style={styles.profileText}><AppText style={styles.profileTitle}>Replay splash screen</AppText><AppText style={styles.profileCaption}>Development only · preview the full or quick intro.</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+      </PressableScale> : null}
+
+      <PressableScale accessibilityRole="button" onPress={() => void handleSignOut()} style={[styles.signOut]}>
         <AppText style={styles.signOutText}>Sign out</AppText>
-      </Pressable>
+      </PressableScale>
     </FixedHeaderScreen>
   );
 }
@@ -100,5 +129,5 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   profileCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 22, borderWidth: 2, flexDirection: 'row', marginTop: 8, padding: 18 }, profileText: { flex: 1, gap: 4, marginLeft: 14 }, profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, profileCaption: { color: colors.muted, fontSize: 13 }, editIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 14, height: 40, justifyContent: 'center', width: 40 },
   reminderCard: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', minHeight: 80, padding: 18 },
   testingCard: { alignItems: 'center', backgroundColor: colors.soft, borderColor: colors.border, borderRadius: 18, borderStyle: 'dashed', borderWidth: 1, flexDirection: 'row', minHeight: 80, padding: 18 },
-  signOut: { alignItems: 'center', borderBottomWidth: 2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, pressed: { opacity: 0.84, transform: [{ translateY: 2 }] },
+  signOut: { alignItems: 'center', borderBottomWidth: 2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, 
 }); }

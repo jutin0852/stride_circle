@@ -4,14 +4,18 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/auth-provider';
 import { useOnboardingState } from '@/hooks/use-onboarding-state';
+import { usePendingPeopleCount } from '@/hooks/use-people';
 import { fontFamilies } from '@/design-system/tokens';
 import { homeTheme } from '@/features/home/tokens';
 import { AnimatedTabBar } from '@/components/animated-tab-bar';
+import { OfflineBanner } from '@/components/offline-banner';
+import { ConnectivityProvider } from '@/components/connectivity-provider';
 
 export default function TabsLayout() {
   const { isLoading, user } = useAuth();
   const onboarding = useOnboardingState(user?.uid);
   const insets = useSafeAreaInsets();
+  const pendingPeople = usePendingPeopleCount(user?.uid);
   const colors = homeTheme(useColorScheme() === 'dark');
 
   if (isLoading || (user && onboarding.status === 'loading')) {
@@ -22,6 +26,8 @@ export default function TabsLayout() {
   if (onboarding.needsOnboarding) return <Redirect href="/onboarding" />;
 
   return (
+    <ConnectivityProvider userId={user.uid}>
+    <View style={styles.fill}>
     <Tabs
       tabBar={(props) => <AnimatedTabBar {...props} />}
       screenOptions={{
@@ -43,14 +49,18 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarLabel: 'Home', tabBarIcon: ({ color, focused }) => <MaterialCommunityIcons color={color} name={focused ? 'home' : 'home-outline'} size={24} /> }} />
-      <Tabs.Screen name="circle" options={{ title: 'Circles', tabBarLabel: 'Circles', tabBarIcon: ({ color, focused }) => <MaterialCommunityIcons color={color} name={focused ? 'account-group' : 'account-group-outline'} size={24} /> }} />
+      <Tabs.Screen name="circle" options={{ title: 'Circles', tabBarLabel: 'Circles', tabBarBadge: pendingPeople > 0 ? pendingPeople : undefined, tabBarIcon: ({ color, focused }) => <MaterialCommunityIcons color={color} name={focused ? 'account-group' : 'account-group-outline'} size={24} /> }} />
       <Tabs.Screen name="activity" options={{ lazy: false, title: 'Activity', tabBarLabel: 'Activity', tabBarIcon: ({ color }) => <MaterialCommunityIcons color={color} name="walk" size={24} /> }} />
       <Tabs.Screen name="history" options={{ title: 'History', tabBarLabel: 'History', tabBarIcon: ({ color }) => <MaterialCommunityIcons color={color} name="history" size={24} /> }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarLabel: 'Profile', tabBarIcon: ({ color, focused }) => <MaterialCommunityIcons color={color} name={focused ? 'account' : 'account-outline'} size={24} /> }} />
     </Tabs>
+    <OfflineBanner bottom={58 + insets.bottom + 8} />
+    </View>
+    </ConnectivityProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
   loading: { alignItems: 'center', flex: 1, justifyContent: 'center' },
 });

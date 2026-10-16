@@ -3,6 +3,12 @@
 Status: launch design foundation  
 Last reviewed: 2026-10-08
 
+## Primary action consistency — 2026-10-16
+
+Home's **View circle** is the reference for similar filled primary actions. Use `Button` from `src/components/ui` for save/create/join/share/continue actions rather than local copies: semantic brand fill and darker edge in each theme, 12-point corners, a 2-point border with a 5-point bottom edge, 48-point minimum height, 10-point padding, and a 16/23 extra-bold centered label. Longer text may wrap and increase height. Keep existing screen margins outside the shared styling. Loading disables repeated presses and remains labelled for assistive technology; the shared press control respects Reduce Motion.
+
+Secondary, destructive, provider-branded Google sign-in, navigation rows, goal-choice chips, chat icons, and circular walking controls keep their distinct roles. Do not turn every tappable element into a filled primary button. Home now consumes the same shared component, preventing future styling drift.
+
 This is the implementation contract for the Stride Circle redesign. The screenshot reference establishes the visual language; the launch brief remains authoritative for product behavior, privacy, and scope.
 
 ## Home and appearance approval updates — 2026-10-07
