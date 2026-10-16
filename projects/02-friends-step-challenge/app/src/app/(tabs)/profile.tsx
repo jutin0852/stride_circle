@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { useAuth } from '@/auth/auth-provider';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { AppText, FixedHeaderScreen } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, signOutCurrentUser } from '@/lib/auth';
+import { setGlobalLeaderboardVisibility } from '@/lib/global-leaderboard';
 import { restartOnboardingForTesting } from '@/lib/onboarding';
 import { useAppColors } from '@/design-system/use-app-theme';
 
@@ -18,6 +19,8 @@ export default function ProfileRoute() {
   const profile = useUserProfile(user);
   const displayName = profile.displayName;
   const avatar = profile.avatar;
+  const [pendingVisibility, setPendingVisibility] = useState<boolean | null>(null);
+  const leaderboardVisible = pendingVisibility ?? profile.globalLeaderboardVisible;
 
   async function handleSignOut() {
     try {
@@ -25,6 +28,14 @@ export default function ProfileRoute() {
     } catch (error) {
       Alert.alert('Could not sign out', getAuthErrorMessage(error));
     }
+  }
+
+  function handleLeaderboardVisibility(visible: boolean) {
+    if (!user || pendingVisibility !== null) return;
+    setPendingVisibility(visible);
+    void setGlobalLeaderboardVisibility({ userId: user.uid, visible })
+      .catch((error) => Alert.alert('Could not update the leaderboard setting', getAuthErrorMessage(error)))
+      .finally(() => setPendingVisibility(null));
   }
 
   function handleReplayOnboarding() {
@@ -77,6 +88,22 @@ export default function ProfileRoute() {
         <View style={styles.profileText}><AppText style={styles.profileTitle}>Blocked people</AppText><AppText style={styles.profileCaption}>Manage who can appear in your circle chat and standings.</AppText></View>
         <Ionicons color={colors.muted} name="chevron-forward" size={20} />
       </Pressable>
+
+      <View style={styles.reminderCard}>
+        <Ionicons color={colors.accentPressed} name="earth-outline" size={24} />
+        <View style={styles.profileText}>
+          <AppText style={styles.profileTitle}>Global leaderboard</AppText>
+          <AppText style={styles.profileCaption}>{leaderboardVisible ? 'Everyone on the app can see your name, character, and step totals. Updates hourly.' : 'Off. Turn on to show your name, character, and step totals to everyone on the app.'}</AppText>
+        </View>
+        <Switch
+          accessibilityHint="Shows or hides your name and step totals on the global leaderboard"
+          accessibilityLabel="Show me on the global leaderboard"
+          disabled={!user || profile.status !== 'ready' || pendingVisibility !== null}
+          onValueChange={handleLeaderboardVisibility}
+          trackColor={{ false: colors.border, true: colors.accentPressed }}
+          value={leaderboardVisible}
+        />
+      </View>
 
       {__DEV__ && user ? <Pressable accessibilityRole="button" accessibilityLabel="Replay onboarding" onPress={handleReplayOnboarding} style={({ pressed }) => [styles.testingCard, pressed && styles.pressed]}>
         <Ionicons color={colors.accentPressed} name="play-circle-outline" size={24} />

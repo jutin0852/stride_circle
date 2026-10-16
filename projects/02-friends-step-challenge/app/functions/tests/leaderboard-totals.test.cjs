@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const { applyDaySteps, getWeekSteps, readTotals } = require('../lib/leaderboard-totals.js');
+const { applyDaySteps, getWeekSteps, isGlobalLeaderboardOptIn, readTotals } = require('../lib/leaderboard-totals.js');
 
 test('adds new days and replaces updated days without double counting', () => {
   const first = applyDaySteps({ allTimeSteps: 50000, days: {} }, { '2026-10-14': 4000 }, '2026-10-16');
@@ -38,4 +38,12 @@ test('reads stored totals defensively', () => {
     days: { '2026-10-16': 12 },
   });
   assert.deepEqual(readTotals(undefined), { allTimeSteps: 0, days: {} });
+});
+
+test('lists someone on the global leaderboard only after an explicit opt-in', () => {
+  assert.equal(isGlobalLeaderboardOptIn({ globalLeaderboardVisible: true }), true);
+  assert.equal(isGlobalLeaderboardOptIn({ globalLeaderboardVisible: false }), false);
+  assert.equal(isGlobalLeaderboardOptIn({ globalLeaderboardVisible: 'true' }), false);
+  assert.equal(isGlobalLeaderboardOptIn({}), false);
+  assert.equal(isGlobalLeaderboardOptIn(undefined), false);
 });

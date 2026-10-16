@@ -68,4 +68,45 @@ describe('GlobalLeaderboardView', () => {
     fireEvent.press(getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it('invites a walker who has not opted in to join', async () => {
+    const onJoin = jest.fn();
+    const { getByRole, getByText } = await render(
+      <GlobalLeaderboardView
+        currentUser={null}
+        entries={entries}
+        generatedAt={null}
+        joined={false}
+        onBack={jest.fn()}
+        onChangePeriod={jest.fn()}
+        onJoin={onJoin}
+        onRetry={jest.fn()}
+        period="week"
+        status="ready"
+      />,
+    );
+
+    expect(getByText('Join the global leaderboard?')).toBeTruthy();
+    fireEvent.press(getByRole('button', { name: 'Join the leaderboard' }));
+    expect(onJoin).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show the join prompt once the walker has joined', async () => {
+    const { queryByText } = await render(
+      <GlobalLeaderboardView
+        currentUser={entries[1]}
+        entries={entries}
+        generatedAt={null}
+        joined
+        onBack={jest.fn()}
+        onChangePeriod={jest.fn()}
+        onJoin={jest.fn()}
+        onRetry={jest.fn()}
+        period="week"
+        status="ready"
+      />,
+    );
+
+    expect(queryByText('Join the global leaderboard?')).toBeNull();
+  });
 });

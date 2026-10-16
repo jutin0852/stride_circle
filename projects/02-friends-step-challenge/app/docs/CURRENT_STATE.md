@@ -33,7 +33,7 @@ Walking reminders use Expo Notifications for an opt-in daily local notification.
 - Circle walk plans with member RSVPs and member-only general meetup labels; circle owners can set a shared weekly step target with visible goal thresholds.
 - Circle weekly recap presentation backed by scheduled recap data, including a saved top-walker snapshot.
 - Walking reminder settings from Profile and Home settings: local daily time, explicit permission opt-in, five-second test, account-scoped on-device preferences, sign-out cancellation, and foreground permission reconciliation. Native delivery still requires an updated development build and device verification.
-- Global walking leaderboard entry in Circles Discover with This Week and All Time views, backed by a server-generated Firestore projection contract.
+- Global walking leaderboard entry in Circles Discover with This Week and All Time views, backed by a server-generated Firestore projection contract. It is opt-in: only users whose profile has `globalLeaderboardVisible: true` are listed, set from a Profile toggle or the leaderboard's join prompt. The hourly job re-evaluates anyone whose `globalLeaderboardVisibilityUpdatedAt` changed, and a one-time cleanup removed entries for people who had not opted in.
 - Personal History calendar, weekly target progress, recap, saved walks, and private saved route details. The History screen no longer exposes the per-day journal; legacy private notes remain stored but are not surfaced.
 - Activity tab with a location-centered map, explicit Start a walk and Plan a walk actions, and a location-permission recovery state.
 - GPS walk recording with pause/resume/finish, a live blue route, session step access requested on first walk use, and save-to-History behavior.
