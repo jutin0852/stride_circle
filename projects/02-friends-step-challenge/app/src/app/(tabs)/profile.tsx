@@ -8,6 +8,7 @@ import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { AppText, FixedHeaderScreen } from '@/components/ui';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { getAuthErrorMessage, signOutCurrentUser } from '@/lib/auth';
+import { restartOnboardingForTesting } from '@/lib/onboarding';
 import { useAppColors } from '@/design-system/use-app-theme';
 
 export default function ProfileRoute() {
@@ -24,6 +25,23 @@ export default function ProfileRoute() {
     } catch (error) {
       Alert.alert('Could not sign out', getAuthErrorMessage(error));
     }
+  }
+
+  function handleReplayOnboarding() {
+    if (!user) return;
+    Alert.alert(
+      'Replay onboarding?',
+      'This keeps your account and data. It only reopens the setup flow for testing.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Replay',
+          onPress: () => void restartOnboardingForTesting(user.uid)
+            .then(() => router.replace('/onboarding'))
+            .catch((error) => Alert.alert('Could not reopen onboarding', getAuthErrorMessage(error))),
+        },
+      ],
+    );
   }
 
   return (
@@ -60,6 +78,12 @@ export default function ProfileRoute() {
         <Ionicons color={colors.muted} name="chevron-forward" size={20} />
       </Pressable>
 
+      {__DEV__ && user ? <Pressable accessibilityRole="button" accessibilityLabel="Replay onboarding" onPress={handleReplayOnboarding} style={({ pressed }) => [styles.testingCard, pressed && styles.pressed]}>
+        <Ionicons color={colors.accentPressed} name="play-circle-outline" size={24} />
+        <View style={styles.profileText}><AppText style={styles.profileTitle}>Replay onboarding</AppText><AppText style={styles.profileCaption}>Development only · keeps your account data.</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+      </Pressable> : null}
+
       <Pressable accessibilityRole="button" onPress={() => void handleSignOut()} style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
         <AppText style={styles.signOutText}>Sign out</AppText>
       </Pressable>
@@ -75,5 +99,6 @@ function createStyles(colors: ReturnType<typeof useAppColors>) { return StyleShe
   headerContainer: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 8 }, header: { gap: 3 }, content: { gap: 14, paddingHorizontal: 24, paddingTop: 14, paddingBottom: 36 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 }, title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1.2, lineHeight: 40 },
   profileCard: { alignItems: 'center', backgroundColor: colors.card, borderBottomWidth: 4, borderColor: colors.border, borderRadius: 22, borderWidth: 2, flexDirection: 'row', marginTop: 8, padding: 18 }, profileText: { flex: 1, gap: 4, marginLeft: 14 }, profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' }, profileCaption: { color: colors.muted, fontSize: 13 }, editIcon: { alignItems: 'center', backgroundColor: colors.soft, borderRadius: 14, height: 40, justifyContent: 'center', width: 40 },
   reminderCard: { alignItems: 'center', backgroundColor: colors.card, borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', minHeight: 80, padding: 18 },
+  testingCard: { alignItems: 'center', backgroundColor: colors.soft, borderColor: colors.border, borderRadius: 18, borderStyle: 'dashed', borderWidth: 1, flexDirection: 'row', minHeight: 80, padding: 18 },
   signOut: { alignItems: 'center', borderBottomWidth: 2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, marginTop: 6, paddingVertical: 14 }, signOutText: { color: colors.accentPressed, fontSize: 15, fontWeight: '800' }, pressed: { opacity: 0.84, transform: [{ translateY: 2 }] },
 }); }

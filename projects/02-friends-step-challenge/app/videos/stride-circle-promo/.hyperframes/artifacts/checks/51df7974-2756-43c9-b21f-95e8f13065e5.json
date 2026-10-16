@@ -1,0 +1,1170 @@
+{
+  "ok": false,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "filesScanned": 4
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 3,
+    "infoCount": 15,
+    "findings": [
+      {
+        "code": "container_overflow",
+        "severity": "warning",
+        "time": 5.556,
+        "selector": "div.dimension-label.width-label",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 935.09,
+          "top": 61,
+          "right": 984.91,
+          "bottom": 86,
+          "width": 49.81,
+          "height": 25
+        },
+        "containerSelector": "div.web-frame",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 240,
+          "top": 90,
+          "right": 1680,
+          "bottom": 990,
+          "width": 1440,
+          "height": 900
+        },
+        "overflow": {
+          "top": 29
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 935.09,
+          "y": 61,
+          "width": 49.81,
+          "height": 25
+        },
+        "firstSeen": 5.556,
+        "lastSeen": 12.222,
+        "occurrences": 4,
+        "heldMs": 0,
+        "times": [
+          5.556,
+          7.778,
+          10,
+          12.222
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "warning",
+        "time": 5.556,
+        "selector": "div.dimension-label.height-label",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 1689.78,
+          "top": 518.28,
+          "right": 1714.78,
+          "bottom": 561.72,
+          "width": 25,
+          "height": 43.44
+        },
+        "containerSelector": "div.web-frame",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 240,
+          "top": 90,
+          "right": 1680,
+          "bottom": 990,
+          "width": 1440,
+          "height": 900
+        },
+        "overflow": {
+          "right": 34.78
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 1689.78,
+          "y": 518.28,
+          "width": 25,
+          "height": 43.44
+        },
+        "firstSeen": 5.556,
+        "lastSeen": 12.222,
+        "occurrences": 4,
+        "heldMs": 0,
+        "times": [
+          5.556,
+          7.778,
+          10,
+          12.222
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "warning",
+        "time": 10,
+        "selector": "div.comment-bubble",
+        "message": "Nowrap text is wider than its container.",
+        "rect": {
+          "left": 1000,
+          "top": 400,
+          "right": 1240.44,
+          "bottom": 441,
+          "width": 240.44,
+          "height": 41
+        },
+        "containerSelector": "div.comment-container",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 960,
+          "top": 420,
+          "right": 992,
+          "bottom": 452,
+          "width": 32,
+          "height": 32
+        },
+        "overflow": {
+          "right": 248.44
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 1000,
+          "y": 400,
+          "width": 240.44,
+          "height": 41
+        },
+        "firstSeen": 10,
+        "lastSeen": 12.222,
+        "occurrences": 2,
+        "heldMs": 0,
+        "times": [
+          10,
+          12.222
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.panel-header",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -296,
+          "top": 24,
+          "right": -236.52,
+          "bottom": 45,
+          "width": 59.48,
+          "height": 21
+        },
+        "containerSelector": "#root",
+        "text": "Assets",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 296
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -296,
+          "y": 24,
+          "width": 59.48,
+          "height": 21
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.asset-list > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -284,
+          "top": 89,
+          "right": -268.95,
+          "bottom": 110,
+          "width": 15.05,
+          "height": 21
+        },
+        "containerSelector": "#root",
+        "text": "◆",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 284
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -284,
+          "y": 89,
+          "width": 15.05,
+          "height": 21
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.asset-list > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -256.95,
+          "top": 92,
+          "right": -157.55,
+          "bottom": 109,
+          "width": 99.4,
+          "height": 17
+        },
+        "containerSelector": "#root",
+        "text": "Button/Primary",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 256.95
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -256.95,
+          "y": 92,
+          "width": 99.4,
+          "height": 17
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.asset-list > div:nth-of-type(2) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -284,
+          "top": 144,
+          "right": -268.95,
+          "bottom": 165,
+          "width": 15.05,
+          "height": 21
+        },
+        "containerSelector": "#root",
+        "text": "◆",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 284
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -284,
+          "y": 144,
+          "width": 15.05,
+          "height": 21
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.asset-list > div:nth-of-type(2) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -256.95,
+          "top": 147,
+          "right": -168.41,
+          "bottom": 164,
+          "width": 88.54,
+          "height": 17
+        },
+        "containerSelector": "#root",
+        "text": "Card/Product",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 256.95
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -256.95,
+          "y": 147,
+          "width": 88.54,
+          "height": 17
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.asset-list > div:nth-of-type(3) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -284,
+          "top": 199,
+          "right": -268.95,
+          "bottom": 220,
+          "width": 15.05,
+          "height": 21
+        },
+        "containerSelector": "#root",
+        "text": "◆",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 284
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -284,
+          "y": 199,
+          "width": 15.05,
+          "height": 21
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.asset-list > div:nth-of-type(3) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -256.95,
+          "top": 202,
+          "right": -178.05,
+          "bottom": 219,
+          "width": 78.9,
+          "height": 17
+        },
+        "containerSelector": "#root",
+        "text": "Nav/Header",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 256.95
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -256.95,
+          "y": 202,
+          "width": 78.9,
+          "height": 17
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 7.778,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          3.333,
+          5.556,
+          7.778
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.cursor.engineer-cursor > div:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": -80,
+          "top": 524,
+          "right": -28.44,
+          "bottom": 539,
+          "width": 51.56,
+          "height": 15
+        },
+        "containerSelector": "#root",
+        "text": "Engineer",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 80
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": -80,
+          "y": 524,
+          "width": 51.56,
+          "height": 15
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 3.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          3.333
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 3.333,
+        "selector": "div.cursor.pm-cursor > div:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 2020,
+          "top": 1124,
+          "right": 2038.81,
+          "bottom": 1139,
+          "width": 18.81,
+          "height": 15
+        },
+        "containerSelector": "#root",
+        "text": "PM",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "right": 118.81,
+          "bottom": 59
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 2020,
+          "y": 1124,
+          "width": 18.81,
+          "height": 15
+        },
+        "firstSeen": 3.333,
+        "lastSeen": 3.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          3.333
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "info",
+        "time": 10,
+        "selector": "h1.hero-heading",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 539.98,
+          "top": 387,
+          "right": 1380,
+          "bottom": 488,
+          "width": 840.02,
+          "height": 101
+        },
+        "containerSelector": "div.comment-bubble",
+        "text": "Design without limits",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 0.19,
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 539.98,
+          "y": 387,
+          "width": 840.02,
+          "height": 101
+        },
+        "firstSeen": 10,
+        "lastSeen": 10,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          10
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 14.444,
+        "selector": "svg.logo-svg > path:nth-of-type(1)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 1084.38,
+          "top": 380,
+          "right": 1164.38,
+          "bottom": 460,
+          "width": 80,
+          "height": 80
+        },
+        "containerSelector": "svg.logo-svg",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 880,
+          "top": 380,
+          "right": 1040,
+          "bottom": 620,
+          "width": 160,
+          "height": 240
+        },
+        "overflow": {
+          "right": 124.38
+        },
+        "dataAttributes": {
+          "data-svg-origin": "80 120"
+        },
+        "sourceFile": "compositions/scene5-logo-outro.html",
+        "bbox": {
+          "x": 1084.38,
+          "y": 380,
+          "width": 80,
+          "height": 80
+        },
+        "firstSeen": 14.444,
+        "lastSeen": 14.444,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          14.444
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 14.444,
+        "selector": "svg.logo-svg > path:nth-of-type(2)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 1295.7,
+          "top": 380,
+          "right": 1375.7,
+          "bottom": 460,
+          "width": 80,
+          "height": 80
+        },
+        "containerSelector": "svg.logo-svg",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 880,
+          "top": 380,
+          "right": 1040,
+          "bottom": 620,
+          "width": 160,
+          "height": 240
+        },
+        "overflow": {
+          "right": 335.7
+        },
+        "dataAttributes": {
+          "data-svg-origin": "160 120"
+        },
+        "sourceFile": "compositions/scene5-logo-outro.html",
+        "bbox": {
+          "x": 1295.7,
+          "y": 380,
+          "width": 80,
+          "height": 80
+        },
+        "firstSeen": 14.444,
+        "lastSeen": 14.444,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          14.444
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 14.444,
+        "selector": "svg.logo-svg > path:nth-of-type(3)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 1407.25,
+          "top": 460,
+          "right": 1487.25,
+          "bottom": 540,
+          "width": 80,
+          "height": 80
+        },
+        "containerSelector": "svg.logo-svg",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 880,
+          "top": 380,
+          "right": 1040,
+          "bottom": 620,
+          "width": 160,
+          "height": 240
+        },
+        "overflow": {
+          "right": 447.25
+        },
+        "dataAttributes": {
+          "data-svg-origin": "80 200"
+        },
+        "sourceFile": "compositions/scene5-logo-outro.html",
+        "bbox": {
+          "x": 1407.25,
+          "y": 460,
+          "width": 80,
+          "height": 80
+        },
+        "firstSeen": 14.444,
+        "lastSeen": 14.444,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          14.444
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 14.444,
+        "selector": "svg.logo-svg > circle:nth-of-type(1)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 1757.67,
+          "top": 460,
+          "right": 1837.67,
+          "bottom": 540,
+          "width": 80,
+          "height": 80
+        },
+        "containerSelector": "svg.logo-svg",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 880,
+          "top": 380,
+          "right": 1040,
+          "bottom": 620,
+          "width": 160,
+          "height": 240
+        },
+        "overflow": {
+          "right": 797.67
+        },
+        "dataAttributes": {
+          "data-svg-origin": "160 200"
+        },
+        "sourceFile": "compositions/scene5-logo-outro.html",
+        "bbox": {
+          "x": 1757.67,
+          "y": 460,
+          "width": 80,
+          "height": 80
+        },
+        "firstSeen": 14.444,
+        "lastSeen": 14.444,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          14.444
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 14.444,
+        "selector": "svg.logo-svg > path:nth-of-type(4)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 2049.17,
+          "top": 540,
+          "right": 2129.17,
+          "bottom": 620,
+          "width": 80,
+          "height": 80
+        },
+        "containerSelector": "svg.logo-svg",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 880,
+          "top": 380,
+          "right": 1040,
+          "bottom": 620,
+          "width": 160,
+          "height": 240
+        },
+        "overflow": {
+          "right": 1089.17
+        },
+        "dataAttributes": {
+          "data-svg-origin": "80 280"
+        },
+        "sourceFile": "compositions/scene5-logo-outro.html",
+        "bbox": {
+          "x": 2049.17,
+          "y": 540,
+          "width": 80,
+          "height": 80
+        },
+        "firstSeen": 14.444,
+        "lastSeen": 14.444,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          14.444
+        ]
+      }
+    ],
+    "duration": 20,
+    "samples": [
+      1.111,
+      3.333,
+      5.556,
+      7.778,
+      10,
+      12.222,
+      14.444,
+      16.667,
+      18.889
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 18,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": false,
+    "errorCount": 7,
+    "warningCount": 4,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 2.05:1; WCAG AA requires 3:1.",
+        "text": "Get Started",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(10,207,131)",
+        "ratio": 2.05,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(97,97,97)",
+        "large": true,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 845.96875,
+          "y": 604,
+          "width": 228.046875,
+          "height": 69
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 2.17:1; WCAG AA requires 4.5:1.",
+        "text": "1440",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(26,188,254)",
+        "ratio": 2.17,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(67,67,67)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 935.09375,
+          "y": 61,
+          "width": 49.8125,
+          "height": 25
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 2.17:1; WCAG AA requires 4.5:1.",
+        "text": "900",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(26,188,254)",
+        "ratio": 2.17,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(67,67,67)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(3)",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 1689.78125,
+          "y": 518.28125,
+          "width": 25,
+          "height": 43.4375
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 3.88:1; WCAG AA requires 4.5:1.",
+        "text": "Designer",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(162,89,255)",
+        "ratio": 3.88,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(25,25,25)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(7) > div",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 972,
+          "y": 560,
+          "width": 68.203125,
+          "height": 23
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 2.17:1; WCAG AA requires 4.5:1.",
+        "text": "Engineer",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(26,188,254)",
+        "ratio": 2.17,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(67,67,67)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(8) > div",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 408.5705871582031,
+          "y": 420.6859130859375,
+          "width": 67.5625,
+          "height": 23
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 3.57:1; WCAG AA requires 4.5:1.",
+        "text": "PM",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(242,78,30)",
+        "ratio": 3.57,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(33,33,33)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(9) > div",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 1666.595458984375,
+          "y": 912.7572021484375,
+          "width": 34.8125,
+          "height": 23
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "error",
+        "message": "Contrast is 1.1:1; WCAG AA requires 3:1.",
+        "text": "Three cursors. One file. Zero meetings.",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(244,244,244)",
+        "ratio": 1.1,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(141,141,141)",
+        "large": true,
+        "selector": "#caption-text",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 525.234375,
+          "y": 861.006103515625,
+          "width": 869.515625,
+          "height": 59
+        },
+        "time": 5.556,
+        "times": [
+          5.556,
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 3.11:1; WCAG AA requires 4.5:1.",
+        "text": "◆",
+        "fg": "rgb(162,89,255)",
+        "bg": "rgb(54,54,54)",
+        "ratio": 3.11,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(186,132,255)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 36,
+          "y": 89,
+          "width": 15.046875,
+          "height": 23
+        },
+        "time": 10,
+        "times": [
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 3.11:1; WCAG AA requires 4.5:1.",
+        "text": "◆",
+        "fg": "rgb(162,89,255)",
+        "bg": "rgb(54,54,54)",
+        "ratio": 3.11,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(186,132,255)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 36,
+          "y": 144,
+          "width": 15.046875,
+          "height": 23
+        },
+        "time": 10,
+        "times": [
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 3.11:1; WCAG AA requires 4.5:1.",
+        "text": "◆",
+        "fg": "rgb(162,89,255)",
+        "bg": "rgb(54,54,54)",
+        "ratio": 3.11,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(186,132,255)",
+        "large": false,
+        "selector": "div > div:nth-of-type(2) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(3) > span:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene2-4-canvas.html",
+        "bbox": {
+          "x": 36,
+          "y": 199,
+          "width": 15.046875,
+          "height": 23
+        },
+        "time": 10,
+        "times": [
+          10
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 3.02:1; WCAG AA requires 4.5:1.",
+        "text": "figma.com",
+        "fg": "rgb(102,102,102)",
+        "bg": "rgb(26,26,31)",
+        "ratio": 3.02,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(130,130,130)",
+        "large": false,
+        "selector": "div > div:nth-of-type(3) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > span",
+        "dataAttributes": {},
+        "sourceFile": "compositions/scene5-logo-outro.html",
+        "bbox": {
+          "x": 912.765625,
+          "y": 815,
+          "width": 94.46875,
+          "height": 21
+        },
+        "time": 18.889,
+        "times": [
+          18.889
+        ]
+      }
+    ],
+    "enabled": true,
+    "samples": [
+      1.111,
+      5.556,
+      10,
+      14.444,
+      18.889
+    ],
+    "checked": 26,
+    "passed": 8
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

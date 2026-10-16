@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Crypto from 'expo-crypto';
 import { useAuth } from '@/auth/auth-provider';
@@ -45,7 +45,8 @@ export function WalkRecorder({ embedded = false }: { embedded?: boolean }) {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const tracking = useActivityTracking(user?.uid);
-  const location = useForegroundLocation(embedded);
+  const isFocused = useIsFocused();
+  const location = useForegroundLocation(isFocused);
   const { routeId } = useLocalSearchParams<{ routeId?: string }>();
   const walks = useWalks(user?.uid);
   const plan = walks.routes.find(r => r.id === (tracking.plannedRouteId ?? routeId));

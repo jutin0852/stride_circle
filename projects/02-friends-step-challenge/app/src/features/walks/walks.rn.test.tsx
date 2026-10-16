@@ -17,7 +17,7 @@ import { ActivityScreen } from './activity-screen';
 import { WalkShareCard } from './share-card';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), canGoBack: jest.fn(), replace: jest.fn(), push: jest.fn() }, useLocalSearchParams: jest.fn(() => ({ id: 'walk' })) }));
+jest.mock('expo-router', () => ({ router: { back: jest.fn(), canGoBack: jest.fn(), replace: jest.fn(), push: jest.fn() }, useIsFocused: jest.fn(() => true), useLocalSearchParams: jest.fn(() => ({ id: 'walk' })) }));
 jest.mock('react-native-safe-area-context', () => {
   const React = jest.requireActual('react');
   return { SafeAreaInsetsContext: React.createContext({ top: 0, right: 0, bottom: 0, left: 0 }), SafeAreaView: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children), useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) };

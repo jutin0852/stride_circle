@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAvatarUrl, getDefaultAvatarChoice } from './avatar';
-import { signInWithEmail, signInWithGoogleIdToken } from './auth';
+import { createAccount, signInWithEmail, signInWithGoogleIdToken } from './auth';
 
 const mock = vi.hoisted(() => ({
   profile: null as Record<string, unknown> | null,
   user: { uid: 'walker', displayName: 'Walker', email: 'walker@example.com', photoURL: null as string | null },
+  createUserWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'new-walker', displayName: null, email: 'new@example.com', photoURL: null } })),
   updateProfile: vi.fn(),
   setDoc: vi.fn(),
 }));
@@ -12,7 +13,7 @@ const mock = vi.hoisted(() => ({
 vi.mock('@/lib/firebase', () => ({ auth: {}, database: {}, requireFirebase: (service: unknown) => service }));
 vi.mock('@/services/notifications/walking-reminders', () => ({ walkingReminders: { activate: vi.fn() } }));
 vi.mock('firebase/auth', () => ({
-  createUserWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: mock.createUserWithEmailAndPassword,
   GoogleAuthProvider: { credential: vi.fn(() => ({})) },
   signInWithCredential: vi.fn(async () => ({ user: mock.user })),
   signInWithEmailAndPassword: vi.fn(async () => ({ user: mock.user })),
@@ -59,6 +60,11 @@ describe('sign-in profile photos', () => {
   it('creates a default character only when there is no photo', async () => {
     await signInWithEmail({ email: mock.user.email, password: 'password' });
     expect(mock.setDoc).toHaveBeenCalledWith('profile', expect.objectContaining({ photoURL: getAvatarUrl(getDefaultAvatarChoice('walker')) }), { merge: true });
+  });
+
+  it('marks an email account as needing first-run setup', async () => {
+    await createAccount({ displayName: 'New Walker', email: 'new@example.com', password: 'password' });
+    expect(mock.setDoc).toHaveBeenCalledWith('profile', expect.objectContaining({ onboardingVersion: 0 }), { merge: true });
   });
 
   it('ignores malformed stored photos and preserves a valid Auth photo', async () => {

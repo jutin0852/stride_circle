@@ -1,0 +1,524 @@
+{
+  "version": 1,
+  "historyId": "85851460-47d6-41e9-81dd-60e1d1516f0e",
+  "currentRevision": "3af3b56a-a8b4-41ef-8288-16616d899edc",
+  "pendingChanges": false,
+  "files": {
+    "AGENTS.md": {
+      "hash": "1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\1d\\1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5"
+    },
+    "CLAUDE.md": {
+      "hash": "1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\1d\\1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5"
+    },
+    "assets/figma-cursors.svg": {
+      "hash": "fc502bfd3a3068bdbcf9eae4e6db8d24961ade74c784f2874b087042c24dab2a",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\fc\\fc502bfd3a3068bdbcf9eae4e6db8d24961ade74c784f2874b087042c24dab2a"
+    },
+    "assets/figma-logo-pieces.svg": {
+      "hash": "33d1ccf5e60c6c6860ad0d3817bd1fa21a02e165c96319ee96a56f35b39aafd7",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\33\\33d1ccf5e60c6c6860ad0d3817bd1fa21a02e165c96319ee96a56f35b39aafd7"
+    },
+    "assets/figma-logo-pills.svg": {
+      "hash": "0260247a846428be258ffa69a70cb94cb03de3dd99de9cb30d5df54ae31638ba",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\02\\0260247a846428be258ffa69a70cb94cb03de3dd99de9cb30d5df54ae31638ba"
+    },
+    "hyperframes.json": {
+      "hash": "53dbce1e19aa713cbb12ee0bc4d206143b45ab15e6ffbfcaa8f69572d4d24d50",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\53\\53dbce1e19aa713cbb12ee0bc4d206143b45ab15e6ffbfcaa8f69572d4d24d50"
+    },
+    "hyperframes.lock.json": {
+      "hash": "cc4ee70b845e428621a15bbe54ebdf22c9c2497565685c9af5017fcceb2b3b2a",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\cc\\cc4ee70b845e428621a15bbe54ebdf22c9c2497565685c9af5017fcceb2b3b2a"
+    },
+    "index.html": {
+      "hash": "1532d98dd467792878972e177477b50bed74c6da12666ae6173419b935923407",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\15\\1532d98dd467792878972e177477b50bed74c6da12666ae6173419b935923407"
+    },
+    "meta.json": {
+      "hash": "a38e6640d4bdb3645d7773ce3285d09d42c515faaf11395ecc43622e5aa14233",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\a3\\a38e6640d4bdb3645d7773ce3285d09d42c515faaf11395ecc43622e5aa14233"
+    },
+    "package.json": {
+      "hash": "f360f304e73f4e9d06d01b4860e95107cd7ae516c595cf3ffd4e4e06a98bfd86",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\f3\\f360f304e73f4e9d06d01b4860e95107cd7ae516c595cf3ffd4e4e06a98bfd86"
+    },
+    "capture/extracted/asset-descriptions.md": {
+      "hash": "390ccc62af88c4ee897b570feca2ec0c6507e2b3c907bd282aac577d34f79d20",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\39\\390ccc62af88c4ee897b570feca2ec0c6507e2b3c907bd282aac577d34f79d20"
+    },
+    "capture/README.md": {
+      "hash": "cb098cc2bb4eae3ce1ed5b10b409d06afef16a71f60255350d581dbe4bd481f6",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\cb\\cb098cc2bb4eae3ce1ed5b10b409d06afef16a71f60255350d581dbe4bd481f6"
+    },
+    "DESIGN.md": {
+      "hash": "f3b3bcc025a2c470733724f34f5d21b42a19da4adb6f3cb5d1c006a94634df1c",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\f3\\f3b3bcc025a2c470733724f34f5d21b42a19da4adb6f3cb5d1c006a94634df1c"
+    },
+    "SCRIPT.md": {
+      "hash": "8584977ccfd09421f2afc7947d1c515a75d24bf8560c53765efa5f7877c44d05",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\85\\8584977ccfd09421f2afc7947d1c515a75d24bf8560c53765efa5f7877c44d05"
+    },
+    "STORYBOARD.md": {
+      "hash": "792b98f33f20c479b35fa47c407235993eec74863d0100a5b568cee9d33ae84f",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\79\\792b98f33f20c479b35fa47c407235993eec74863d0100a5b568cee9d33ae84f"
+    },
+    "assets/icon.png": {
+      "hash": "119462bb78eb240a65c869fc067ee599639b3cb5a41953f25c07b17d2a8c7e0f",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\11\\119462bb78eb240a65c869fc067ee599639b3cb5a41953f25c07b17d2a8c7e0f"
+    },
+    "assets/fonts/NunitoSans_400Regular.ttf": {
+      "hash": "5539bb068f72fd4575342e6b914b9cb037019c4583835f794283399ba1b94efc",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\55\\5539bb068f72fd4575342e6b914b9cb037019c4583835f794283399ba1b94efc"
+    },
+    "assets/fonts/NunitoSans_600SemiBold.ttf": {
+      "hash": "97c3e5eb6bcd991e54c4daf143102e20781cc4b50d64211131f837845cba12aa",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\97\\97c3e5eb6bcd991e54c4daf143102e20781cc4b50d64211131f837845cba12aa"
+    },
+    "assets/fonts/NunitoSans_800ExtraBold.ttf": {
+      "hash": "0101d01f9a62daf606b1999fd9836a51a979b28fc32cf0e532f0e75d31e3a376",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\01\\0101d01f9a62daf606b1999fd9836a51a979b28fc32cf0e532f0e75d31e3a376"
+    },
+    "assets/fonts/NunitoSans_900Black.ttf": {
+      "hash": "a7424a0a0bf06ab25f66870e1ec549341cbb41cd36ab4f0bb85a84f5c464a4f8",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\a7\\a7424a0a0bf06ab25f66870e1ec549341cbb41cd36ab4f0bb85a84f5c464a4f8"
+    },
+    "assets/screenshots/circle-race.png": {
+      "hash": "20515d1739295e700c9c8261ecf2de5e9145524e4af2daf5e62e8aba09d75c84",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\20\\20515d1739295e700c9c8261ecf2de5e9145524e4af2daf5e62e8aba09d75c84"
+    },
+    "assets/screenshots/circles.png": {
+      "hash": "3e18b425490b21a8ea0c80a37345df7a7c2159006bd8a22ac667b4aa3d9550ca",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\3e\\3e18b425490b21a8ea0c80a37345df7a7c2159006bd8a22ac667b4aa3d9550ca"
+    },
+    "assets/screenshots/history.png": {
+      "hash": "391e76455d374c915d78a773e513d9c1a982fed60027a7029b267b979e6696c0",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\39\\391e76455d374c915d78a773e513d9c1a982fed60027a7029b267b979e6696c0"
+    },
+    "assets/screenshots/home.png": {
+      "hash": "847164f7d081c8b9a390d8581fa0a32fce129ebadac18760073bc3e3680e9c32",
+      "content": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\84\\847164f7d081c8b9a390d8581fa0a32fce129ebadac18760073bc3e3680e9c32"
+    }
+  },
+  "revisions": {
+    "cbf569af-608d-41e3-8937-3733fb29228d": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792145628084,
+      "endedAt": 1792145628295,
+      "files": {
+        "capture/extracted/asset-descriptions.md": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\39\\390ccc62af88c4ee897b570feca2ec0c6507e2b3c907bd282aac577d34f79d20"
+        },
+        "capture/README.md": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\cb\\cb098cc2bb4eae3ce1ed5b10b409d06afef16a71f60255350d581dbe4bd481f6"
+        },
+        "DESIGN.md": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\f3\\f3b3bcc025a2c470733724f34f5d21b42a19da4adb6f3cb5d1c006a94634df1c"
+        },
+        "index.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\e6\\e66d18050fa0863f31a1da06ad8564aed7f09b3c7b9cd59e08ed56f3fecb024e",
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\78\\7873d4ab43f4fa8d83362aa130365264197525095a9b9dcca7a2b43b0d87400f"
+        },
+        "SCRIPT.md": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\85\\8584977ccfd09421f2afc7947d1c515a75d24bf8560c53765efa5f7877c44d05"
+        },
+        "STORYBOARD.md": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\79\\792b98f33f20c479b35fa47c407235993eec74863d0100a5b568cee9d33ae84f"
+        }
+      }
+    },
+    "a8542c78-d6b2-4b24-9c72-89f38b152eff": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792145667127,
+      "endedAt": 1792145667167,
+      "files": {
+        "assets/icon.png": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\11\\119462bb78eb240a65c869fc067ee599639b3cb5a41953f25c07b17d2a8c7e0f"
+        },
+        "index.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\78\\7873d4ab43f4fa8d83362aa130365264197525095a9b9dcca7a2b43b0d87400f",
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\24\\242ae9fb60afe7e83bd123a5539c6d6ac835e196929a9fe27c0a5e1e58fc9537"
+        }
+      }
+    },
+    "b4ca045d-e3e0-4c6d-b9f0-de242c3f5f44": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792145694829,
+      "endedAt": 1792145695009,
+      "files": {
+        "assets/fonts/NunitoSans_400Regular.ttf": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\55\\5539bb068f72fd4575342e6b914b9cb037019c4583835f794283399ba1b94efc"
+        },
+        "assets/fonts/NunitoSans_600SemiBold.ttf": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\97\\97c3e5eb6bcd991e54c4daf143102e20781cc4b50d64211131f837845cba12aa"
+        },
+        "assets/fonts/NunitoSans_800ExtraBold.ttf": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\01\\0101d01f9a62daf606b1999fd9836a51a979b28fc32cf0e532f0e75d31e3a376"
+        },
+        "assets/fonts/NunitoSans_900Black.ttf": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\a7\\a7424a0a0bf06ab25f66870e1ec549341cbb41cd36ab4f0bb85a84f5c464a4f8"
+        },
+        "assets/screenshots/circle-race.png": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\20\\20515d1739295e700c9c8261ecf2de5e9145524e4af2daf5e62e8aba09d75c84"
+        },
+        "assets/screenshots/circles.png": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\3e\\3e18b425490b21a8ea0c80a37345df7a7c2159006bd8a22ac667b4aa3d9550ca"
+        },
+        "assets/screenshots/history.png": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\39\\391e76455d374c915d78a773e513d9c1a982fed60027a7029b267b979e6696c0"
+        },
+        "assets/screenshots/home.png": {
+          "before": null,
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\84\\847164f7d081c8b9a390d8581fa0a32fce129ebadac18760073bc3e3680e9c32"
+        }
+      }
+    },
+    "215a1bb0-c252-4061-a870-a5e8d8b2bf43": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792145744510,
+      "endedAt": 1792145744522,
+      "files": {
+        "compositions/scene1-logo-intro.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\28\\286cb47166409ff8e4568ce06a0c73b056bb843bfa46e0c70bdeff131d87a833",
+          "after": null
+        },
+        "compositions/scene2-4-canvas.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\4e\\4e9ddf830440b5fefffe0deb78e39923cfeb1d09dcc6d9faea84a1604f5b3ca5",
+          "after": null
+        },
+        "compositions/scene5-logo-outro.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\2a\\2abf2a0e8c52b9539ec1efe0b6cb35bb6c2fff0237b5b5e154a1c3a9f53421f1",
+          "after": null
+        },
+        "index.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\24\\242ae9fb60afe7e83bd123a5539c6d6ac835e196929a9fe27c0a5e1e58fc9537",
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\04\\04ad9a2f7e2f628e8d6c1b3dd98e85fb8dffea994de6dd752d7501a5a7a7d3ea"
+        }
+      }
+    },
+    "795bfe04-e47d-420b-97a5-cf754746d1bf": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792145830895,
+      "endedAt": 1792145830898,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\04\\04ad9a2f7e2f628e8d6c1b3dd98e85fb8dffea994de6dd752d7501a5a7a7d3ea",
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\ea\\ea4cfb725f233206a447940777ed1b61f4e16137ce3ef48b2b2b36ebfed24dd7"
+        }
+      }
+    },
+    "3af3b56a-a8b4-41ef-8288-16616d899edc": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792145877931,
+      "endedAt": 1792145877936,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\ea\\ea4cfb725f233206a447940777ed1b61f4e16137ce3ef48b2b2b36ebfed24dd7",
+          "after": "C:\\Users\\jutin\\.cache\\hyperframes\\history\\85851460-47d6-41e9-81dd-60e1d1516f0e\\blobs\\15\\1532d98dd467792878972e177477b50bed74c6da12666ae6173419b935923407"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "215a1bb0-c252-4061-a870-a5e8d8b2bf43",
+      "id": "29f0a3ef-ba8e-423e-83b8-86b5f37c13b4"
+    },
+    "revisions": {
+      "cbf569af-608d-41e3-8937-3733fb29228d": [
+        {
+          "id": "98d71cfe-f93a-4b4c-be9a-c37e71437531",
+          "scope": "project",
+          "report": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\checks\\98d71cfe-f93a-4b4c-be9a-c37e71437531.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": true,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792145630654,
+          "contentHash": "ade32ca2d95be62b02631270fcfbccc72d4d1d993340cf7e3f15e91447e91835",
+          "revision": "cbf569af-608d-41e3-8937-3733fb29228d",
+          "inputFingerprint": "6f7c27d5af94b0ba66e63511ab4fec35c022208a0dc3f7c02203c22fdddffb6d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "a8542c78-d6b2-4b24-9c72-89f38b152eff": [
+        {
+          "id": "bc702e5c-7d75-4ba9-8fcf-28cc2ecf2046",
+          "scope": "project",
+          "report": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\checks\\bc702e5c-7d75-4ba9-8fcf-28cc2ecf2046.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": true,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792145668487,
+          "contentHash": "58888f3d6ffcb81481d7acb08d43a366a8d8ec363803582e9ee8a25ff7c07563",
+          "revision": "a8542c78-d6b2-4b24-9c72-89f38b152eff",
+          "inputFingerprint": "16459442f9b05d91e01c6ba147aef29963412f40af2f60a738004c0ad163e42a",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "b4ca045d-e3e0-4c6d-b9f0-de242c3f5f44": [
+        {
+          "id": "5e8fbf1a-c4c5-49e2-9b06-6a214eb7914b",
+          "scope": "project",
+          "report": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\checks\\5e8fbf1a-c4c5-49e2-9b06-6a214eb7914b.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792145711736,
+          "contentHash": "b0b652878fd73ff9ec1f1e9be69257d13dbc557cb538d750bbc956a1ab67ba18",
+          "revision": "b4ca045d-e3e0-4c6d-b9f0-de242c3f5f44",
+          "inputFingerprint": "6e43db92836ed370ea41740c14b3096c0ce0aa1c1c204117a137c907276b45ea",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "215a1bb0-c252-4061-a870-a5e8d8b2bf43": [
+        {
+          "id": "29f0a3ef-ba8e-423e-83b8-86b5f37c13b4",
+          "scope": "project",
+          "report": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\checks\\29f0a3ef-ba8e-423e-83b8-86b5f37c13b4.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792145756526,
+          "contentHash": "9b444820440c9b8d5cb0ebf1396816e1dda0f9c1ee59db2e2b65b48142207f80",
+          "revision": "215a1bb0-c252-4061-a870-a5e8d8b2bf43",
+          "inputFingerprint": "f6496cb41e0940880900504a643b16920ab78c19ba57124795adf31881388ac9",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "51df7974-2756-43c9-b21f-95e8f13065e5",
+        "scope": "project",
+        "report": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\checks\\51df7974-2756-43c9-b21f-95e8f13065e5.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 3000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1792145490080,
+        "contentHash": "c430e051c71e0465d15e227107a0c1db9f126b2367fff0321d126ee3b398c14f",
+        "revision": null,
+        "inputFingerprint": "c297edad368c9b70a2c03322ed3e9b418b3d8c755e0589f44eb6bc856cfdc336",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": {
+      "revision": "795bfe04-e47d-420b-97a5-cf754746d1bf",
+      "id": "7a522768-3dae-4ed8-b44e-410277bd5651-4"
+    },
+    "revisions": {
+      "795bfe04-e47d-420b-97a5-cf754746d1bf": [
+        {
+          "scope": "full",
+          "id": "7a522768-3dae-4ed8-b44e-410277bd5651-0",
+          "image": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\snapshots\\c18c7a68-a5e7-4dd3-80a1-13a360e742a6\\frame-00-at-2s.png",
+          "time": 2,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792145841484,
+          "contentHash": "73cf2fbab27f82920ca1252c150658451f20dae81862c749795191ff5018990d",
+          "revision": "795bfe04-e47d-420b-97a5-cf754746d1bf",
+          "inputFingerprint": "185bfa5eeb07ce6c3461ee7a6917314d60e29adb695fda99d0be67d7a93a32f2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "7a522768-3dae-4ed8-b44e-410277bd5651-1",
+          "image": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\snapshots\\c18c7a68-a5e7-4dd3-80a1-13a360e742a6\\frame-01-at-6.5s.png",
+          "time": 6.5,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792145841484,
+          "contentHash": "b7c7ccd1ee933be534e02626ae8b7fdf3b95b15783f296457aefd552f022b954",
+          "revision": "795bfe04-e47d-420b-97a5-cf754746d1bf",
+          "inputFingerprint": "185bfa5eeb07ce6c3461ee7a6917314d60e29adb695fda99d0be67d7a93a32f2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "7a522768-3dae-4ed8-b44e-410277bd5651-2",
+          "image": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\snapshots\\c18c7a68-a5e7-4dd3-80a1-13a360e742a6\\frame-02-at-11.5s.png",
+          "time": 11.5,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792145841484,
+          "contentHash": "65733f72ab72e81394ddb35d24624d6986f41694156a7914dcfdb70163b20684",
+          "revision": "795bfe04-e47d-420b-97a5-cf754746d1bf",
+          "inputFingerprint": "185bfa5eeb07ce6c3461ee7a6917314d60e29adb695fda99d0be67d7a93a32f2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "7a522768-3dae-4ed8-b44e-410277bd5651-3",
+          "image": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\snapshots\\c18c7a68-a5e7-4dd3-80a1-13a360e742a6\\frame-03-at-17s.png",
+          "time": 17,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792145841485,
+          "contentHash": "32afedde8d4751c485a014afd69a5af1653ab63560f5d16a60ada42fbfe94a98",
+          "revision": "795bfe04-e47d-420b-97a5-cf754746d1bf",
+          "inputFingerprint": "185bfa5eeb07ce6c3461ee7a6917314d60e29adb695fda99d0be67d7a93a32f2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "7a522768-3dae-4ed8-b44e-410277bd5651-4",
+          "image": "C:\\Users\\jutin\\Documents\\ChatGPT\\stride_circle-fresh\\projects\\02-friends-step-challenge\\app\\videos\\stride-circle-promo\\.hyperframes\\artifacts\\snapshots\\c18c7a68-a5e7-4dd3-80a1-13a360e742a6\\frame-04-at-19.4s.png",
+          "time": 19.4,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792145841485,
+          "contentHash": "f67e3be27638efe3929f6a9c864c2f22d522fa48043922bb9694cbd57e441bae",
+          "revision": "795bfe04-e47d-420b-97a5-cf754746d1bf",
+          "inputFingerprint": "185bfa5eeb07ce6c3461ee7a6917314d60e29adb695fda99d0be67d7a93a32f2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": []
+  }
+}
