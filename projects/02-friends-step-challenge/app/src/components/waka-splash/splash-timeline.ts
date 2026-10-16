@@ -4,34 +4,35 @@ import { WAKA_PRINTS, type WakaPrintName } from './waka-prints';
  * Timeline for the Waka splash. Pure functions of time so the UI thread (Reanimated worklets)
  * and unit tests compute exactly the same frames.
  *
- * 0.00-0.30 two shoes appear at the centre and settle onto the top of the loop
- * 0.30-1.80 nine running strides, left first (L R L R …), one clockwise loop; each landing
+ * 0.00-0.25 two shoes appear at the centre and settle onto the top of the loop
+ * 0.25-1.52 seven running strides, left first (L R L R L R L), one clockwise loop; each landing
  *           stamps a print (left = "WA", right = "KA") that stays behind
- * 1.92-2.62 the trail sweeps once around the centre and gathers into the Waka logo
- * 2.62-2.95 the logo lands with a ~3% settle, then holds until END
+ * 1.60-2.10 the trail sweeps half a turn and gathers into the Waka logo
+ * 2.10-2.35 the logo lands with a ~3% settle, then holds until END
  *
  * Units are design px on a 390-wide screen; the component scales them to the device.
  */
 
-export const SPLASH_END = 3.2;
+export const SPLASH_END = 2.45;
 export const DESIGN_WIDTH = 390;
 
-const WALK_START = 0.3;
-const SWEEP_START = 1.92;
-const SWEEP_END = 2.62;
-const SETTLE_END = 2.95;
-const STEPS = 9;
-const SLOTS = 8;
+const WALK_START = 0.25;
+const SWEEP_START = 1.6;
+const SWEEP_END = 2.1;
+const SETTLE_END = 2.35;
+const SWEEP_TURN = 180;                // a half turn: momentum without reading as a spinner
+const STEPS = 7;
+const SLOTS = 6;
 const RING = 84 * 0.95;                // loop radius
 const STRIDE_LAT = 13 * 0.95;          // left foot runs outside the loop, right foot inside
 const TOE_OUT = 14;
 const PRINT_SIZE = 0.72 * 0.95 * 1.06; // print scale while running
 const SWING = 1.15;                    // swing > step length gives a short flight phase
 const LIFT = 0.22;                     // a lifted foot draws this much bigger
-const TRAIL_OPACITY = 0.38;
+const TRAIL_OPACITY = 0.6;            // the trail must stay visible on a bright screen
 const LOGO_PX = 0.25;                  // design px per unit of the 1254-unit logo
 
-const STEP_DURATIONS = Array.from({ length: STEPS }, (_, i) => 0.185 + (0.1483 - 0.185) * (i / (STEPS - 1)));
+const STEP_DURATIONS = Array.from({ length: STEPS }, (_, i) => 0.195 + (0.162 - 0.195) * (i / (STEPS - 1)));
 const STEP_STARTS = STEP_DURATIONS.reduce<number[]>((starts, _, i) => {
   starts.push(i === 0 ? WALK_START : starts[i - 1] + STEP_DURATIONS[i - 1]);
   return starts;
@@ -98,19 +99,19 @@ function ringPose(theta: number, name: WakaPrintName, size: number, pull: number
   };
 }
 
-/** The print stamped on `slot` (0-7) by the runner, including its sweep into the logo. */
+/** The print stamped on `slot` (0-5) by the runner, including its sweep into the logo. */
 export function trailPrintPose(t: number, slot: number): PrintPose {
   'worklet';
   const landed = landTime(slot);
   if (t < landed) return { x: 0, y: 0, rotation: 0, scale: 0, opacity: 0 };
   const name = printNameForSlot(slot);
   const sweep = easeInOutQuint(progress(t, SWEEP_START, SWEEP_END));
-  const gather = easeInOut(progress(t, SWEEP_START + 0.2, SWEEP_END));
+  const gather = easeInOut(progress(t, SWEEP_START + 0.12, SWEEP_END));
   const since = easeOut(progress(t, landed, landed + 0.22));
-  const ring = ringPose(slotAngle(slot) + 360 * sweep, name, 1 + 0.12 * (1 - since), 0);
+  const ring = ringPose(slotAngle(slot) + SWEEP_TURN * sweep, name, 1 + 0.12 * (1 - since), 0);
   const print = WAKA_PRINTS[name];
   const targetRotation = print.logoRotation + 360 * Math.round((ring.rotation - print.logoRotation) / 360);
-  const trailOpacity = lerp(0.9, TRAIL_OPACITY, since);
+  const trailOpacity = lerp(1, TRAIL_OPACITY, since);
   const isLogoPrint = slot === 0 || slot === SLOTS - 1; // the last WA and KA prints become the logo
   return {
     x: lerp(ring.x, print.logoX * LOGO_PX, gather),
@@ -149,3 +150,6 @@ export function logoSettleScale(t: number) {
   const settle = progress(t, SWEEP_END, SETTLE_END);
   return 1 + 0.032 * Math.sin(Math.PI * easeOut(settle)) * (1 - settle * 0.4);
 }
+
+/** Number of prints the runner leaves around the loop. */
+export const TRAIL_SLOT_COUNT = SLOTS;

@@ -23,7 +23,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#13B5E8",
           "dark": {
             "backgroundColor": "#111F29"
           }
@@ -71,7 +71,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
+        "backgroundColor": "#13B5E8",
         "foregroundImage": "./assets/branding/waka-adaptive-foreground.png",
         "monochromeImage": "./assets/branding/waka-adaptive-monochrome.png"
       },
