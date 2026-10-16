@@ -1,13 +1,14 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-import { activityFromSession, deletePlannedWalk, getLocalRawRoute, getWalk, listLocalWalks, listPlannedWalks, saveLocalWalk, savePlannedWalk, syncPendingWalks } from './repository';
+import { activityFromSession, deletePlannedWalk, deleteWalk, getLocalRawRoute, getWalk, listLocalWalks, listPlannedWalks, saveLocalWalk, savePlannedWalk, syncPendingWalks } from './repository';
 import { finishRecording, newRecording, recordLocations } from '@/lib/activity-recording';
 const mock = vi.hoisted(() => ({ storage: new Map<string, string>(), set: vi.fn(), save: vi.fn(), networkWrite: vi.fn(), remote: vi.fn() }));
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: {
   getItem: async (key: string) => mock.storage.get(key) ?? null,
   setItem: async (key: string, value: string) => { mock.set(key, value); mock.storage.set(key, value); },
+  removeItem: async (key: string) => { mock.storage.delete(key); },
 } }));
 vi.mock('firebase/firestore', () => ({ doc: (_db: unknown, ...parts: string[]) => parts.join('/'), setDoc: (...args: unknown[]) => mock.networkWrite(...args), getDoc: () => mock.remote(), deleteDoc: (...args: unknown[]) => mock.networkWrite(...args) }));
-vi.mock('@/lib/firebase', () => ({ database: {}, requireFirebase: (db: unknown) => db }));
+vi.mock('@/lib/firebase', () => ({ database: {}, firebaseIsConfigured: false, requireFirebase: (db: unknown) => db }));
 vi.mock('@/lib/activities', () => ({ saveActivity: (...args: unknown[]) => mock.save(...args) }));
 beforeEach(() => { mock.storage.clear(); mock.set.mockReset(); mock.save.mockReset(); mock.networkWrite.mockReset(); });
 function activity(id = 'walk') {
@@ -20,6 +21,20 @@ it('saves complete activities offline and preserves raw samples', async () => {
   expect(mock.networkWrite).not.toHaveBeenCalled();
   expect(await getLocalRawRoute('user', walk.id)).toEqual(walk.rawCoordinates);
   expect((await listLocalWalks('user'))[0].rawCoordinates).toHaveLength(0);
+});
+
+it('deletes a saved walk and its local raw route chunks', async () => {
+  const walk = activity();
+  walk.rawCoordinates = Array.from({ length: 501 }, (_, i) => ({ latitude: 0, longitude: i / 100000, timestamp: 1000 + i * 5000, accuracy: 5 }));
+  await saveLocalWalk(walk);
+  expect(await listLocalWalks('user')).toHaveLength(1);
+
+  await deleteWalk('user', walk.id);
+
+  expect(await listLocalWalks('user')).toEqual([]);
+  expect(mock.storage.has('stride:walk:walk:v1:user')).toBe(false);
+  expect(mock.storage.has('stride:walk:walk:raw:0:v1:user')).toBe(false);
+  expect(mock.storage.has('stride:walk:walk:raw:1:v1:user')).toBe(false);
 });
 it('retains a pending completed activity after upload failure for later retry', async () => {
   await saveLocalWalk(activity()); mock.networkWrite.mockRejectedValueOnce(new Error('offline'));

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, writeBatch } from 'firebase/firestore';
 import { saveActivity } from '@/lib/activities';
-import { database, requireFirebase } from '@/lib/firebase';
+import { database, firebaseIsConfigured, requireFirebase } from '@/lib/firebase';
 import { averagePace, defaultRoutePrivacy, routeBounds, validCoordinate, validPlannedWalk, validWalk, type GpsSample, type PlannedWalk, type WalkActivity } from '@/domain/walk';
 import type { RecordingSession } from '@/lib/activity-recording';
 import { simplifyRoute } from '@/lib/route';
@@ -48,6 +48,47 @@ async function localWalk(userId: string, id: string) {
   if (!validWalk(value) || value.userId !== userId || value.id !== id) throw new Error('Invalid saved walk');
   return value;
 }
+
+async function deleteRemoteWalk(userId: string, id: string) {
+  const db = requireFirebase(database, 'Firestore');
+  const rawRoute = await getDocs(collection(db, 'users', userId, 'activities', id, 'rawRoute'));
+  const references = [
+    ...rawRoute.docs.map((chunk) => chunk.ref),
+    doc(db, 'users', userId, 'activities', id),
+    doc(db, 'users', userId, 'walkDetails', id),
+  ];
+
+  for (let start = 0; start < references.length; start += 450) {
+    const batch = writeBatch(db);
+    references.slice(start, start + 450).forEach((reference) => batch.delete(reference));
+    await batch.commit();
+  }
+}
+
+async function deleteLocalWalk(userId: string, id: string, activity: WalkActivity | null) {
+  const ids = await walkIds(userId);
+  if (!ids.includes(id)) return;
+
+  const rawChunkCount = Math.ceil((activity?.rawSampleCount ?? 0) / 500);
+  for (let index = 0; index < rawChunkCount; index += 1) {
+    await AsyncStorage.removeItem(key(userId, `walk:${id}:raw:${index}`));
+  }
+  await AsyncStorage.removeItem(key(userId, `walk:${id}`));
+  await AsyncStorage.setItem(key(userId, 'walk-index'), JSON.stringify(ids.filter((walkId) => walkId !== id)));
+  listeners.forEach(l => l());
+}
+
+/** Remove a private walk and its owner-only remote detail/raw records. */
+export function deleteWalk(userId: string, id: string) {
+  return exclusive(async () => {
+    const activity = await localWalk(userId, id);
+    // A locally pending walk has not necessarily reached Firestore yet. It is
+    // safe to remove it without a network request when Firebase is unavailable.
+    if (firebaseIsConfigured || activity?.syncStatus === 'synced' || !activity) await deleteRemoteWalk(userId, id);
+    await deleteLocalWalk(userId, id, activity);
+  });
+}
+
 export async function listLocalWalks(userId: string) {
   const records = await Promise.all((await walkIds(userId)).map(id => localWalk(userId, id)));
   if (records.some(r => !r)) throw new Error('Walk recovery data is missing');

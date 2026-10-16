@@ -1,9 +1,10 @@
 import { Pressable as MockPressable, View as MockView } from 'react-native';
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Alert } from 'react-native';
 import { useActivityTracking } from '@/hooks/use-activity-tracking';
 import { useForegroundLocation } from '@/hooks/use-foreground-location';
-import { activityFromSession, getWalk, saveLocalWalk, syncPendingWalks } from '@/services/walks/repository';
+import { activityFromSession, deleteWalk, getWalk, saveLocalWalk, syncPendingWalks } from '@/services/walks/repository';
 import { matchWalkingRoute, searchWalkingPlaces, walkingDirections } from '@/services/maps/mapbox';
 import { finishRecording, newRecording } from '@/lib/activity-recording';
 import { shareableWalk } from '@/domain/walk';
@@ -35,7 +36,7 @@ jest.mock('@/hooks/use-walks', () => ({ useWalks: () => ({ routes: [], activitie
 jest.mock('@/lib/background-activity', () => ({ getBackgroundRecording: () => ({ session: null, issue: null }) }));
 jest.mock('@/services/walks/repository', () => ({
   ...jest.requireActual('@/services/walks/repository'),
-  getWalk: jest.fn(), saveLocalWalk: jest.fn().mockResolvedValue(undefined), syncPendingWalks: jest.fn().mockResolvedValue(undefined),
+  deleteWalk: jest.fn().mockResolvedValue(undefined), getWalk: jest.fn(), saveLocalWalk: jest.fn().mockResolvedValue(undefined), syncPendingWalks: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: jest.fn(), setItem: jest.fn() }));
 jest.mock('firebase/firestore', () => ({}));
@@ -272,14 +273,28 @@ it('keeps account synchronization automatic and hides implementation details', a
   await waitFor(() => expect(screen.getByRole('button', { name: 'Share walk' })).toBeTruthy());
   expect(screen.queryByRole('button', { name: /sync|upload/i })).toBeNull();
   expect(screen.queryByText(/sync|upload|firebase|cloud copy/i)).toBeNull();
-  await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+  expect(screen.getByRole('button', { name: 'Save changes' }).props.accessibilityState.disabled).toBe(true);
+  await fireEvent.changeText(screen.getByLabelText('Private activity notes'), 'A quiet evening walk');
+  await fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
   await waitFor(() => expect(syncPendingWalks).toHaveBeenCalledWith('user'));
+});
+it('confirms deletion and returns to History', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+    buttons?.find(button => button.text === 'Delete walk')?.onPress?.();
+  });
+  const screen = await render(<WalkDetail />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Delete saved walk' })).toBeTruthy());
+  await fireEvent.press(screen.getByRole('button', { name: 'Delete saved walk' }));
+  expect(alert).toHaveBeenCalledWith('Delete saved walk?', expect.any(String), expect.any(Array));
+  await waitFor(() => expect(deleteWalk).toHaveBeenCalledWith('user', 'walk'));
+  expect(router.replace).toHaveBeenCalledWith('/history');
+  alert.mockRestore();
 });
 it('confirms saved edits and clears success when the name changes again', async () => {
   const screen = await render(<WalkDetail />);
   await waitFor(() => expect(screen.getByLabelText('Activity title')).toBeTruthy());
   await fireEvent.changeText(screen.getByLabelText('Activity title'), 'Evening walk');
-  await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
   await waitFor(() => expect(screen.getByText('Saved')).toBeTruthy());
   expect(saveLocalWalk).toHaveBeenCalledWith(expect.objectContaining({ title: 'Evening walk', id: 'walk' }));
   await fireEvent.changeText(screen.getByLabelText('Activity title'), 'Another title');
@@ -290,7 +305,7 @@ it('keeps drafts and reports a failed local save instead of showing success', as
   const screen = await render(<WalkDetail />);
   await waitFor(() => expect(screen.getByLabelText('Activity title')).toBeTruthy());
   await fireEvent.changeText(screen.getByLabelText('Activity title'), 'My unsaved walk');
-  await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
   await waitFor(() => expect(screen.getByText('Changes could not save. Try again.')).toBeTruthy());
   expect(screen.getByLabelText('Activity title').props.value).toBe('My unsaved walk');
   expect(screen.queryByText('Saved')).toBeNull();

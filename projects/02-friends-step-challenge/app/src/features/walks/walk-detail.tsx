@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
 import { BlurTargetView, BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,7 +10,7 @@ import { AppSheet, AppText, Button, FixedHeaderScreen, IconButton } from '@/comp
 import { useAppColors, useAppTheme } from '@/design-system/use-app-theme';
 import { defaultRoutePrivacy, formatWalkTime, shareableWalk as createShareableWalk, type WalkActivity } from '@/domain/walk';
 import { splitRoute } from '@/lib/route';
-import { getWalk, saveLocalWalk, subscribeWalks, syncPendingWalks } from '@/services/walks/repository';
+import { deleteWalk, getWalk, saveLocalWalk, subscribeWalks, syncPendingWalks } from '@/services/walks/repository';
 import { shareWalkImage } from '@/services/walks/share';
 import { mapboxToken, staticWalkMapUrl } from '@/services/maps/mapbox';
 import { WalkShareCard } from './share-card';
@@ -52,6 +52,7 @@ export function WalkDetail() {
   const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null);
   const [loadedKey, setLoadedKey] = useState('');
   const [sharing, setSharing] = useState(false); const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const saveLock = useRef(false);
@@ -170,6 +171,26 @@ export function WalkDetail() {
     finally { saveLock.current = false; setBusy(false); }
   }
 
+  async function removeWalk() {
+    if (!activity || deleting) return;
+    setDeleting(true); setError(null);
+    try {
+      await deleteWalk(activity.userId, activity.id);
+      router.replace('/history');
+    } catch {
+      setError('This walk could not be deleted. Check your connection and try again.');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function confirmDelete() {
+    Alert.alert('Delete saved walk?', 'This removes the walk from your private History and cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete walk', style: 'destructive', onPress: () => { void removeWalk(); } },
+    ]);
+  }
+
   function openShare() {
     shareSession.current += 1;
     setError(null); setShareNotice(null); setSharing(true);
@@ -194,6 +215,7 @@ export function WalkDetail() {
   if (loading || loadedKey !== `${user?.uid}:${id}`) return <View style={[styles.empty, { backgroundColor: colors.background }]}><AppText>Loading walk…</AppText></View>;
   if (!activity) return <View style={[styles.empty, { backgroundColor: colors.background }]}><AppText>{error ?? 'This walk uses an earlier activity format.'}</AppText><Button onPress={() => router.replace({ pathname: '/activity/[activityId]', params: { activityId: id } })}>Open activity summary</Button><Button variant="tertiary" onPress={goBack}>Go back</Button></View>;
   const shared = shareableWalk(activity);
+  const hasChanges = title.trim() !== activity.title || notes !== activity.notes;
   const canShowMapDetails = !!mapboxToken() && !activity.privacy.hideMap && hasShareableRoute(shared.route);
   const mapDetailsHint = !mapboxToken()
     ? 'Street names are unavailable right now. The route-only preview is still ready to share.'
@@ -212,8 +234,9 @@ export function WalkDetail() {
           <View style={styles.stats}>{activity.steps !== null ? <Stat label="Steps" value={activity.steps.toLocaleString()} /> : null}<Stat label="Distance" value={`${(activity.distanceMeters / 1000).toFixed(2)} km`} /><Stat label="Walking time" value={formatWalkTime(activity.durationSeconds)} /></View>
           <TextInput accessibilityLabel="Activity title" editable={!busy} value={title} onChangeText={value => { setTitle(value); setSaved(false); }} maxLength={80} style={[styles.input, { color: colors.ink, borderColor: colors.border }]} />
           <TextInput accessibilityLabel="Private activity notes" editable={!busy} placeholder="Private notes" placeholderTextColor={colors.muted} value={notes} onChangeText={value => { setNotes(value); setSaved(false); }} multiline maxLength={2000} style={[styles.input, { color: colors.ink, borderColor: colors.border }]} />
-          <Button loading={busy} disabled={busy || !title.trim()} onPress={() => { void update({ ...activity, title: title.trim(), notes }, true); }}>Save</Button>
+          <Button loading={busy} disabled={busy || deleting || !title.trim() || !hasChanges} onPress={() => { void update({ ...activity, title: title.trim(), notes }, true); }}>Save changes</Button>
           {saved ? <View style={styles.savedFeedback}><Ionicons name="checkmark-circle" color={colors.success} size={18} /><AppText accessibilityLiveRegion="polite" tone="success" variant="label">Saved</AppText></View> : null}
+          <Button variant="danger" loading={deleting} disabled={busy || deleting} onPress={confirmDelete}>Delete saved walk</Button>
           <View testID="walk-sharing-options" style={styles.shareSettings}>
             <AppText variant="label">Sharing</AppText>
             <View style={[styles.shareOption, { borderColor: colors.border }]}>

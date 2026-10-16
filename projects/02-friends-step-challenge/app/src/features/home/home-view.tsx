@@ -74,13 +74,13 @@ function Progress({ steps, goal, health, colors, reduced, onGoal }: { steps: num
       <View style={styles.ring} accessible={false}>
         <Svg width={64} height={64} viewBox="0 0 64 64">
           <Circle cx={32} cy={32} r={27} stroke={colors.panelLine} strokeWidth={6} fill="none" />
-          <Circle cx={32} cy={32} r={27} stroke={reached ? colors.green : colors.blue} strokeWidth={6} strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 27}`} strokeDashoffset={2 * Math.PI * 27 * (1 - (percent ?? 0) / 100)} rotation={-90} origin="32, 32" fill="none" />
+          <Circle cx={32} cy={32} r={27} stroke={colors.blue} strokeWidth={6} strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 27}`} strokeDashoffset={2 * Math.PI * 27 * (1 - (percent ?? 0) / 100)} rotation={-90} origin="32, 32" fill="none" />
         </Svg>
-        <Copy colors={colors} style={styles.ringLabel}>{percent === null ? '—' : `${percent}%`}</Copy>
+        <Copy colors={colors} style={[styles.ringLabel, reached && { color: colors.blue }]}>{percent === null ? '—' : `${percent}%`}</Copy>
       </View>
       <View style={styles.fill}>
         <Copy colors={colors} style={styles.remaining}>{health === 'stale' ? 'Last confirmed total' : steps === null ? health === 'loading' ? 'Your walking day is loading' : 'Today’s total is unavailable' : goal === null ? 'Set a goal that works for you' : steps === 0 ? 'A few steps is a lovely start.' : progress.goalMet ? `${(steps - goal).toLocaleString()} steps beyond your goal` : `${progress.remaining?.toLocaleString()} steps to your goal`}</Copy>
-        {reached ? <Copy colors={colors} accessibilityLiveRegion="polite" style={{ color: colors.green, fontWeight: '800', marginTop: 4 }}>Goal reached</Copy> : null}
+        {reached ? <Copy colors={colors} accessibilityLiveRegion="polite" style={{ color: colors.blue, fontWeight: '800', marginTop: 4 }}>Goal reached</Copy> : null}
       </View>
     </View>
   </>;

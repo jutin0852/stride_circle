@@ -378,6 +378,8 @@ describe('private walking data', () => {
     await assertSucceeds(getDoc(doc(owner, ...path)));
     await assertFails(getDoc(doc(outsider, ...path))); await assertFails(getDoc(doc(guest, ...path)));
     await assertFails(setDoc(doc(outsider, ...path), { samples: [] }));
+    await assertFails(deleteDoc(doc(outsider, ...path)));
+    await assertSucceeds(deleteDoc(doc(owner, ...path)));
   });
   it('protects private activity detail including endpoints and notes', async () => {
     const owner = testEnv.authenticatedContext('walker').firestore();
@@ -385,6 +387,16 @@ describe('private walking data', () => {
     await assertSucceeds(setDoc(doc(owner, 'users', 'walker', 'walkDetails', 'walk'), { notes: 'Private' }));
     await assertFails(getDoc(doc(outsider, 'users', 'walker', 'walkDetails', 'walk')));
     await assertFails(setDoc(doc(outsider, 'users', 'walker', 'walkDetails', 'walk'), { notes: 'Other' }));
+    await assertFails(deleteDoc(doc(outsider, 'users', 'walker', 'walkDetails', 'walk')));
+    await assertSucceeds(deleteDoc(doc(owner, 'users', 'walker', 'walkDetails', 'walk')));
+  });
+  it('lets only the activity owner delete the personal activity summary', async () => {
+    const owner = testEnv.authenticatedContext('walker').firestore();
+    const outsider = testEnv.authenticatedContext('circle-member').firestore();
+    const reference = doc(owner, 'users', 'walker', 'activities', 'walk');
+    await assertSucceeds(setDoc(reference, { activityType: 'walk', dateKey: '2026-10-14', distanceMeters: 100, durationMs: 60000 }));
+    await assertFails(deleteDoc(doc(outsider, 'users', 'walker', 'activities', 'walk')));
+    await assertSucceeds(deleteDoc(reference));
   });
   it('lets only the route owner save, view, and delete a planned route', async () => {
     const owner = testEnv.authenticatedContext('walker').firestore();
