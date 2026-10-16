@@ -1,0 +1,56 @@
+{
+  "brand": "Stride Circle",
+  "tagline": "Walking is better together",
+  "brief": "A social walking app where small circles of friends compare daily steps, keep streaks and cheer each other on. It should feel encouraging, playful and everyday, not like a hardcore fitness tracker.",
+  "adjectives": [
+    "social",
+    "encouraging",
+    "playful",
+    "everyday"
+  ],
+  "criteria": "Success: avoids fitness cliches (activity rings, running figures, swooshes), says circle and steps together, works as an app icon and in one colour.",
+  "industry": "consumer-app",
+  "mockups": [
+    "app-icon",
+    "website",
+    "social",
+    "favicon-tab",
+    "sticker",
+    "tshirt"
+  ],
+  "nav": [
+    "How it works",
+    "Circles",
+    "Download"
+  ],
+  "brand_color": "#13B5E8",
+  "tile_color": "#13B5E8",
+  "greyscale": false,
+  "final": true,
+  "round": 2,
+  "concepts": [
+    {
+      "name": "The walking loop",
+      "symbol": "../symbol/stride-circle-symbol.svg",
+      "lockup": "../lockups/stride-circle-horizontal.svg",
+      "stacked": "../lockups/stride-circle-stacked.svg",
+      "avatar": "../symbol/stride-circle-symbol-small.svg",
+      "symbol_on_tile": "../symbol/stride-circle-symbol-on-blue.svg",
+      "symbol_on_dark": "../symbol/stride-circle-symbol-on-dark.svg",
+      "lockup_on_dark": "../lockups/stride-circle-horizontal-on-dark.svg",
+      "stacked_on_dark": "../lockups/stride-circle-stacked-on-dark.svg",
+      "idea": "Eight left-right steps walking one perfect circle; the blue step is today's step.",
+      "rationale": [
+        "Says circle and steps in one shape, with no running man or activity ring",
+        "The blue lead step works as a live accent: progress, streaks and notifications",
+        "Small-size cut (six steps in a blue disc) keeps it readable at 16 to 48 px"
+      ]
+    }
+  ],
+  "recommendation": "The walking loop in the app's own palette: ink steps with a blue lead step, and a blue app icon.",
+  "next_steps": [
+    "Wire the icon, adaptive icon and splash into app.json",
+    "Run a trademark search before launch",
+    "Animate the loop (steps light up in order) for loading and goal celebrations"
+  ]
+}

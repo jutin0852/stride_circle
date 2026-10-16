@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { GoogleMark } from '@/components/google-mark';
+import { BrandLogo } from '@/components/brand-logo';
 import { FixedHeaderScreen } from '@/components/ui';
 import { createAccount, getAuthErrorMessage, signInWithEmail } from '@/lib/auth';
 import { signInWithGoogle } from '@/services/auth/google-sign-in';
@@ -30,7 +31,7 @@ export default function SignInRoute() {
   const submissionLock = useRef(false);
 
   if (isLoading) {
-    return <View style={styles.loadingPage}><View style={styles.loadingMark}><Text style={styles.brandMarkText}>SC</Text></View><ActivityIndicator color={colors.accent} /><Text style={styles.loadingText}>Opening Stride Circle</Text></View>;
+    return <View style={styles.loadingPage}><BrandLogo size={80} /><ActivityIndicator color={colors.accent} /><Text style={styles.loadingText}>Opening Stride Circle</Text></View>;
   }
   if (user) return <Redirect href="/" />;
 
@@ -87,7 +88,7 @@ export default function SignInRoute() {
     <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding' })} style={styles.page}>
       <FixedHeaderScreen backgroundColor={colors.background} header={<View style={styles.signInHeader}>
         <View style={styles.brand}>
-          <View style={styles.brandMark}><Text style={styles.brandMarkText}>SC</Text></View>
+          <BrandLogo size={48} />
           <Text style={styles.brandName}>Stride Circle</Text>
         </View>
         <View style={styles.intro}>

@@ -10,6 +10,7 @@ import { PanelUIProvider } from 'panelui-native/provider';
 
 import { AuthProvider } from '@/auth/auth-provider';
 import { AnimatedAppSplash } from '@/components/animated-app-splash';
+import { useSplashMode } from '@/components/waka-splash/splash-mode';
 import { installTypographyDefaults } from '@/design-system/typography';
 import { WalkingReminderLifecycle } from '@/features/notifications/walking-reminder-lifecycle';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
@@ -20,6 +21,7 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ NunitoSans_400Regular, NunitoSans_600SemiBold, NunitoSans_700Bold, NunitoSans_800ExtraBold });
   const isDark = useColorScheme() === 'dark';
   const reducedMotion = useReducedMotion();
+  const splashMode = useSplashMode();
   const [animatedSplashVisible, setAnimatedSplashVisible] = useState(true);
   const finishAnimatedSplash = useCallback(() => setAnimatedSplashVisible(false), []);
 
@@ -55,7 +57,7 @@ export default function RootLayout() {
             <Stack.Screen name="circle/[circleId]/activity" />
             <Stack.Screen name="circle/[circleId]/recap" />
           </Stack>
-          {animatedSplashVisible ? <AnimatedAppSplash onFinished={finishAnimatedSplash} reducedMotion={reducedMotion} /> : null}
+          {animatedSplashVisible ? <AnimatedAppSplash mode={splashMode} onFinished={finishAnimatedSplash} reducedMotion={reducedMotion} /> : null}
         </AuthProvider>
       </SafeAreaProvider>
     </PanelUIProvider>

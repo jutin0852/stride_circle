@@ -12,7 +12,6 @@ import type { AvatarChoice } from '@/lib/avatar';
 import { getPersonalProgress, type HomeHealthState } from './home-model';
 import { homeMotion, homeTheme } from './tokens';
 import { useReducedHomeMotion } from './use-home-motion';
-import { WalkingCompanion } from './walking-companion';
 import { usePressMotion } from '@/hooks/use-press-motion';
 
 export type HomeStanding = { userId: string; name: string; steps: number | null; rank: number | null; self: boolean };
@@ -84,38 +83,6 @@ function Progress({ steps, goal, health, colors, reduced, onGoal }: { steps: num
       </View>
     </View>
   </>;
-}
-
-function Companion({ goalEvent, happy, helpful, reduced, colors, size }: { goalEvent: number; happy: boolean; helpful: boolean; reduced: boolean; colors: HomeTheme; size: number }) {
-  const [hop] = useState(() => new Animated.Value(0));
-  const [burst] = useState(() => new Animated.Value(0));
-  const played = useRef(0);
-  const greeted = useRef(false);
-  useEffect(() => {
-    if (reduced || greeted.current) return;
-    greeted.current = true;
-    Animated.sequence([Animated.timing(hop, { toValue: 0.3, duration: 240, useNativeDriver: true }), Animated.timing(hop, { toValue: 0, duration: 360, useNativeDriver: true })]).start();
-    return () => { hop.stopAnimation(); hop.setValue(0); };
-  }, [hop, reduced]);
-  useEffect(() => {
-    hop.stopAnimation(); burst.stopAnimation(); hop.setValue(0); burst.setValue(0);
-    if (!goalEvent || goalEvent === played.current) return;
-    played.current = goalEvent;
-    if (reduced || !happy) return;
-    const animation = Animated.parallel([
-      Animated.sequence([Animated.timing(hop, { toValue: 1, duration: 240, useNativeDriver: true }), Animated.spring(hop, { toValue: 0, speed: 18, bounciness: 5, useNativeDriver: true })]),
-      Animated.sequence([Animated.delay(150), Animated.timing(burst, { toValue: 1, duration: 250, useNativeDriver: true }), Animated.timing(burst, { toValue: 0, duration: 500, useNativeDriver: true })]),
-    ]);
-    animation.start();
-    return () => { animation.stop(); hop.setValue(0); burst.setValue(0); };
-  }, [burst, goalEvent, happy, hop, reduced]);
-  return <View accessible={false} style={{ width: size, height: size }}>
-    <View style={[styles.shadow, { backgroundColor: colors.panelLine, width: size * 0.6, left: size * 0.2 }]} />
-    <Animated.View style={{ transform: [{ translateY: hop.interpolate({ inputRange: [0, 1], outputRange: [0, -14] }) }, { rotate: hop.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-6deg'] }) }] }}>
-      <WalkingCompanion size={size} happy={happy} helpful={helpful} shadow={false} />
-    </Animated.View>
-    {!reduced ? <Animated.View pointerEvents="none" style={[styles.sparkles, { opacity: burst }]}>{[colors.yellow, colors.coral, colors.blue].map((color, index) => <View key={color} style={{ position: 'absolute', backgroundColor: color, width: 6, height: 6, borderRadius: index === 1 ? 3 : 1, left: index * 30 - 4, top: index === 1 ? -8 : 16, transform: [{ rotate: '30deg' }] }} />)}</Animated.View> : null}
-  </View>;
 }
 
 export function HomeView(props: HomeViewProps) {
@@ -217,7 +184,6 @@ export function HomeView(props: HomeViewProps) {
     try { await action(); } catch { setSheetError('Health access could not be opened. Please try again.'); }
     finally { setHealthAction(false); }
   }
-  const goalMet = props.health === 'confirmed' && getPersonalProgress(props.steps, props.goal ?? 0).goalMet;
   const cardStyle = { backgroundColor: colors.canvas, borderColor: colors.line };
   return <View style={[styles.page, { backgroundColor: colors.canvas }]}>
     <View style={[styles.fixedHeader, { backgroundColor: colors.canvas, paddingHorizontal: narrow ? 16 : 20, paddingTop: Math.max(insets.top, 12) + 8 }]}>
@@ -234,9 +200,6 @@ export function HomeView(props: HomeViewProps) {
       <View style={[styles.hero, { backgroundColor: colors.ice, borderColor: colors.panelLine, padding: narrow ? 12 : 16 }]}>
         <View style={styles.progressCopy}>
           <Progress steps={props.steps} goal={props.goal} health={props.health} colors={colors} reduced={reduced} onGoal={props.onGoal} />
-        </View>
-        <View pointerEvents="none" style={styles.companion}>
-          <Companion colors={colors} size={narrow ? 56 : 64} reduced={reduced} happy={goalMet} helpful={props.health === 'stale' || props.health === 'unavailable'} goalEvent={props.goalEvent} />
         </View>
       </View>
       {props.health === 'unavailable' || props.health === 'stale' ? <View style={[styles.notice, { backgroundColor: colors.panelEdge, borderColor: colors.line }]}>
@@ -315,8 +278,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 }, profile: { borderWidth: 2, borderBottomWidth: 2, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   greeting: { fontWeight: '800', fontSize: 14 }, title: { fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.8 },
   hero: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 22, position: 'relative' }, progressCopy: { width: '100%' }, label: { fontSize: 16, fontWeight: '800', paddingRight: 68 }, count: { fontSize: 48, lineHeight: 55, fontWeight: '800', letterSpacing: -1.5, fontVariant: ['tabular-nums'], paddingRight: 68 },
-  goalLink: { minHeight: 44, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, paddingRight: 56 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }, ring: { height: 64, width: 64, alignItems: 'center', justifyContent: 'center' }, ringLabel: { position: 'absolute', fontSize: 13, fontWeight: '800' }, remaining: { fontSize: 14, lineHeight: 21, fontWeight: '700' },
-  companion: { position: 'absolute', top: 28, right: 14 }, shadow: { position: 'absolute', height: 5, bottom: 5, borderRadius: 20 }, sparkles: { position: 'absolute', top: 0, left: 0, right: 0 },
+  goalLink: { minHeight: 44, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }, progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }, ring: { height: 64, width: 64, alignItems: 'center', justifyContent: 'center' }, ringLabel: { position: 'absolute', fontSize: 13, fontWeight: '800' }, remaining: { fontSize: 14, lineHeight: 21, fontWeight: '700' },
   circleCard: { borderWidth: 2, borderBottomWidth: 4, borderRadius: 20, gap: 12 }, eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1 }, circleHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 }, circleTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 }, switcher: { minHeight: 48, minWidth: 48, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, circleSummary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }, deadline: { gap: 2 }, standings: { gap: 6 }, standing: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, minHeight: 44, borderWidth: 1, borderRadius: 12 }, rank: { width: 24, textAlign: 'center', fontSize: 13, fontWeight: '800' }, standingName: { fontSize: 15, fontWeight: '700' }, standingSteps: { fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 },
   action: { minHeight: 48, borderRadius: 12, borderWidth: 2, padding: 10, alignItems: 'center', justifyContent: 'center' }, actionLabel: { fontWeight: '800', textAlign: 'center' }, waiting: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 96 }, empty: { gap: 12 },
   social: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 20 }, column: { flexDirection: 'column', alignItems: 'stretch' }, cheer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 2, borderBottomWidth: 4, borderRadius: 12, padding: 10, minHeight: 48 }, cheerLabel: { fontSize: 14, fontWeight: '800' },
