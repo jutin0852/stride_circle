@@ -5,7 +5,7 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import { request as httpRequest } from 'node:http';
-import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 
 const projectId = 'demo-stride-circle';
 let testEnv: RulesTestEnvironment;
@@ -365,6 +365,237 @@ describe('Firestore launch rules', () => {
       schemaVersion: 1,
     }));
     await assertFails(getDoc(doc(owner, 'users', 'member-1', 'blocks', 'owner-1')));
+  });
+});
+
+describe('circle membership integrity', () => {
+  beforeEach(async () => {
+    await clearFirestoreData();
+    await seedCircle();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const database = context.firestore();
+      await setDoc(doc(database, 'users', 'member-1'), { displayName: 'Member One' });
+      await setDoc(doc(database, 'users', 'joiner'), { displayName: 'Joiner' });
+    });
+  });
+
+  function joinBatch(userId: string, circleId: string, nextMemberCount: number, displayName = 'Joiner') {
+    const database = testEnv.authenticatedContext(userId).firestore();
+    const batch = writeBatch(database);
+    batch.set(doc(database, 'circles', circleId, 'members', userId), {
+      avatarSeed: userId,
+      avatarStyle: 'sprouts',
+      displayName,
+      joinedAt: serverTimestamp(),
+      role: 'member',
+      userId,
+    });
+    batch.set(doc(database, 'users', userId, 'circleMemberships', circleId), {
+      circleId,
+      circleName: 'Circle',
+      joinedAt: serverTimestamp(),
+      role: 'member',
+    });
+    if (nextMemberCount > 0) {
+      batch.update(doc(database, 'circles', circleId), { memberCount: nextMemberCount, updatedAt: serverTimestamp() });
+    }
+    return batch;
+  }
+
+  it('requires a join to raise the member count, so the cap cannot be skipped', async () => {
+    await assertFails(joinBatch('joiner', 'private-circle', 0).commit());
+    await assertFails(joinBatch('joiner', 'public-circle', 0).commit());
+    await assertSucceeds(joinBatch('joiner', 'private-circle', 2).commit());
+  });
+
+  it('rejects joining a circle that is already at the 20-member cap', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'circles', 'public-circle'), { memberCount: 20 }, { merge: true });
+    });
+
+    await assertFails(joinBatch('joiner', 'public-circle', 21).commit());
+    await assertFails(joinBatch('joiner', 'public-circle', 0).commit());
+  });
+
+  it('still lets an owner create a circle together with their member record', async () => {
+    const owner = testEnv.authenticatedContext('joiner').firestore();
+    const batch = writeBatch(owner);
+    batch.set(doc(owner, 'circles', 'new-circle'), {
+      activityType: 'walk',
+      inviteCode: 'new-circle',
+      joinPolicy: 'invite_only',
+      memberCount: 1,
+      name: 'New Circle',
+      ownerId: 'joiner',
+      visibility: 'private',
+    });
+    batch.set(doc(owner, 'circles', 'new-circle', 'members', 'joiner'), {
+      displayName: 'Joiner',
+      role: 'owner',
+      userId: 'joiner',
+    });
+    await assertSucceeds(batch.commit());
+  });
+
+  function removalBatch(actorId: string, memberId: string, options: { decrement?: boolean; removedMemberId?: string; recordRemoval?: boolean } = {}) {
+    const database = testEnv.authenticatedContext(actorId).firestore();
+    const batch = writeBatch(database);
+    batch.delete(doc(database, 'circles', 'public-circle', 'members', memberId));
+    batch.delete(doc(database, 'users', memberId, 'circleMemberships', 'public-circle'));
+    if (options.decrement !== false) {
+      batch.update(doc(database, 'circles', 'public-circle'), {
+        memberCount: 1,
+        removedMemberId: options.removedMemberId ?? memberId,
+        updatedAt: serverTimestamp(),
+      });
+    }
+    if (options.recordRemoval) {
+      batch.set(doc(database, 'circles', 'public-circle', 'removedMembers', memberId), {
+        removedAt: serverTimestamp(),
+        removedBy: actorId,
+        userId: memberId,
+      });
+    }
+    return batch;
+  }
+
+  it('only lowers the member count when a member is actually removed', async () => {
+    const owner = testEnv.authenticatedContext('owner-1').firestore();
+    await assertFails(updateDoc(doc(owner, 'circles', 'public-circle'), { memberCount: 1, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(owner, 'circles', 'public-circle'), { memberCount: 1, removedMemberId: 'member-1', updatedAt: serverTimestamp() }));
+    await assertFails(removalBatch('owner-1', 'member-1', { decrement: false }).commit());
+    await assertFails(removalBatch('owner-1', 'member-1', { removedMemberId: 'someone-else' }).commit());
+    await assertSucceeds(removalBatch('owner-1', 'member-1').commit());
+  });
+
+  it('lets a member leave by lowering the count for themselves only', async () => {
+    await assertFails(removalBatch('member-1', 'member-1', { decrement: false }).commit());
+    await assertSucceeds(removalBatch('member-1', 'member-1').commit());
+  });
+
+  it('blocks a removed member from rejoining but lets a leaver come back', async () => {
+    await assertSucceeds(removalBatch('owner-1', 'member-1', { recordRemoval: true }).commit());
+    const removedMember = testEnv.authenticatedContext('member-1').firestore();
+    await assertSucceeds(getDoc(doc(removedMember, 'circles', 'public-circle', 'removedMembers', 'member-1')));
+    await assertFails(joinBatch('member-1', 'public-circle', 2, 'Member One').commit());
+
+    await assertSucceeds(joinBatch('joiner', 'public-circle', 2).commit());
+    await assertSucceeds(removalBatchFor('joiner').commit());
+    await assertSucceeds(joinBatch('joiner', 'public-circle', 2).commit());
+  });
+
+  it('lets only the owner record a removal', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    await assertFails(setDoc(doc(member, 'circles', 'public-circle', 'removedMembers', 'owner-1'), {
+      removedAt: serverTimestamp(),
+      removedBy: 'member-1',
+      userId: 'owner-1',
+    }));
+  });
+
+  function removalBatchFor(memberId: string) {
+    const database = testEnv.authenticatedContext(memberId).firestore();
+    const batch = writeBatch(database);
+    batch.delete(doc(database, 'circles', 'public-circle', 'members', memberId));
+    batch.delete(doc(database, 'users', memberId, 'circleMemberships', 'public-circle'));
+    batch.update(doc(database, 'circles', 'public-circle'), { memberCount: 1, removedMemberId: memberId, updatedAt: serverTimestamp() });
+    return batch;
+  }
+
+  it('rejects a join whose member name differs from the profile name', async () => {
+    await assertFails(joinBatch('joiner', 'private-circle', 2, 'Circle Owner').commit());
+  });
+
+  it('stops members renaming their member record away from their profile name', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const memberReference = doc(member, 'circles', 'public-circle', 'members', 'member-1');
+
+    await assertFails(updateDoc(memberReference, { displayName: 'Circle Owner' }));
+    await assertFails(updateDoc(memberReference, { displayName: '' }));
+    await assertSucceeds(updateDoc(memberReference, { avatarStyle: 'adventurer', updatedAt: serverTimestamp() }));
+
+    const profileAndMember = writeBatch(member);
+    profileAndMember.set(doc(member, 'users', 'member-1'), { displayName: 'Member Renamed' }, { merge: true });
+    profileAndMember.update(memberReference, { displayName: 'Member Renamed' });
+    await assertSucceeds(profileAndMember.commit());
+  });
+});
+
+describe('daily step plausibility', () => {
+  beforeEach(async () => {
+    await clearFirestoreData();
+    await seedCircle();
+  });
+
+  function dateKeyDaysFromNow(days: number) {
+    return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  }
+
+  function personalSteps(dateKey: string, overrides: Record<string, unknown> = {}) {
+    return { dateKey, source: 'healthkit', steps: 8000, timeZone: 'Africa/Lagos', updatedAt: serverTimestamp(), ...overrides };
+  }
+
+  it('accepts a whole, plausible step total for a recent day', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const today = dateKeyDaysFromNow(0);
+    const threeDaysAgo = dateKeyDaysFromNow(-3);
+
+    await assertSucceeds(setDoc(doc(member, 'users', 'member-1', 'dailySteps', today), personalSteps(today)));
+    await assertSucceeds(setDoc(doc(member, 'users', 'member-1', 'dailySteps', threeDaysAgo), personalSteps(threeDaysAgo, { steps: 100000 })));
+  });
+
+  it('rejects implausible, fractional, or negative step totals', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const today = dateKeyDaysFromNow(0);
+    const reference = doc(member, 'users', 'member-1', 'dailySteps', today);
+
+    await assertFails(setDoc(reference, personalSteps(today, { steps: 100001 })));
+    await assertFails(setDoc(reference, personalSteps(today, { steps: 1500.5 })));
+    await assertFails(setDoc(reference, personalSteps(today, { steps: -1 })));
+  });
+
+  it('rejects future, stale, malformed, or mismatched days', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const future = dateKeyDaysFromNow(3);
+    const stale = dateKeyDaysFromNow(-20);
+    const today = dateKeyDaysFromNow(0);
+
+    await assertFails(setDoc(doc(member, 'users', 'member-1', 'dailySteps', future), personalSteps(future)));
+    await assertFails(setDoc(doc(member, 'users', 'member-1', 'dailySteps', stale), personalSteps(stale)));
+    await assertFails(setDoc(doc(member, 'users', 'member-1', 'dailySteps', 'not-a-date'), personalSteps('not-a-date')));
+    await assertFails(setDoc(doc(member, 'users', 'member-1', 'dailySteps', today), personalSteps(stale)));
+  });
+
+  it('rejects unexpected fields, unknown sources, and client timestamps', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const today = dateKeyDaysFromNow(0);
+    const reference = doc(member, 'users', 'member-1', 'dailySteps', today);
+
+    await assertFails(setDoc(reference, personalSteps(today, { bonus: 5000 })));
+    await assertFails(setDoc(reference, personalSteps(today, { source: 'manual' })));
+    await assertFails(setDoc(reference, personalSteps(today, { updatedAt: new Date(0) })));
+  });
+
+  it('still lets a legacy record with extra fields be updated', async () => {
+    const today = dateKeyDaysFromNow(0);
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'users', 'member-1', 'dailySteps', today), { ...personalSteps(today), legacyNote: 'kept', updatedAt: new Date() });
+    });
+
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    await assertSucceeds(setDoc(doc(member, 'users', 'member-1', 'dailySteps', today), personalSteps(today, { steps: 9000 }), { merge: true }));
+  });
+
+  it('applies the same bounds to circle standings entries', async () => {
+    const member = testEnv.authenticatedContext('member-1').firestore();
+    const today = dateKeyDaysFromNow(0);
+    const entry = doc(member, 'circles', 'public-circle', 'dailySteps', today, 'entries', 'member-1');
+    const payload = { dateKey: today, steps: 8000, updatedAt: serverTimestamp(), userId: 'member-1' };
+
+    await assertSucceeds(setDoc(entry, payload));
+    await assertFails(setDoc(entry, { ...payload, steps: 250000 }));
+    await assertFails(setDoc(entry, { ...payload, source: 'healthkit' }));
+    await assertFails(setDoc(doc(member, 'circles', 'public-circle', 'dailySteps', dateKeyDaysFromNow(-20), 'entries', 'member-1'), { ...payload, dateKey: dateKeyDaysFromNow(-20) }));
   });
 });
 

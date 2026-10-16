@@ -102,7 +102,8 @@ export async function saveDailySteps(input: {
   const record: DailyStepRecord = {
     dateKey,
     source: input.source ?? 'expo-pedometer',
-    steps: input.steps,
+    // Firestore Rules accept only whole, non-negative step counts.
+    steps: Math.max(0, Math.round(input.steps)),
     timeZone: getLocalTimeZone(),
   };
 

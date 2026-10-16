@@ -1,0 +1,16 @@
+diff --git a/node_modules/@appeeky/expo-healthkit/android/src/main/java/expo/modules/healthkit/HealthConnectService.kt b/node_modules/@appeeky/expo-healthkit/android/src/main/java/expo/modules/healthkit/HealthConnectService.kt
+index 42a94c4..b838860 100644
+--- a/node_modules/@appeeky/expo-healthkit/android/src/main/java/expo/modules/healthkit/HealthConnectService.kt
++++ b/node_modules/@appeeky/expo-healthkit/android/src/main/java/expo/modules/healthkit/HealthConnectService.kt
+@@ -1056,7 +1056,10 @@ internal class HealthConnectService(
+       "value" to value,
+       "unit" to unit,
+       "sourceName" to metadata.dataOrigin.packageName,
+-      "sourceId" to metadata.dataOrigin.packageName
++      "sourceId" to metadata.dataOrigin.packageName,
++      // Stride Circle patch: expose how the record was made so apps can drop
++      // manual entries (Metadata.RECORDING_METHOD_MANUAL_ENTRY == 3).
++      "metadata" to mapOf("recordingMethod" to metadata.recordingMethod.toString())
+     )
+     if (type == HealthConnectMapping.HRV) {
+       // HeartRateVariabilityRmssdRecord is served under the SDNN identifier; say so.

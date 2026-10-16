@@ -49,11 +49,11 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
     >
       <View style={styles.intro}>
         <AppText variant="title">Walking worldwide</AppText>
-        <AppText tone="secondary" variant="bodySmall">Compare verified walking steps with everyone on the app.</AppText>
+        <AppText tone="secondary" variant="bodySmall">Compare walking steps synced from health data with everyone on the app.</AppText>
       </View>
 
       <View style={styles.metaRow}>
-        <AppText tone="secondary" variant="caption">Walking · verified steps</AppText>
+        <AppText tone="secondary" variant="caption">Walking · synced steps</AppText>
         {generatedAt ? <AppText tone="tertiary" variant="caption">Updated {formatGeneratedAt(generatedAt)}</AppText> : null}
       </View>
 
@@ -69,7 +69,7 @@ export function GlobalLeaderboardView({ currentUser, entries, generatedAt, onBac
       ) : null}
       {status === 'ready' && friends.length === 0 ? (
         <StateCard
-          description="Global standings will appear once walkers have verified steps."
+          description="Global standings will appear once walkers have synced steps."
           icon={<Ionicons color={colors.accentPressed} name="trophy-outline" size={22} />}
           title="No global standings yet"
         />

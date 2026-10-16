@@ -48,3 +48,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Stray Windows cache folder from an unexpanded %SystemDrive% path
+/%SystemDrive%/

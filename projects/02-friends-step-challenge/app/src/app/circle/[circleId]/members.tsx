@@ -118,7 +118,7 @@ export default function CircleMembersRoute() {
     if (!details || pendingId) return;
     setPendingId(member.userId);
     try {
-      await removeCircleMember({ circleId: details.circle.id, memberId: member.userId });
+      await removeCircleMember({ circleId: details.circle.id, memberId: member.userId, removedBy: user?.uid });
     } catch (error) {
       Alert.alert('Could not remove member', getMessage(error));
     } finally {

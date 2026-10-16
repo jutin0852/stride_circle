@@ -1,11 +1,13 @@
 import {
   collection,
   doc,
+  getCountFromServer,
   limit,
   onSnapshot,
   orderBy,
   query,
   type Unsubscribe,
+  where,
 } from 'firebase/firestore';
 
 import {
@@ -13,7 +15,7 @@ import {
   isAvatarStyle,
 } from '@/lib/avatar';
 import { database, requireFirebase } from '@/lib/firebase';
-import { getGlobalLeaderboardBoardId, type GlobalLeaderboardEntry, type GlobalLeaderboardPeriod } from '@/domain/global-leaderboard';
+import { getGlobalLeaderboardBoardId, rankByTotals, type GlobalLeaderboardEntry, type GlobalLeaderboardPeriod } from '@/domain/global-leaderboard';
 
 export type GlobalLeaderboardSnapshot = {
   currentUser: GlobalLeaderboardEntry | null;
@@ -29,10 +31,15 @@ export function watchGlobalLeaderboard(input: {
 }): Unsubscribe {
   const db = requireFirebase(database, 'Firestore');
   const boardReference = doc(db, 'globalLeaderboards', getGlobalLeaderboardBoardId(input.period));
-  const entriesQuery = query(collection(boardReference, 'entries'), orderBy('rank'), limit(50));
+  const entriesReference = collection(boardReference, 'entries');
+  // Entries store totals only; ranks are derived here so the server job never
+  // rewrites every entry when one walker moves.
+  const entriesQuery = query(entriesReference, orderBy('verifiedSteps', 'desc'), limit(50));
 
   let entries: GlobalLeaderboardEntry[] = [];
   let currentUser: GlobalLeaderboardEntry | null = null;
+  let currentUserRead = 0;
+  let stopped = false;
   let generatedAt: Date | null = null;
   let entriesReady = false;
 
@@ -43,10 +50,10 @@ export function watchGlobalLeaderboard(input: {
 
   const subscriptions: Unsubscribe[] = [
     onSnapshot(entriesQuery, (snapshot) => {
-      entries = snapshot.docs.flatMap((entry) => {
+      entries = rankByTotals(snapshot.docs.flatMap((entry) => {
         const value = readEntry(entry.id, entry.data());
         return value ? [value] : [];
-      });
+      }));
       entriesReady = true;
       publish();
     }, input.onError),
@@ -55,17 +62,32 @@ export function watchGlobalLeaderboard(input: {
       publish();
     }, () => undefined),
     onSnapshot(doc(boardReference, 'entries', input.userId), (snapshot) => {
-      currentUser = snapshot.exists() ? readEntry(snapshot.id, snapshot.data()) : null;
-      publish();
+      const entry = snapshot.exists() ? readEntry(snapshot.id, snapshot.data()) : null;
+      const read = ++currentUserRead;
+      if (!entry) {
+        currentUser = null;
+        publish();
+        return;
+      }
+      // Rank = walkers with strictly more steps + 1. A count aggregation costs
+      // one read per 1,000 matching entries.
+      void getCountFromServer(query(entriesReference, where('verifiedSteps', '>', entry.verifiedSteps)))
+        .then((result) => {
+          if (stopped || read !== currentUserRead) return;
+          currentUser = { ...entry, rank: result.data().count + 1 };
+          publish();
+        }, () => undefined);
     }, () => undefined),
   ];
 
-  return () => subscriptions.forEach((unsubscribe) => unsubscribe());
+  return () => {
+    stopped = true;
+    subscriptions.forEach((unsubscribe) => unsubscribe());
+  };
 }
 
-function readEntry(userId: string, data: Record<string, unknown> | undefined): GlobalLeaderboardEntry | null {
+function readEntry(userId: string, data: Record<string, unknown> | undefined): Omit<GlobalLeaderboardEntry, 'rank'> | null {
   if (!data || typeof data.verifiedSteps !== 'number' || !Number.isFinite(data.verifiedSteps) || data.verifiedSteps < 0) return null;
-  if (typeof data.rank !== 'number' || !Number.isInteger(data.rank) || data.rank < 1) return null;
 
   const fallback = getDefaultAvatarChoice(userId);
   return {
@@ -74,7 +96,6 @@ function readEntry(userId: string, data: Record<string, unknown> | undefined): G
       style: isAvatarStyle(data.avatarStyle) ? data.avatarStyle : fallback.style,
     },
     displayName: typeof data.displayName === 'string' && data.displayName.trim() ? data.displayName.trim() : 'Stride Circle member',
-    rank: data.rank,
     userId,
     verifiedSteps: Math.floor(data.verifiedSteps),
   };

@@ -60,8 +60,8 @@ Existing GPS activity code may remain available as legacy or experimental functi
 ## Scoring rules
 
 - Daily winners are determined by provider-sourced step totals for the circle's competition day.
-- Weekly winners are determined by total verified steps during the circle's competition week.
-- The global weekly leaderboard uses verified walking steps in a shared Monday `00:00 UTC` week.
+- Weekly winners are determined by total steps synced from health data during the circle's competition week.
+- The global weekly leaderboard uses walking steps synced from health data in a shared Monday `00:00 UTC` week.
 - Global rank is an integer placement generated from a server-side projection. The global board is public to signed-in users; it exposes aggregate steps and limited display snapshots only.
 - Consistency and streaks are recognized separately from the winner calculation.
 - Personal history uses the user's local timezone where appropriate; circle standings use the circle timezone.

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { getGlobalLeaderboardBoardId } from './global-leaderboard';
+import { getGlobalLeaderboardBoardId, rankByTotals } from './global-leaderboard';
+
+describe('global leaderboard ranks', () => {
+  it('gives tied totals the same rank and skips the next rank', () => {
+    expect(rankByTotals([
+      { userId: 'a', verifiedSteps: 9000 },
+      { userId: 'b', verifiedSteps: 7000 },
+      { userId: 'c', verifiedSteps: 7000 },
+      { userId: 'd', verifiedSteps: 4000 },
+    ]).map(({ rank }) => rank)).toEqual([1, 2, 2, 4]);
+  });
+});
 
 describe('global leaderboard periods', () => {
   it('uses the same UTC week key for every user', () => {
