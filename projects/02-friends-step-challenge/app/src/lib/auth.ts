@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -19,7 +20,7 @@ import {
   type AvatarChoice,
 } from '@/lib/avatar';
 
-export async function createProfileIfMissing(user: User) {
+export async function createProfileIfMissing(user: User, options: { startOnboarding?: boolean } = {}) {
   const db = requireFirebase(database, 'Firestore');
   const profileReference = doc(db, 'users', user.uid);
   const existingProfile = await getDoc(profileReference);
@@ -39,11 +40,13 @@ export async function createProfileIfMissing(user: User) {
   if (user.photoURL !== photoURL) await updateProfile(user, { photoURL });
 
   await setDoc(profileReference, {
-    displayName: user.displayName ?? 'Stride Circle member',
+    // Matches the member-record name so Firestore Rules accept circle joins.
+    displayName: user.displayName?.trim() || 'Stride Circle member',
     email: user.email,
     avatarSeed: avatar.seed,
     avatarStyle: avatar.style,
     photoURL,
+    ...(!existingProfile.exists() && options.startOnboarding ? { onboardingVersion: 0 } : {}),
     ...(existingProfile.exists() ? { updatedAt: serverTimestamp() } : { createdAt: serverTimestamp() }),
   }, { merge: true });
 }
@@ -62,7 +65,7 @@ export async function createAccount(input: { displayName: string; email: string;
   const firebaseAuth = requireFirebase(auth, 'Authentication');
   const credentials = await createUserWithEmailAndPassword(firebaseAuth, input.email.trim(), input.password);
   await updateProfile(credentials.user, { displayName: input.displayName.trim() });
-  await createProfileIfMissing(credentials.user);
+  await createProfileIfMissing(credentials.user, { startOnboarding: true });
 }
 
 export async function signInWithEmail(input: { email: string; password: string }) {
@@ -75,7 +78,10 @@ export async function signInWithGoogleIdToken(idToken: string) {
   const firebaseAuth = requireFirebase(auth, 'Authentication');
   const credential = GoogleAuthProvider.credential(idToken);
   const result = await signInWithCredential(firebaseAuth, credential);
-  await createProfileIfMissing(result.user);
+  // Firebase v12 exposes the new-user flag through getAdditionalUserInfo.
+  // Existing members must never be sent through setup.
+  const isNewUser = getAdditionalUserInfo(result)?.isNewUser === true;
+  await createProfileIfMissing(result.user, { startOnboarding: isNewUser });
 }
 
 export async function updateUserDisplayName(input: { displayName: string; user: User }) {

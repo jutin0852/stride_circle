@@ -24,6 +24,29 @@ function isAndroid() {
   return process.env.EXPO_OS === 'android';
 }
 
+// Steps typed into Apple Health are written by the Health app itself and
+// tagged HKMetadataKeyWasUserEntered (serialized by the module as "1").
+const APPLE_HEALTH_BUNDLE_ID = 'com.apple.Health';
+const HEALTHKIT_USER_ENTERED_KEY = 'HKWasUserEntered';
+// Health Connect Metadata.RECORDING_METHOD_MANUAL_ENTRY, exposed by our
+// patch to @appeeky/expo-healthkit (patches/).
+const HEALTH_CONNECT_RECORDING_METHOD_KEY = 'recordingMethod';
+const HEALTH_CONNECT_MANUAL_ENTRY = '3';
+// Android must read every step record to find manual ones, so that read is
+// reused for a few minutes instead of repeating on each foreground refresh.
+const ANDROID_HAND_ENTERED_CACHE_MS = 5 * 60_000;
+
+export function isHandEnteredSample(sample: { metadata?: Record<string, string> }) {
+  const healthKitFlag = sample.metadata?.[HEALTHKIT_USER_ENTERED_KEY]?.toLowerCase();
+  return healthKitFlag === '1'
+    || healthKitFlag === 'true'
+    || sample.metadata?.[HEALTH_CONNECT_RECORDING_METHOD_KEY] === HEALTH_CONNECT_MANUAL_ENTRY;
+}
+
+export function sumHandEnteredSteps(samples: readonly { metadata?: Record<string, string>; value: number }[]) {
+  return samples.reduce((total, sample) => isHandEnteredSample(sample) ? total + Math.max(0, sample.value) : total, 0);
+}
+
 export function shouldUsePedometerFallback(platform: string | undefined, providerSetting: string | undefined) {
   // iOS defaults to foreground pedometer for free-signed builds; HealthKit is
   // selected explicitly only in a build with the required entitlement.
@@ -44,6 +67,37 @@ export function createHealthDataProvider(): HealthDataProvider {
     process.env.EXPO_PUBLIC_HEALTH_DATA_PROVIDER,
   ) ? fallback : null;
   let readQueue: Promise<unknown> = Promise.resolve();
+  let androidHandEntered: { computedAt: number; start: number; steps: number } | null = null;
+
+  async function readHandEnteredSteps(healthKit: HealthKitModule, input: { end: Date; start: Date }) {
+    if (!isAndroid()) {
+      // Only the Health app writes hand-entered samples, so this read stays small.
+      return sumHandEnteredSteps(await healthKit.queryQuantitySamples({
+        from: input.start,
+        sources: [APPLE_HEALTH_BUNDLE_ID],
+        to: input.end,
+        type: healthKit.QuantityType.stepCount,
+        unit: healthKit.Unit.count,
+      }));
+    }
+
+    const start = input.start.getTime();
+    const now = Date.now();
+    if (androidHandEntered?.start === start && now - androidHandEntered.computedAt < ANDROID_HAND_ENTERED_CACHE_MS) {
+      return androidHandEntered.steps;
+    }
+
+    // Health Connect cannot filter by recording method, so read the day's
+    // step records and keep the manual ones.
+    const steps = sumHandEnteredSteps(await healthKit.queryQuantitySamples({
+      from: input.start,
+      to: input.end,
+      type: healthKit.QuantityType.stepCount,
+      unit: healthKit.Unit.count,
+    }));
+    androidHandEntered = { computedAt: now, start, steps };
+    return steps;
+  }
 
   async function getAvailableNativeModule() {
     if (!isNativePlatform() || activeProvider === fallback) return null;
@@ -74,7 +128,10 @@ export function createHealthDataProvider(): HealthDataProvider {
         type: healthKit.QuantityType.stepCount,
         unit: healthKit.Unit.count,
       });
-      return Math.max(0, Math.round(statistics.sum ?? 0));
+      // The statistics sum stays de-duplicated across devices; subtract only
+      // hand-entered samples so typed-in steps never count.
+      const handEnteredSteps = await readHandEnteredSteps(healthKit, input);
+      return Math.max(0, Math.round((statistics.sum ?? 0) - handEnteredSteps));
     });
 
     // A failed read must not poison the queue for all future reads.

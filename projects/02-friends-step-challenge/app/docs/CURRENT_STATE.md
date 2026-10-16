@@ -12,7 +12,7 @@ The visible navigation is Home, Circles, Activity, History, and Profile. Activit
 
 - Firebase Authentication: email/password, native Google Sign-In ID-token exchange, and a Firebase Google popup on web. iOS OAuth configuration is set up; native login still requires an updated development client and device acceptance. Android additionally requires the real build's signing SHA-1 registration. See [GOOGLE_SIGN_IN.md](GOOGLE_SIGN_IN.md).
 - Cloud Firestore: profiles, circle membership, circles, daily steps, standings data, saved walks, cheers, circle messages, blocks, and reports.
-- Cloud Functions 2nd gen: initial callable circle operations plus scheduled daily score finalization and weekly recap generation.
+- Cloud Functions 2nd gen: scheduled daily score finalization, weekly recap generation, and an incremental global leaderboard job. The job reads only daily-step records changed since its last run (one full bootstrap scan on first run), keeps private per-user running totals in `leaderboardTotals`, and writes totals-only entries; the app derives ranks from step order plus a count query. There are no callable circle functions; circle create/join/leave are direct client writes guarded by Firestore Rules.
 - Health data: native HealthKit on iOS, Health Connect on Android, and a guarded iOS Expo Pedometer fallback for development builds.
 - Expo Location and React Native Maps: optional private GPS walking sessions.
 - DiceBear CDN: selectable profile characters with initials fallback.
@@ -22,9 +22,10 @@ Walking reminders use Expo Notifications for an opt-in daily local notification.
 ## Implemented behavior
 
 - Authentication and profile creation/editing.
-- Private invite-only circles and public open circles with a 20-member cap.
+- Private invite-only circles and public open circles with a 20-member cap enforced by Rules: a join must raise the stored count, a decrement must name the member removed in the same write, and people an owner removes are recorded in `removedMembers` and cannot rejoin.
 - Fixed circle competition timezones and live daily standings.
 - Personal cumulative daily steps, bounded synchronization, offline outbox retry, goals, streaks, milestones, and goal celebrations.
+- Bounded trust for client-reported steps: Firestore Rules accept only whole daily totals from 0 to 100,000 for a real day within the last 15 days (and at most one day ahead), with fixed fields and server timestamps, for both personal and circle records. HealthKit reads subtract steps hand-entered in the Health app; Health Connect reads subtract manual-entry records using a patched `@appeeky/expo-healthkit` (`patches/`, applied by `postinstall`) that exposes the recording method; that read is cached for five minutes. Scores are still client-reported, not server-verified.
 - Fixed cheers with Firestore duplicate protection.
 - Membership-scoped circle chat with optimistic sends, retryable failures, member avatars, paged message history, and a device-local unread badge on circle standings. The badge watches messages newer than a per-circle cursor and is limited to the latest 50 unread messages.
 - Public-circle safety MVP: users can report public circles from Discover and report members/messages from circle views; owners can appoint/demote moderators; owners and moderators have a private report inbox; members can block/unblock people from roster/chat and manage the blocked list in Profile. Blocked users are hidden locally from circle chat, standings, and recap names; this does not remove shared messages or prevent other circle members from seeing them.
@@ -41,7 +42,7 @@ Walking reminders use Expo Notifications for an opt-in daily local notification.
 
 ## Transitional architecture
 
-The target feature/domain/data/service boundaries are documented in [ARCHITECTURE.md](ARCHITECTURE.md), but the migration is incomplete. Home and History have coordinator/presentation splits; many other routes still call transitional repositories in `src/lib` directly. Circle mutations and circle message writes are still partly direct client Firestore operations even though initial Cloud Functions exist. Legacy run records remain readable, but new activity UI is walking-only.
+The target feature/domain/data/service boundaries are documented in [ARCHITECTURE.md](ARCHITECTURE.md), but the migration is incomplete. Home and History have coordinator/presentation splits; many other routes still call transitional repositories in `src/lib` directly. Circle mutations and circle message writes are still partly direct client Firestore operations. Legacy run records remain readable, but new activity UI is walking-only.
 
 ## Not complete
 

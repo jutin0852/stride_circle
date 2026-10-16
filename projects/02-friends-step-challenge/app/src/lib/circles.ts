@@ -90,6 +90,11 @@ function getUserMembershipReference(userId: string, circleId: string) {
   return doc(db, 'users', userId, 'circleMemberships', circleId);
 }
 
+function getRemovedMemberReference(circleId: string, userId: string) {
+  const db = requireFirebase(database, 'Firestore');
+  return doc(db, 'circles', circleId, 'removedMembers', userId);
+}
+
 function generateInviteCode() {
   return Array.from({ length: 8 }, () => {
     const index = Math.floor(Math.random() * INVITE_ALPHABET.length);
@@ -301,6 +306,9 @@ export async function joinCircle(input: { inviteCode: string; user: User }) {
     const circleSnapshot = await transaction.get(circleReference);
     const memberSnapshot = await transaction.get(memberReference);
     if (!circleSnapshot.exists()) throw new Error('That invite code does not match a circle.');
+    if (!memberSnapshot.exists() && (await transaction.get(getRemovedMemberReference(circleReference.id, input.user.uid))).exists()) {
+      throw new Error('You were removed from this circle and cannot rejoin it.');
+    }
 
     const circle = circleSnapshot.data();
     const visibility = getVisibility(circle.visibility);
@@ -341,6 +349,9 @@ export async function joinPublicCircle(input: { circleId: string; user: User }) 
     const circleSnapshot = await transaction.get(circleReference);
     const memberSnapshot = await transaction.get(memberReference);
     if (!circleSnapshot.exists()) throw new Error('That public circle is no longer available.');
+    if (!memberSnapshot.exists() && (await transaction.get(getRemovedMemberReference(circleReference.id, input.user.uid))).exists()) {
+      throw new Error('You were removed from this circle and cannot rejoin it.');
+    }
 
     const circle = circleSnapshot.data();
     const visibility = getVisibility(circle.visibility);
@@ -412,8 +423,11 @@ export async function selectCircle(input: { circleId: string; userId: string }) 
  * decide who may call this: a member may leave their own circle, and a
  * circle owner may remove someone else. We intentionally retain their old
  * step entries so past leaderboards remain historically accurate.
+ *
+ * Pass `removedBy` (the owner's uid) for an owner removal: it records the
+ * person so they cannot rejoin with the invite code.
  */
-export async function removeCircleMember(input: { circleId: string; memberId: string }) {
+export async function removeCircleMember(input: { circleId: string; memberId: string; removedBy?: string }) {
   const db = requireFirebase(database, 'Firestore');
   const circleReference = doc(db, 'circles', input.circleId);
   const memberReference = doc(db, 'circles', input.circleId, 'members', input.memberId);
@@ -429,8 +443,17 @@ export async function removeCircleMember(input: { circleId: string; memberId: st
     transaction.delete(membershipReference);
     transaction.update(circleReference, {
       memberCount: Math.max(0, memberCount - 1),
+      // Firestore Rules only accept a decrement that names the removed member.
+      removedMemberId: input.memberId,
       updatedAt: serverTimestamp(),
     });
+    if (input.removedBy && input.removedBy !== input.memberId) {
+      transaction.set(doc(db, 'circles', input.circleId, 'removedMembers', input.memberId), {
+        removedAt: serverTimestamp(),
+        removedBy: input.removedBy,
+        userId: input.memberId,
+      });
+    }
   });
 }
 
@@ -459,7 +482,8 @@ export async function saveCircleDailySteps(input: {
     entryReference,
     {
       dateKey,
-      steps: input.steps,
+      // Firestore Rules accept only whole, non-negative step counts.
+      steps: Math.max(0, Math.round(input.steps)),
       updatedAt: serverTimestamp(),
       userId: input.userId,
     },

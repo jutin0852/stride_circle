@@ -4,6 +4,7 @@ const mock = vi.hoisted(() => ({ popup: vi.fn(), profile: vi.fn(), parameters: v
 vi.mock('@/lib/auth', () => ({ createProfileIfMissing: mock.profile }));
 vi.mock('@/lib/firebase', () => ({ auth: {}, requireFirebase: (value: unknown) => value }));
 vi.mock('firebase/auth', () => ({
+  getAdditionalUserInfo: (result: { additionalUserInfo?: unknown }) => result.additionalUserInfo ?? null,
   GoogleAuthProvider: class { setCustomParameters = mock.parameters; },
   signInWithPopup: mock.popup,
 }));
@@ -16,7 +17,13 @@ it('completes web login using the Firebase popup flow', async () => {
   expect(await signInWithGoogle()).toBe('success');
   expect(mock.popup).toHaveBeenCalledTimes(1);
   expect(mock.parameters).toHaveBeenCalledWith({ prompt: 'select_account' });
-  expect(mock.profile).toHaveBeenCalledWith(mock.user);
+  expect(mock.profile).toHaveBeenCalledWith(mock.user, { startOnboarding: false });
+});
+
+it('marks a first Google sign-in for onboarding', async () => {
+  mock.popup.mockResolvedValueOnce({ additionalUserInfo: { isNewUser: true }, user: mock.user });
+  await signInWithGoogle();
+  expect(mock.profile).toHaveBeenCalledWith(mock.user, { startOnboarding: true });
 });
 it('handles popup cancellation without surfacing an error', async () => {
   mock.popup.mockRejectedValueOnce({ code: 'auth/popup-closed-by-user' });

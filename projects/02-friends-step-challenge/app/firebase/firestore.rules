@@ -6,6 +6,35 @@ service cloud.firestore {
       return 20;
     }
 
+    // Well above a very long walking day; anything higher is not plausible.
+    function maxDailySteps() {
+      return 100000;
+    }
+
+    function dateKeyStart(dateKey) {
+      return timestamp.date(int(dateKey[0:4]), int(dateKey[5:7]), int(dateKey[8:10]));
+    }
+
+    // Daily step totals are client-reported, so bound what a client can claim:
+    // a whole, plausible number for a real day that is not in the future and
+    // not older than the offline sync window.
+    function isPlausibleDailySteps(dateKey) {
+      return request.resource.data.steps is int
+        && request.resource.data.steps >= 0
+        && request.resource.data.steps <= maxDailySteps()
+        && request.resource.data.dateKey == dateKey
+        && dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && dateKeyStart(dateKey) <= request.time + duration.value(1, 'd')
+        && dateKeyStart(dateKey) >= request.time - duration.value(15, 'd')
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function hasOnlyStepFields(fields) {
+      return resource == null
+        ? request.resource.data.keys().hasOnly(fields)
+        : request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
     function signedIn() {
       return request.auth != null;
     }
@@ -42,6 +71,27 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.joinPolicy == 'open';
     }
 
+    // A new member record must raise the stored count by exactly one in the same
+    // write, so the member cap cannot be bypassed by writing the record alone.
+    function isJoinWithCountIncrement(circleId) {
+      return exists(/databases/$(database)/documents/circles/$(circleId))
+        && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.memberCount
+          == get(/databases/$(database)/documents/circles/$(circleId)).data.memberCount + 1
+        && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.memberCount <= maxCircleMembers();
+    }
+
+    // Member names are copies of the user's profile name; they may stay as they
+    // are or follow the profile, but never diverge from it.
+    function isAllowedMemberDisplayName(memberId) {
+      return request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 100
+        && (
+          (resource != null && request.resource.data.displayName == resource.data.displayName)
+          || request.resource.data.displayName == getAfter(/databases/$(database)/documents/users/$(memberId)).data.displayName
+        );
+    }
+
     function isValidCircleReportTarget(circleId, targetType, targetId) {
       return (
           targetType == 'circle'
@@ -74,7 +124,14 @@ service cloud.firestore {
     }
 
     match /users/{userId}/dailySteps/{dateKey} {
-      allow create, read, update: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && hasOnlyStepFields(['dateKey', 'source', 'steps', 'timeZone', 'updatedAt'])
+        && isPlausibleDailySteps(dateKey)
+        && request.resource.data.source in ['expo-pedometer', 'health-connect', 'healthkit', 'ios-pedometer']
+        && request.resource.data.timeZone is string
+        && request.resource.data.timeZone.size() <= 100;
       allow delete: if false;
     }
 
@@ -241,16 +298,15 @@ service cloud.firestore {
             && !exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
             && existsAfter(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
           )
+          // A decrement must name the member removed in the same write, so the
+          // count can only fall when someone actually leaves or is removed.
           || (
-            (
-              isCircleOwner(circleId)
-              || (
-                exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
-                && !existsAfter(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid))
-              )
-            )
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'removedMemberId', 'updatedAt'])
             && request.resource.data.memberCount == resource.data.memberCount - 1
+            && request.resource.data.removedMemberId is string
+            && (isCircleOwner(circleId) || request.resource.data.removedMemberId == request.auth.uid)
+            && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.resource.data.removedMemberId))
+            && !existsAfter(/databases/$(database)/documents/circles/$(circleId)/members/$(request.resource.data.removedMemberId))
           )
         );
       allow delete: if signedIn() && isCircleOwner(circleId);
@@ -261,21 +317,26 @@ service cloud.firestore {
         allow create: if signedIn()
           && request.auth.uid == memberId
           && request.resource.data.userId == request.auth.uid
+          && isAllowedMemberDisplayName(memberId)
+          // Someone the owner removed cannot rejoin with the invite code.
+          && !exists(/databases/$(database)/documents/circles/$(circleId)/removedMembers/$(memberId))
           && (
             getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId
-            || (
-              isPublicOpenCircleAfter(circleId)
-              && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.memberCount <= maxCircleMembers()
-            )
+            || isPublicOpenCircleAfter(circleId)
           )
           && (
             (
               request.auth.uid == getAfter(/databases/$(database)/documents/circles/$(circleId)).data.ownerId
               && request.resource.data.role == 'owner'
+              && (
+                !exists(/databases/$(database)/documents/circles/$(circleId))
+                || isJoinWithCountIncrement(circleId)
+              )
             )
             || (
               request.auth.uid != getAfter(/databases/$(database)/documents/circles/$(circleId)).data.ownerId
               && request.resource.data.role == 'member'
+              && isJoinWithCountIncrement(circleId)
             )
           );
         allow update: if signedIn()
@@ -283,6 +344,7 @@ service cloud.firestore {
             (
               request.auth.uid == memberId
               && request.resource.data.userId == request.auth.uid
+              && isAllowedMemberDisplayName(memberId)
               && (
                 getAfter(/databases/$(database)/documents/circles/$(circleId)).data.inviteCode == circleId
                 || (
@@ -317,7 +379,28 @@ service cloud.firestore {
             (request.auth.uid == memberId && !isCircleOwner(circleId))
             || (isCircleOwner(circleId) && request.auth.uid != memberId)
             || (request.auth.uid == memberId && isCircleOwner(circleId) && isDeletingCircle(circleId))
+          )
+          // Keep the stored count accurate: a removal lowers it in the same write.
+          && (
+            isDeletingCircle(circleId)
+            || getAfter(/databases/$(database)/documents/circles/$(circleId)).data.memberCount
+              == get(/databases/$(database)/documents/circles/$(circleId)).data.memberCount - 1
           );
+      }
+
+      // People the owner removed; their presence blocks rejoining by invite code.
+      match /removedMembers/{memberId} {
+        allow get: if signedIn() && (request.auth.uid == memberId || isCircleModerator(circleId));
+        allow list: if isCircleModerator(circleId);
+        allow create: if signedIn()
+          && isCircleOwner(circleId)
+          && memberId != request.auth.uid
+          && request.resource.data.keys().hasOnly(['removedAt', 'removedBy', 'userId'])
+          && request.resource.data.userId == memberId
+          && request.resource.data.removedBy == request.auth.uid
+          && request.resource.data.removedAt == request.time;
+        allow update: if false;
+        allow delete: if signedIn() && (isCircleOwner(circleId) || isDeletingCircle(circleId));
       }
 
       match /dailySteps/{dateKey}/entries/{userId} {
@@ -326,6 +409,8 @@ service cloud.firestore {
         allow create, update: if signedIn()
           && request.auth.uid == userId
           && request.resource.data.userId == request.auth.uid
+          && hasOnlyStepFields(['dateKey', 'steps', 'updatedAt', 'userId'])
+          && isPlausibleDailySteps(dateKey)
           && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
         allow delete: if false;
       }

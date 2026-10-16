@@ -17,6 +17,8 @@ jest.mock('@/hooks/use-user-profile', () => ({
   }),
 }));
 jest.mock('@/components/dicebear-avatar', () => ({ DicebearAvatar: () => null }));
+// The development-only replay action imports Firestore through this module.
+jest.mock('@/lib/onboarding', () => ({ restartOnboardingForTesting: jest.fn(() => Promise.resolve()) }));
 jest.mock('@/lib/auth', () => ({
   getAuthErrorMessage: () => 'Please try again.',
   signOutCurrentUser: (...args: unknown[]) => mockSignOut(...args),
