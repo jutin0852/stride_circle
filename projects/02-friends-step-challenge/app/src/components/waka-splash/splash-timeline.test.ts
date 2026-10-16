@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { logoSettleScale, printNameForSlot, runnerFootPose, SPLASH_END, TRAIL_SLOT_COUNT, trailPrintPose } from './splash-timeline';
+import { logoSettleScale, poseMatrix, printNameForSlot, runnerFootPose, SPLASH_END, TRAIL_SLOT_COUNT, trailPrintPose } from './splash-timeline';
 import { WAKA_PRINTS } from './waka-prints';
 
 const LOGO_PX = 0.25;
@@ -12,7 +12,7 @@ describe('Waka splash timeline', () => {
   });
 
   it('alternates left (WA) and right (KA) prints around the loop', () => {
-    expect(SLOTS.map(printNameForSlot)).toEqual(['WA', 'KA', 'WA', 'KA', 'WA', 'KA']);
+    expect(SLOTS.map(printNameForSlot)).toEqual(['WA', 'KA', 'WA', 'KA', 'WA', 'KA', 'WA', 'KA']);
   });
 
   it('shows no prints before the first landing', () => {
@@ -47,5 +47,15 @@ describe('Waka splash timeline', () => {
     expect(logoSettleScale(2.2)).toBeGreaterThan(1);
     expect(logoSettleScale(2.2)).toBeLessThan(1.04);
     expect(logoSettleScale(SPLASH_END)).toBeCloseTo(1, 5);
+  });
+
+  it('lays the trail on one round loop: every print within a few px of the same radius', () => {
+    const radii = SLOTS.map((slot) => { const p = trailPrintPose(1.58, slot); return Math.hypot(p.x, p.y); });
+    expect(Math.max(...radii) - Math.min(...radii)).toBeLessThan(8);
+  });
+
+  it('turns a pose into the native SVG matrix (translate, rotate, scale)', () => {
+    const [a, b, c, d, e, f] = poseMatrix({ x: 10, y: -4, rotation: 90, scale: 2 });
+    expect([a, b, c, d, e, f].map((v) => Math.round(v * 1e6) / 1e6)).toEqual([0, 2, -2, 0, 10, -4]);
   });
 });
