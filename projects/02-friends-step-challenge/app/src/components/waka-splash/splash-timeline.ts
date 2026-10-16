@@ -5,7 +5,7 @@ import { WAKA_PRINTS, type WakaPrintName } from './waka-prints';
  * and unit tests compute exactly the same frames.
  *
  * 0.00-0.25 two shoes appear at the centre and settle onto the top of the loop
- * 0.25-1.52 seven running strides, left first (L R L R L R L), one clockwise loop; each landing
+ * 0.25-1.52 nine running strides, left first (L R L R …), one clockwise loop; each landing
  *           stamps a print (left = "WA", right = "KA") that stays behind
  * 1.60-2.10 the trail sweeps half a turn and gathers into the Waka logo
  * 2.10-2.35 the logo lands with a ~3% settle, then holds until END
@@ -21,18 +21,23 @@ const SWEEP_START = 1.6;
 const SWEEP_END = 2.1;
 const SETTLE_END = 2.35;
 const SWEEP_TURN = 180;                // a half turn: momentum without reading as a spinner
-const STEPS = 7;
-const SLOTS = 6;
+const RUN_TIME = 1.25;                 // all strides fit in this window, whatever their number
+const STEPS = 9;
+const SLOTS = 8;                       // eight evenly spaced prints read as one round loop
 const RING = 84 * 0.95;                // loop radius
-const STRIDE_LAT = 13 * 0.95;          // left foot runs outside the loop, right foot inside
-const TOE_OUT = 14;
-const PRINT_SIZE = 0.72 * 0.95 * 1.06; // print scale while running
+const STRIDE_LAT = 4 * 0.95;           // left prints just outside the loop, right just inside
+const SWING_LAT = 16 * 0.95;           // a swinging foot passes beside the planted one, not over it
+const TOE_OUT = 4;                     // prints follow the curve so the trail stays round
+const PRINT_SIZE = 0.72 * 0.95 * 1.06 * 0.85; // print scale while running; small enough for 8 slots
 const SWING = 1.15;                    // swing > step length gives a short flight phase
 const LIFT = 0.22;                     // a lifted foot draws this much bigger
 const TRAIL_OPACITY = 0.6;            // the trail must stay visible on a bright screen
 const LOGO_PX = 0.25;                  // design px per unit of the 1254-unit logo
 
-const STEP_DURATIONS = Array.from({ length: STEPS }, (_, i) => 0.195 + (0.162 - 0.195) * (i / (STEPS - 1)));
+// Strides quicken slightly towards the end; scaled so the whole run takes RUN_TIME.
+const RAW_DURATIONS = Array.from({ length: STEPS }, (_, i) => 0.195 + (0.162 - 0.195) * (i / (STEPS - 1)));
+const RAW_TOTAL = RAW_DURATIONS.reduce((sum, d) => sum + d, 0);
+const STEP_DURATIONS = RAW_DURATIONS.map((d) => (d * RUN_TIME) / RAW_TOTAL);
 const STEP_STARTS = STEP_DURATIONS.reduce<number[]>((starts, _, i) => {
   starts.push(i === 0 ? WALK_START : starts[i - 1] + STEP_DURATIONS[i - 1]);
   return starts;
@@ -86,10 +91,10 @@ function landTime(step: number) {
   return STEP_STARTS[step] + STEP_DURATIONS[step] * SWING;
 }
 
-function ringPose(theta: number, name: WakaPrintName, size: number, pull: number) {
+function ringPose(theta: number, name: WakaPrintName, size: number, pull: number, swingOut = 0) {
   'worklet';
   const lateral = name === 'WA' ? 1 : -1;
-  const radius = (RING + lateral * STRIDE_LAT) * (1 - 0.82 * pull);
+  const radius = (RING + lateral * (STRIDE_LAT + swingOut)) * (1 - 0.82 * pull);
   const radians = (theta * Math.PI) / 180;
   return {
     x: radius * Math.cos(radians),
@@ -99,7 +104,7 @@ function ringPose(theta: number, name: WakaPrintName, size: number, pull: number
   };
 }
 
-/** The print stamped on `slot` (0-5) by the runner, including its sweep into the logo. */
+/** The print stamped on `slot` (0-7) by the runner, including its sweep into the logo. */
 export function trailPrintPose(t: number, slot: number): PrintPose {
   'worklet';
   const landed = landTime(slot);
@@ -140,7 +145,7 @@ export function runnerFootPose(t: number, foot: -1 | 1): PrintPose {
   const lifted = swing < 1 ? Math.sin(Math.PI * swing) : 0;
   const intro = easeOut(progress(t, 0, WALK_START));
   const theta = lerp(slotAngle(from), slotAngle(to), easeInOut(swing));
-  const pose = ringPose(theta, foot === -1 ? 'WA' : 'KA', (1 + LIFT * lifted) * lerp(0.82, 1, intro), 1 - intro);
+  const pose = ringPose(theta, foot === -1 ? 'WA' : 'KA', (1 + LIFT * lifted) * lerp(0.82, 1, intro), 1 - intro, SWING_LAT * lifted);
   return { ...pose, opacity: intro };
 }
 
@@ -153,3 +158,16 @@ export function logoSettleScale(t: number) {
 
 /** Number of prints the runner leaves around the loop. */
 export const TRAIL_SLOT_COUNT = SLOTS;
+
+/**
+ * A pose as the 2D matrix [a, b, c, d, e, f] of translate(x, y) · rotate(rotation) · scale(scale).
+ * Native SVG groups only accept `matrix`; translateX/rotation/scale are converted in JS during
+ * React renders, so frame-by-frame updates from the UI thread must send the matrix itself.
+ */
+export function poseMatrix(pose: { x: number; y: number; rotation: number; scale: number }) {
+  'worklet';
+  const radians = (pose.rotation * Math.PI) / 180;
+  const cos = Math.cos(radians) * pose.scale;
+  const sin = Math.sin(radians) * pose.scale;
+  return [cos, sin, -sin, cos, pose.x, pose.y];
+}

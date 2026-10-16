@@ -30,7 +30,7 @@ it('hands off quickly when Reduce Motion is enabled', async () => {
   const onFinished = jest.fn();
   const screen = await render(<AnimatedAppSplash mode="full" onFinished={onFinished} reducedMotion />);
 
-  expect(screen.getByLabelText('Waka loading')).toBeTruthy();
+  expect(screen.getByLabelText('Wakà loading')).toBeTruthy();
   await act(async () => { jest.advanceTimersByTime(179); });
   expect(onFinished).not.toHaveBeenCalled();
   await act(async () => { jest.advanceTimersByTime(1); });
@@ -47,12 +47,25 @@ it('shows only the background while the mode is being decided', async () => {
   expect(onFinished).not.toHaveBeenCalled();
 });
 
-it('plays the full run (six trail prints and two runner shoes) in about two and a half seconds', async () => {
+it('waits for the real Reduce Motion setting before starting', async () => {
+  jest.useFakeTimers();
+  const onFinished = jest.fn();
+  const screen = await render(<AnimatedAppSplash mode="full" onFinished={onFinished} reducedMotion={null} />);
+
+  expect(screen.queryAllByTestId('shoe-print')).toHaveLength(0);
+  await act(async () => { jest.advanceTimersByTime(5000); });
+  expect(onFinished).not.toHaveBeenCalled();
+
+  await screen.rerender(<AnimatedAppSplash mode="full" onFinished={onFinished} reducedMotion={false} />);
+  expect(screen.getAllByTestId('shoe-print')).toHaveLength(10);
+});
+
+it('plays the full run (eight trail prints and two runner shoes) in about two and a half seconds', async () => {
   jest.useFakeTimers();
   const onFinished = jest.fn();
   const screen = await render(<AnimatedAppSplash mode="full" onFinished={onFinished} reducedMotion={false} />);
 
-  expect(screen.getAllByTestId('shoe-print')).toHaveLength(8);
+  expect(screen.getAllByTestId('shoe-print')).toHaveLength(10);
   await act(async () => { jest.advanceTimersByTime(2450 + 219); });
   expect(onFinished).not.toHaveBeenCalled();
   await act(async () => { jest.advanceTimersByTime(1); });
@@ -74,7 +87,7 @@ it('skips the intro when tapped', async () => {
   const screen = await render(<AnimatedAppSplash mode="full" onFinished={onFinished} reducedMotion={false} />);
 
   await act(async () => { jest.advanceTimersByTime(500); });
-  await fireEvent.press(screen.getByLabelText('Waka loading'));
+  await fireEvent.press(screen.getByLabelText('Wakà loading'));
   await act(async () => { jest.advanceTimersByTime(160); });
   expect(onFinished).toHaveBeenCalledTimes(1);
 

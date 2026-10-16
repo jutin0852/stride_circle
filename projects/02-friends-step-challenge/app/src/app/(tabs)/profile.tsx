@@ -55,6 +55,14 @@ export default function ProfileRoute() {
     );
   }
 
+  function handleReplaySplash() {
+    Alert.alert('Replay splash screen', 'Choose the launch animation to preview. Your normal launch schedule stays the same.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Full animation', onPress: () => router.push({ pathname: '/splash-preview', params: { mode: 'full' } }) },
+      { text: 'Quick animation', onPress: () => router.push({ pathname: '/splash-preview', params: { mode: 'short' } }) },
+    ]);
+  }
+
   return (
     <FixedHeaderScreen
       backgroundColor={colors.background}
@@ -108,6 +116,12 @@ export default function ProfileRoute() {
       {__DEV__ && user ? <Pressable accessibilityRole="button" accessibilityLabel="Replay onboarding" onPress={handleReplayOnboarding} style={({ pressed }) => [styles.testingCard, pressed && styles.pressed]}>
         <Ionicons color={colors.accentPressed} name="play-circle-outline" size={24} />
         <View style={styles.profileText}><AppText style={styles.profileTitle}>Replay onboarding</AppText><AppText style={styles.profileCaption}>Development only · keeps your account data.</AppText></View>
+        <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+      </Pressable> : null}
+
+      {__DEV__ && user ? <Pressable accessibilityRole="button" accessibilityLabel="Replay splash screen" onPress={handleReplaySplash} style={({ pressed }) => [styles.testingCard, pressed && styles.pressed]}>
+        <Ionicons color={colors.accentPressed} name="play-circle-outline" size={24} />
+        <View style={styles.profileText}><AppText style={styles.profileTitle}>Replay splash screen</AppText><AppText style={styles.profileCaption}>Development only · preview the full or quick intro.</AppText></View>
         <Ionicons color={colors.muted} name="chevron-forward" size={20} />
       </Pressable> : null}
 

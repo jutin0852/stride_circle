@@ -6,14 +6,15 @@ import Svg, { G, Path } from 'react-native-svg';
 import { darkModePalette, palette, semanticColors } from '@/design-system/tokens';
 import { useAppTheme } from '@/design-system/use-app-theme';
 import type { SplashMode } from '@/components/waka-splash/splash-mode';
-import { DESIGN_WIDTH, logoSettleScale, printNameForSlot, runnerFootPose, SPLASH_END, TRAIL_SLOT_COUNT, trailPrintPose, type PrintPose } from '@/components/waka-splash/splash-timeline';
+import { DESIGN_WIDTH, logoSettleScale, poseMatrix, printNameForSlot, runnerFootPose, SPLASH_END, TRAIL_SLOT_COUNT, trailPrintPose, type PrintPose } from '@/components/waka-splash/splash-timeline';
 import { WAKA_PRINTS, type WakaPrintName } from '@/components/waka-splash/waka-prints';
 
 type AnimatedAppSplashProps = {
   /** null while the mode is being decided: only the plain background shows. */
   mode: SplashMode | null;
   onFinished: () => void;
-  reducedMotion: boolean;
+  /** The system Reduce Motion setting; null until it is known (only the background shows). */
+  reducedMotion: boolean | null;
 };
 
 const AnimatedG = Animated.createAnimatedComponent(G);
@@ -57,7 +58,8 @@ export function AnimatedAppSplash({ mode, onFinished, reducedMotion }: AnimatedA
   }, [exit, onFinished]);
 
   useEffect(() => {
-    if (mode === null) return;
+    // Wait for both answers; guessing would flash the finished logo or skip the run.
+    if (mode === null || reducedMotion === null) return;
     clearTimers();
 
     if (reducedMotion) {
@@ -82,27 +84,30 @@ export function AnimatedAppSplash({ mode, onFinished, reducedMotion }: AnimatedA
   }, [clearTimers, finish, mode, onFinished, reducedMotion, reveal, time]);
 
   const skip = useCallback(() => {
-    if (finished.current || mode === null) return;
+    if (finished.current || mode === null || reducedMotion === null) return;
     clearTimers();
     finish(0, SKIP_EXIT_MS);
-  }, [clearTimers, finish, mode]);
+  }, [clearTimers, finish, mode, reducedMotion]);
 
   const background = isDark ? darkModePalette.background : semanticColors.brandAction;
   const ink = isDark ? darkModePalette.primary : palette.white;
   const designScale = Math.min(width / DESIGN_WIDTH, 1.4);
+  const centerX = width / 2;
+  const centerY = height / 2;
 
   const screenStyle = useAnimatedStyle(() => ({ opacity: exit.value }));
+  // Native SVG groups only take `matrix`; see poseMatrix.
   const markProps = useAnimatedProps(() => ({
-    scale: designScale * logoSettleScale(time.value) * (0.92 + 0.08 * reveal.value),
+    matrix: poseMatrix({ x: centerX, y: centerY, rotation: 0, scale: designScale * logoSettleScale(time.value) * (0.92 + 0.08 * reveal.value) }),
     opacity: reveal.value,
   }));
 
   return (
     <Animated.View style={[styles.screen, { backgroundColor: background }, screenStyle]}>
-      <Pressable accessibilityHint="Skips the intro" accessibilityLabel="Waka loading" accessibilityRole="button" onPress={skip} style={StyleSheet.absoluteFill}>
-        {mode === null ? null : (
+      <Pressable accessibilityHint="Skips the intro" accessibilityLabel="Wakà loading" accessibilityRole="button" onPress={skip} style={StyleSheet.absoluteFill}>
+        {mode === null || reducedMotion === null ? null : (
           <Svg width={width} height={height}>
-            <AnimatedG x={width / 2} y={height / 2} animatedProps={markProps}>
+            <AnimatedG animatedProps={markProps}>
               {TRAIL_SLOTS.map((slot) => (
                 <ShoePrint key={`trail-${slot}`} name={printNameForSlot(slot)} color={ink} time={time} pose={(t) => {
                   'worklet';
@@ -135,7 +140,7 @@ type ShoePrintProps = {
 function ShoePrint({ name, color, time, pose }: ShoePrintProps) {
   const animatedProps = useAnimatedProps(() => {
     const p = pose(time.value);
-    return { translateX: p.x, translateY: p.y, rotation: p.rotation, scale: p.scale, opacity: p.opacity };
+    return { matrix: poseMatrix(p), opacity: p.opacity };
   });
 
   return (
